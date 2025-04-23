@@ -170,28 +170,19 @@ if log_r:
 else:
     st.warning("Not enough structure to estimate dimension.")
 
-# 3D PCA plot
-st.subheader("🌀 3D PCA Projection of the Strange Attractor")
+st.subheader("🌀 2D Projections of the PCA Attractor")
 st.markdown("""
-The 3D plot shows the shape of the attractor after applying PCA to the
-embedded vectors. This gives you a visual sense of how **temperature dynamics**
-form consistent trajectories in a hidden space, revealing loops, folds,
-or clustering.
+3D attractor plots can be unstable on some browsers. These 2D projections show
+different views of the underlying geometry in the reduced PCA space.
 """)
-fig3d = go.Figure(data=[go.Scatter3d(
-    x=reduced[:, 0],
-    y=reduced[:, 1],
-    z=reduced[:, 2],
-    mode='lines',
-    line=dict(color='royalblue', width=2)
-)])
-fig3d.update_layout(
-    title=f"{city_name} — PCA Projection",
-    scene=dict(
-        xaxis_title='PC1',
-        yaxis_title='PC2',
-        zaxis_title='PC3'
-    ),
-    margin=dict(l=0, r=0, b=0, t=40)
-)
-st.plotly_chart(fig3d, use_container_width=True)
+
+fig_p1 = px.line(x=reduced[:, 0], y=reduced[:, 1],
+                 labels={'x': 'PC1', 'y': 'PC2'}, title='PC1 vs PC2')
+fig_p2 = px.line(x=reduced[:, 0], y=reduced[:, 2],
+                 labels={'x': 'PC1', 'y': 'PC3'}, title='PC1 vs PC3')
+fig_p3 = px.line(x=reduced[:, 1], y=reduced[:, 2],
+                 labels={'x': 'PC2', 'y': 'PC3'}, title='PC2 vs PC3')
+
+st.plotly_chart(fig_p1, use_container_width=True)
+st.plotly_chart(fig_p2, use_container_width=True)
+st.plotly_chart(fig_p3, use_container_width=True)
