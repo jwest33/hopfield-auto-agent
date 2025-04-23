@@ -151,8 +151,21 @@ embedded ΔT vectors. A higher dimension implies more complex and
 chaotic dynamics, whereas a value near 1 suggests near-periodic behavior.
 """)
 if log_r:
-    fig = px.scatter(x=log_r, y=log_C, labels={"x": "log r", "y": "log C(r)"},
-                     title=f"Estimated correlation dimension ≈ {dim:.2f}")
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=log_r,
+        y=log_C,
+        mode='markers+lines',
+        marker=dict(color='tomato'),
+        line=dict(dash='dot'),
+        name='log C(r)'
+    ))
+    fig.update_layout(
+        title=f"Estimated correlation dimension ≈ {dim:.2f}",
+        xaxis_title="log r",
+        yaxis_title="log C(r)",
+        margin=dict(l=40, r=40, t=40, b=40)
+    )
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.warning("Not enough structure to estimate dimension.")
@@ -165,10 +178,20 @@ embedded vectors. This gives you a visual sense of how **temperature dynamics**
 form consistent trajectories in a hidden space, revealing loops, folds,
 or clustering.
 """)
-fig3d = px.line_3d(x=reduced[:,0], y=reduced[:,1], z=reduced[:,2],
-                  labels={"x": "PC1", "y": "PC2", "z": "PC3"},
-                  title=f"{city_name} — PCA Projection")
+fig3d = go.Figure(data=[go.Scatter3d(
+    x=reduced[:, 0],
+    y=reduced[:, 1],
+    z=reduced[:, 2],
+    mode='lines',
+    line=dict(color='royalblue', width=2)
+)])
+fig3d.update_layout(
+    title=f"{city_name} — PCA Projection",
+    scene=dict(
+        xaxis_title='PC1',
+        yaxis_title='PC2',
+        zaxis_title='PC3'
+    ),
+    margin=dict(l=0, r=0, b=0, t=40)
+)
 st.plotly_chart(fig3d, use_container_width=True)
-
-st.success(f"Hopfield energy (lower = closer to memory manifold): {energy:.3f}")
-st.caption("Model: Modern Hopfield network + Takens embedding + correlation dimension")
