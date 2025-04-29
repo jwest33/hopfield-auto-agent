@@ -80,7 +80,7 @@ class Hopfield:
 # ───────────────────── World ─────────────────────
 class World:
     def __init__(self):
-        logging.info("Creating new world grid …")
+        logging.info("Creating new world grid…")
         self.grid = np.full((GRID, GRID), "empty", object)
         self.home = (GRID // 2, GRID // 2)
         self.grid[self.home] = "home"
@@ -124,7 +124,7 @@ class Agent:
         self.mem1 = Hopfield(SEQ_DIM, CAP_L1)
         self.trace: list[np.ndarray] = []
         self.mem0.store(self.observe())
-        logging.info("Agent initialised at home {}.".format(self.pos))
+        logging.info("Agent initialised at home {}.".format(self.pos))
 
     # ───────────── persistence helpers ─────────────
     def save_state(self, path: str = STATE_FILE):
@@ -146,7 +146,7 @@ class Agent:
     def load_state(self, path: str = STATE_FILE):
         """Restore internal memory & physiology from *existing* file."""
         if not os.path.exists(path):
-            logging.info("No previous state found – starting fresh.")
+            logging.info("No previous state found - starting fresh.")
             return
         data = np.load(path, allow_pickle=True)
         self.pos = data["pos"].tolist()
@@ -196,7 +196,7 @@ class Agent:
                 cost += HOME_DIST_W * (home_dist / GRID)
             if np.isfinite(cost) and cost < best_cost:
                 best, best_cost = act, cost
-        logging.debug("Planned action %s with cost %.3f", best, best_cost)
+        logging.debug("Planned action %s with cost %.3f", best, best_cost)
         return best
 
     def _obs_after_move(self, nxt: list[int]) -> np.ndarray:
@@ -258,7 +258,7 @@ class Agent:
 
         # persistence
         self.save_state()
-        logging.debug("Tick complete – pos %s, energy %.1f, hunger %d, pain %d", self.pos, self.energy, self.hunger, self.pain)
+        logging.debug("Tick complete - pos %s, energy %.1f, hunger %d, pain %d", self.pos, self.energy, self.hunger, self.pain)
 
 # ───────────────────── Streamlit app ─────────────────────
 st.set_page_config("Hopfield forager", layout="wide")
@@ -278,15 +278,15 @@ agent: Agent = st.session_state.agent
 left_btn, right_btn = st.sidebar.columns(2)
 if left_btn.button("Start"):
     st.session_state.running = True
-    logging.info("▶️ Simulation started.")
+    logging.info("Simulation started.")
 if right_btn.button("Stop"):
     st.session_state.running = False
-    logging.info("⏸️ Simulation paused.")
+    logging.info("Simulation paused.")
 if st.sidebar.button("Reset"):
     # remove saved state and rebuild everything
     if os.path.exists(STATE_FILE):
         os.remove(STATE_FILE)
-        logging.info("🗑️ Saved state cleared.")
+        logging.info("Saved state cleared.")
     st.session_state.world = World()
     st.session_state.agent = Agent(st.session_state.world)
     st.session_state.running = False
