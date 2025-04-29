@@ -1,20 +1,23 @@
 #!/usr/bin/env python
 """
 streamlit_surprise_world.py — exploratory & fatigue‑aware Hopfield agent
-=======================================================================
-Updates
--------
-1. **Exploration drive**: when no food is visible anywhere (`nearest_food`
-   returns `GRID`), the agent *reduces* cost for surprising states, so it
-   deliberately explores new cells.
-2. **Fatigue drive**: when energy falls below `ENERGY_LOW_FRAC` (30 %),
-   cost includes a `HOME_DIST_W × distance_to_home` term to encourage a
-   return for rest.
-3. Retains carry‑home incentive, eating logic, and uses `st.rerun()`.
+===========================================================================
+▲ Added persistence & verbose flow messages ▼
+
+New features
+------------
+1. **State persistence** – the agent now saves its *internal memory* (both
+   Hopfield layers) and key physiological variables to ``agent_state.npz`` on
+   every tick and *reloads* them automatically if the file is present at start‑up.
+2. **Application‑flow logging** – strategic calls to ``logging.info`` make the
+   execution trace clear in the Streamlit / console log.
+
+Persistence is intentionally lightweight (``numpy.savez_compressed``) and keeps
+only what matters for recall; the external grid is regenerated each run.
 """
 
 from __future__ import annotations
-import itertools, random, time, logging
+import itertools, random, time, logging, os, sys
 from typing import Tuple
 
 import numpy as np
@@ -44,9 +47,12 @@ HAZARD_PENALTY = 5.0
 REST_PENALTY = 0.2
 TICK_SEC = 0.15
 
+STATE_FILE = "agent_state.npz"
+
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s %(levelname)s | %(message)s",
-                    datefmt="%H:%M:%S")
+                    datefmt="%H:%M:%S",
+                    stream=sys.stdout)
 
 # ───────────────────── encoder ─────────────────────
 CELL_TYPES = np.array(["home", "food", "hazard", "empty"]).reshape(-1, 1)
@@ -56,24 +62,34 @@ ENC = OneHotEncoder(sparse_output=False, handle_unknown="ignore").fit(CELL_TYPES
 class Hopfield:
     def __init__(self, dim: int, cap: int):
         self.dim, self.cap, self.beta = dim, cap, BETA
-        self.M = np.empty((0, dim)); self.t: list[float] = []
+        self.M = np.empty((0, dim))
+        self.t: list[float] = []
 
+    # ——— internal helpers ———
     def _evict(self):
         while len(self.t) > self.cap:
             idx = int(np.argmin(self.t))
-            self.M = np.delete(self.M, idx, 0); self.t.pop(idx)
+            self.M = np.delete(self.M, idx, 0)
+            self.t.pop(idx)
 
+    # ——— public API ———
     def store(self, v: np.ndarray):
-        if v.size != self.dim: return
-        self.M = np.vstack([self.M, v]); self.t.append(time.time()); self._evict()
+        if v.size != self.dim:
+            return
+        self.M = np.vstack([self.M, v])
+        self.t.append(time.time())
+        self._evict()
 
-    def recall(self, v: np.ndarray, it=3) -> np.ndarray:
-        if self.M.size == 0: return v.copy()
+    def recall(self, v: np.ndarray, it: int = 3) -> np.ndarray:
+        if self.M.size == 0:
+            return v.copy()
         y = v.copy()
         for _ in range(it):
             logits = self.M @ y - (self.M @ y).max()
-            p = np.exp(logits); s = p.sum()
-            if not np.isfinite(s) or s == 0: return v.copy()
+            p = np.exp(logits)
+            s = p.sum()
+            if not np.isfinite(s) or s == 0:
+                return v.copy()
             y = (p / s) @ self.M
         return y
 
@@ -83,39 +99,86 @@ class Hopfield:
 # ───────────────────── World ─────────────────────
 class World:
     def __init__(self):
+        logging.info("Creating new world grid …")
         self.grid = np.full((GRID, GRID), "empty", object)
-        self.home = (GRID // 2, GRID // 2); self.grid[self.home] = "home"
-        for _ in range(80): self._rand("food")
-        for _ in range(70): self._rand("hazard")
+        self.home = (GRID // 2, GRID // 2)
+        self.grid[self.home] = "home"
+        for _ in range(80):
+            self._rand("food")
+        for _ in range(70):
+            self._rand("hazard")
 
     def _rand(self, label: str):
         while True:
             x, y = random.randrange(GRID), random.randrange(GRID)
-            if self.grid[x, y] == "empty": self.grid[x, y] = label; break
+            if self.grid[x, y] == "empty":
+                self.grid[x, y] = label
+                break
 
     def cell(self, pos: Tuple[int, int]) -> str:
-        x, y = pos; return self.grid[x % GRID, y % GRID]
+        x, y = pos
+        return self.grid[x % GRID, y % GRID]
 
     def remove_food(self, pos: Tuple[int, int]):
         self.grid[pos] = "empty"
 
     def nearest_food_distance(self, pos: Tuple[int, int]) -> int:
         fx, fy = np.where(self.grid == "food")
-        if fx.size == 0: return GRID
-        dists = np.abs(fx - pos[0]) + np.abs(fy - pos[1]); return int(dists.min())
+        if fx.size == 0:
+            return GRID
+        dists = np.abs(fx - pos[0]) + np.abs(fy - pos[1])
+        return int(dists.min())
 
 # ───────────────────── Agent ─────────────────────
 class Agent:
     MOV = {"N": (-1, 0), "S": (1, 0), "W": (0, -1), "E": (0, 1), "REST": (0, 0)}
 
     def __init__(self, w: World):
-        self.w = w; self.pos = list(w.home)
+        self.w = w
+        self.pos = list(w.home)
         self.energy, self.hunger, self.pain = MAX_E, 0, 0
         self.carrying, self.store = False, 0
         self.rest_streak = 0
-        self.mem0 = Hopfield(OBS_DIM, CAP_L0); self.mem1 = Hopfield(SEQ_DIM, CAP_L1)
+        self.mem0 = Hopfield(OBS_DIM, CAP_L0)
+        self.mem1 = Hopfield(SEQ_DIM, CAP_L1)
         self.trace: list[np.ndarray] = []
         self.mem0.store(self.observe())
+        logging.info("Agent initialised at home {}.".format(self.pos))
+
+    # ───────────── persistence helpers ─────────────
+    def save_state(self, path: str = STATE_FILE):
+        """Persist internal memory & essential physiology."""
+        np.savez_compressed(
+            path,
+            pos=self.pos,
+            energy=self.energy,
+            hunger=self.hunger,
+            pain=self.pain,
+            carrying=self.carrying,
+            store=self.store,
+            mem0_M=self.mem0.M,
+            mem0_t=np.asarray(self.mem0.t, dtype=float),
+            mem1_M=self.mem1.M,
+            mem1_t=np.asarray(self.mem1.t, dtype=float),
+        )
+
+    def load_state(self, path: str = STATE_FILE):
+        """Restore internal memory & physiology from *existing* file."""
+        if not os.path.exists(path):
+            logging.info("No previous state found – starting fresh.")
+            return
+        data = np.load(path, allow_pickle=True)
+        self.pos = data["pos"].tolist()
+        self.energy = float(data["energy"])
+        self.hunger = float(data["hunger"])
+        self.pain = float(data["pain"])
+        self.carrying = bool(data["carrying"])
+        self.store = int(data["store"])
+        self.mem0.M = data["mem0_M"]
+        self.mem0.t = data["mem0_t"].tolist()
+        self.mem1.M = data["mem1_M"]
+        self.mem1.t = data["mem1_t"].tolist()
+        logging.info("🔄 Agent state loaded ← %s", path)
 
     # -------- perception --------
     def observe(self) -> np.ndarray:
@@ -124,19 +187,25 @@ class Agent:
 
     # -------- planning --------
     def plan(self) -> str:
-        hunger = self.hunger / MAX_H; pain = self.pain / MAX_P; energy_def = (MAX_E - self.energy) / MAX_E
+        hunger = self.hunger / MAX_H
+        pain = self.pain / MAX_P
+        energy_def = (MAX_E - self.energy) / MAX_E
         best, best_cost = "REST", float("inf")
-        food_none = (self.w.nearest_food_distance(tuple(self.pos)) == GRID)
+        food_none = self.w.nearest_food_distance(tuple(self.pos)) == GRID
         for act, (dx, dy) in Agent.MOV.items():
             nxt = [(self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID]
             cell = self.w.cell(tuple(nxt))
             obs_nxt = self.observe() if act == "REST" else self._obs_after_move(nxt)
             cost = self.mem0.surprise(obs_nxt)
-            if food_none: cost -= EXPLORATION_BONUS * (cost / SURPRISE_SCALE)
+            if food_none:
+                cost -= EXPLORATION_BONUS * (cost / SURPRISE_SCALE)
             cost += HUNGER_W * hunger + PAIN_W * pain + energy_def
-            if self.carrying and act != "REST": cost += CARRY_COST
-            if act == "REST": cost += REST_PENALTY * self.rest_streak
-            if cell == "hazard": cost += HAZARD_PENALTY
+            if self.carrying and act != "REST":
+                cost += CARRY_COST
+            if act == "REST":
+                cost += REST_PENALTY * self.rest_streak
+            if cell == "hazard":
+                cost += HAZARD_PENALTY
             cost += self.w.nearest_food_distance(tuple(nxt)) / GRID
             if self.carrying:
                 home_dist = abs(nxt[0] - self.w.home[0]) + abs(nxt[1] - self.w.home[1])
@@ -146,28 +215,45 @@ class Agent:
                 cost += HOME_DIST_W * (home_dist / GRID)
             if np.isfinite(cost) and cost < best_cost:
                 best, best_cost = act, cost
+        logging.debug("Planned action %s with cost %.3f", best, best_cost)
         return best
 
     def _obs_after_move(self, nxt: list[int]) -> np.ndarray:
-        cur = self.pos; self.pos = nxt; obs = self.observe(); self.pos = cur; return obs
+        cur = self.pos
+        self.pos = nxt
+        obs = self.observe()
+        self.pos = cur
+        return obs
 
     # -------- acting --------
     def step(self):
-        act = self.plan(); dx, dy = Agent.MOV[act]
+        act = self.plan()
+        dx, dy = Agent.MOV[act]
+        # movement or rest
         if act != "REST":
             self.pos = [(self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID]
-            self.rest_streak = 0; self.energy -= MOVE_COST; self.energy -= CARRY_COST if self.carrying else 0
-        else: self.rest_streak += 1
+            self.rest_streak = 0
+            self.energy -= MOVE_COST
+            if self.carrying:
+                self.energy -= CARRY_COST
+        else:
+            self.rest_streak += 1
 
         # metabolism
-        self.hunger = min(MAX_H, self.hunger + 1); self.pain = max(0, self.pain - PAIN_DECAY)
+        self.hunger = min(MAX_H, self.hunger + 1)
+        self.pain = max(0, self.pain - PAIN_DECAY)
         self.energy -= self.hunger / MAX_H + self.pain / MAX_P
 
         cell = self.w.cell(tuple(self.pos))
-        if cell == "hazard": self.pain = min(MAX_P, self.pain + PAIN_HIT)
-        if cell == "food" and not self.carrying: self.carrying = True; self.w.remove_food(tuple(self.pos))
+        if cell == "hazard":
+            self.pain = min(MAX_P, self.pain + PAIN_HIT)
+        if cell == "food" and not self.carrying:
+            self.carrying = True
+            self.w.remove_food(tuple(self.pos))
         if cell == "home":
-            if self.carrying and act != "REST": self.carrying = False; self.store += 1
+            if self.carrying and act != "REST":
+                self.carrying = False
+                self.store += 1
             if act == "REST":
                 if self.carrying:
                     self.carrying = False
@@ -175,34 +261,51 @@ class Agent:
                 elif self.store > 0:
                     self.store -= 1
                     eat = True
-                else: eat = False
+                else:
+                    eat = False
                 if eat:
                     self.energy = min(MAX_E, self.energy + FOOD_E)
                     self.hunger = max(0, self.hunger - FOOD_S)
 
         # learning
-        obs = self.observe(); self.mem0.store(obs)
+        obs = self.observe()
+        self.mem0.store(obs)
         if len(self.trace) >= SEQ_LEN - 1:
-            seq = np.concatenate(self.trace[-(SEQ_LEN - 1):] + [obs]); self.mem1.store(seq)
-        self.trace.append
+            seq = np.concatenate(self.trace[-(SEQ_LEN - 1):] + [obs])
+            self.mem1.store(seq)
+        self.trace.append(obs)
+
+        # persistence
+        self.save_state()
+        logging.debug("Tick complete – pos %s, energy %.1f, hunger %d, pain %d", self.pos, self.energy, self.hunger, self.pain)
 
 # ───────────────────── Streamlit app ─────────────────────
 st.set_page_config("Hopfield forager", layout="wide")
+
 if "world" not in st.session_state:
+    # initialise world & agent (try loading state on agent)
     st.session_state.world = World()
     st.session_state.agent = Agent(st.session_state.world)
+    st.session_state.agent.load_state()  # harmless if file absent
     st.session_state.running = False
+    logging.info("Session initialised.")
 
 world: World = st.session_state.world
 agent: Agent = st.session_state.agent
 
 # --- sidebar controls ---
-left, right = st.sidebar.columns(2)
-if left.button("Start"):
+left_btn, right_btn = st.sidebar.columns(2)
+if left_btn.button("Start"):
     st.session_state.running = True
-if right.button("Stop"):
+    logging.info("▶️ Simulation started.")
+if right_btn.button("Stop"):
     st.session_state.running = False
+    logging.info("⏸️ Simulation paused.")
 if st.sidebar.button("Reset"):
+    # remove saved state and rebuild everything
+    if os.path.exists(STATE_FILE):
+        os.remove(STATE_FILE)
+        logging.info("🗑️ Saved state cleared.")
     st.session_state.world = World()
     st.session_state.agent = Agent(st.session_state.world)
     st.session_state.running = False
@@ -219,7 +322,7 @@ color_map = {
 rgb = np.zeros((GRID, GRID, 3))
 for i, j in itertools.product(range(GRID), range(GRID)):
     rgb[i, j] = color_map[world.grid[i, j]]
-ax, ay = agent.pos                     # avoid clobbering plotly.express alias
+ax, ay = agent.pos  # avoid clobbering plotly.express alias
 rgb[ax, ay] = [0, 0, 1] if not agent.carrying else [0.5, 0, 1]
 
 fig = px.imshow(rgb, aspect="equal")
@@ -236,6 +339,6 @@ right_m.metric("Carrying", "Yes" if agent.carrying else "No")
 
 # --- autoplay tick ---
 if st.session_state.running:
-    agent.step()                  # take one action
-    time.sleep(TICK_SEC)          # wait a bit so UI can paint
+    agent.step()              # take one action & persist
+    time.sleep(TICK_SEC)      # wait a bit so UI can paint
     st.rerun()
