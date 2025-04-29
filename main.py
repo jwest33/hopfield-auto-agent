@@ -159,7 +159,7 @@ class Agent:
         self.mem0.t = data["mem0_t"].tolist()
         self.mem1.M = data["mem1_M"]
         self.mem1.t = data["mem1_t"].tolist()
-        logging.info("🔄 Agent state loaded ← %s", path)
+        logging.info("Agent state loaded ← %s", path)
 
     # -------- perception --------
     def observe(self) -> np.ndarray:
