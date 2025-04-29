@@ -1,21 +1,3 @@
-#!/usr/bin/env python
-"""
-streamlit_surprise_world.py — exploratory & fatigue‑aware Hopfield agent
-===========================================================================
-▲ Added persistence & verbose flow messages ▼
-
-New features
-------------
-1. **State persistence** – the agent now saves its *internal memory* (both
-   Hopfield layers) and key physiological variables to ``agent_state.npz`` on
-   every tick and *reloads* them automatically if the file is present at start‑up.
-2. **Application‑flow logging** – strategic calls to ``logging.info`` make the
-   execution trace clear in the Streamlit / console log.
-
-Persistence is intentionally lightweight (``numpy.savez_compressed``) and keeps
-only what matters for recall; the external grid is regenerated each run.
-"""
-
 from __future__ import annotations
 import itertools, random, time, logging, os, sys
 from typing import Tuple
@@ -25,7 +7,6 @@ import streamlit as st
 from sklearn.preprocessing import OneHotEncoder
 import plotly.express as px
 
-# ───────────────────── configuration ─────────────────────
 GRID = 25
 OBS_DIM = GRID * GRID * 4
 SEQ_LEN, SEQ_DIM = 5, OBS_DIM * 5
