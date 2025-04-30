@@ -16,7 +16,7 @@ This project implements an autonomous agent that navigates a grid-based world us
 - **Fatigue-Aware**: Agent considers energy, hunger, and pain in its decision-making with exponential penalties for critical states
 - **Exploratory Behavior**: Uses surprise from Hopfield networks and epsilon-greedy exploration to encourage discovery
 - **Enhanced Home Benefits**: Special recovery mechanics when resting at home provide adaptive safe-haven behavior
-- **Interactive Visualization**: Rich Streamlit interface with real-time metrics and performance history
+- **Interactive Visualization**: Streamlit interface with real-time metrics and performance history
 
 ## Technical Architecture
 
