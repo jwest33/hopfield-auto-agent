@@ -4,6 +4,10 @@
 
 This project implements an autonomous agent that navigates a grid-based world using Hopfield networks for memory and experience-based learning for decision-making. The agent balances exploration, resource gathering, and self-preservation while adapting to its environment through reinforcement learning rather than hardcoded rules.
 
+
+![Hopfield Agent](example_simulation.png)
+
+
 ## Features
 
 - **Experience-Based Learning**: Agent learns to avoid hazards and seek rewards through experience rather than hardcoded rules
