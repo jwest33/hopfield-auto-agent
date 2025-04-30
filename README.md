@@ -1,4 +1,4 @@
-# Hop to it: Experience-Based Grid World Learning
+# Hop To It: Experience-Based Grid World Learning
 
 ## Overview
 
