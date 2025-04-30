@@ -1,114 +1,129 @@
-# Surprise World: Exploratory & Fatigue-Aware Hopfield Agent
+# Hop to it: Experience-Based Grid World Learning
 
 ## Overview
 
-This project implements an autonomous agent that navigates a grid-based world using Hopfield networks for memory and decision-making. The agent must balance exploration, resource gathering, and self-preservation while navigating a world containing food, hazards, and a home base.
+This project implements an autonomous agent that navigates a grid-based world using Hopfield networks for memory and experience-based learning for decision-making. The agent balances exploration, resource gathering, and self-preservation while adapting to its environment through reinforcement learning rather than hardcoded rules.
 
 ## Features
 
-- **Persistence**: Agent saves its internal memory and physiological state between runs
-- **Fatigue-Aware**: Agent considers energy, hunger, and pain in its decision-making
-- **Exploratory Behavior**: Uses surprise from Hopfield networks to encourage exploration
-- **Adaptive Planning**: Dynamically adjusts priorities based on current needs and environment
+- **Experience-Based Learning**: Agent learns to avoid hazards and seek rewards through experience rather than hardcoded rules
+- **Reinforcement Learning**: Uses Q-learning to update the agent's understanding of its environment
+- **Persistent Memory**: Agent saves its neural networks, learning experiences, and physiological state between runs
+- **Fatigue-Aware**: Agent considers energy, hunger, and pain in its decision-making with exponential penalties for critical states
+- **Exploratory Behavior**: Uses surprise from Hopfield networks and epsilon-greedy exploration to encourage discovery
+- **Enhanced Home Benefits**: Special recovery mechanics when resting at home provide adaptive safe-haven behavior
+- **Interactive Visualization**: Rich Streamlit interface with real-time metrics and performance history
 
 ## Technical Architecture
 
+### Learning System
+
+The agent implements a multi-layered learning approach:
+
+1. **Experience Memory**: Tracks rewards associated with different cell types
+   ```python
+   self.cell_experience = {
+       "home": {"reward": 0, "visits": 0, "last_visit": 0},
+       "food": {"reward": 0, "visits": 0, "last_visit": 0},
+       "hazard": {"reward": 0, "visits": 0, "last_visit": 0},
+       "empty": {"reward": 0, "visits": 0, "last_visit": 0}
+   }
+   ```
+
+2. **Q-Learning**: Maintains state-action values that are updated using:
+   ```python
+   new_q = old_q + LEARNING_RATE * (reward + DISCOUNT_FACTOR * next_max_q - old_q)
+   ```
+
+3. **Exploration Strategy**: Uses epsilon-greedy approach that decreases over time:
+   ```python
+   epsilon = max(0.1, 1.0 / (1 + self.tick_count / 1000))
+   ```
+
+4. **Exponential Reward System**: Creates stronger learning signals for critical states:
+   ```python
+   energy_penalty = -10.0 * energy_critical * energy_critical if energy_critical > 0.5 else 0
+   ```
+
 ### Agent Decision-Making
 
-The agent uses a sophisticated cost-based planning system that evaluates multiple possible actions and selects the one with the lowest associated cost. This process occurs in the `plan()` method where the agent:
+The agent uses a sophisticated planning system that combines learned values with heuristics:
 
 1. Considers all possible moves (North, South, East, West, or Rest)
-2. Calculates a cost for each action based on:
-   - Memory-based surprise value
+2. Calculates a value for each action based on:
+   - Q-values from past experience
+   - Experience-based rewards for different cell types
+   - Exploration bonuses for less-visited cell types
+   - Memory-based surprise from Hopfield networks
    - Current physiological needs (hunger, pain, energy)
-   - Environmental factors (distance to food/home, hazards)
-   - Context-dependent costs (carrying food, energy levels)
-3. Selects and executes the lowest-cost action
-4. Updates internal state and learns from new observations
+   - Goal-directed behavior (returning home when carrying food or low on energy)
+3. Selects the highest-value action
+4. Updates learning based on observed outcomes
 
-### Mathematical Foundations
+### Neural Foundations: Hopfield Networks
 
-#### Hopfield Networks
-
-At the core of the agent's cognition are two Hopfield networks:
+At the core of the agent's memory are two Hopfield networks:
 
 - **Primary Memory (mem0)**: Stores observations of the immediate environment
 - **Sequential Memory (mem1)**: Stores sequences of observations to capture temporal patterns
 
-These networks implement a modern continuous Hopfield network with a softmax-based update rule, using the following key operations:
+These networks implement a modern continuous Hopfield network with a softmax-based update rule:
 
-- **Storage**: `store(v)` - Adds new patterns with timestamp-based priority
-- **Recall**: `recall(v, it=3)` - Iteratively reconstructs patterns from memory
-- **Surprise**: `surprise(v)` - Quantifies novelty as the distance between input and recall
-
-The update formula uses a soft winner-takes-all approach:
-```
+```python
 logits = self.M @ y - (self.M @ y).max()
 p = np.exp(logits)
 y = (p / s) @ self.M
 ```
 
-This approach allows for a form of content-addressable memory that drives the agent's curiosity and exploration behaviors.
-
-#### Cost Function Components
-
-The decision-making process is governed by a multi-factor cost function that balances:
-
-```
-cost = surprise + hunger_weight * hunger + pain_weight * pain + energy_deficit
-       + context_specific_factors
-```
-
-Where context-specific factors include:
-- Exploration bonuses when no food is visible
-- Penalties for hazardous cells
-- Distance-based incentives to return home when carrying food
-- Energy-conservation incentives when resources are low
-
-### Environment Interaction
-
-The agent interacts with its environment through:
-
-1. **Observation**: Perceives cell types via one-hot encoding
-2. **Action**: Moves or rests based on planning outcomes
-3. **Consequences**: Updates internal state based on:
-   - Metabolic costs (energy decrease, hunger increase)
-   - Rewards (food collection, consumption at home)
-   - Hazard penalties (pain increase)
+This approach allows for a form of content-addressable memory that drives the agent's curiosity and novelty detection.
 
 ## Implementation Details
 
 - **Grid Representation**: 25×25 grid with color-coded cell types (home, food, hazard, empty)
 - **One-Hot Encoding**: Converts categorical cell types to vector representation
-- **Streamlit Interface**: Real-time visualization and control of the simulation
-- **Numpy-based Persistence**: Compressed storage of agent memory and state
+- **Streamlit Interface**: Advanced visualization with metrics, history charts, and interactive controls
+- **Numpy-based Persistence**: Compressed storage of agent memory, learning, and state
+- **Analytics Tools**: Standalone analyzer script for investigating agent learning patterns
 
 ## Usage
 
-To run the simulation:
+### Running the Simulation
 
 ```bash
 streamlit run main.py
 ```
 
-Control options:
-- **Start**: Begin the simulation
-- **Stop**: Pause the agent
+### Control Options
+- **Start/Pause**: Begin or pause the simulation
+- **Speed Slider**: Adjust simulation speed
 - **Reset**: Clear state and reinitialize the world
+
+### Analyzing Agent State
+
+Use the agent state viewer to analyze learning progress:
+
+```bash
+python agent_state_viewer.py                # Basic view
+python agent_state_viewer.py --learning     # Detailed learning analysis 
+python agent_state_viewer.py --plot         # Visualize memory patterns
+python agent_state_viewer.py --export       # Export data for further analysis
+```
 
 ## Project Structure
 
 ```
 .
-├── main.py           # Main application file with agent and world logic
-├── agent_state.npz   # Persisted agent state (created at runtime)
-└── README.md         # This documentation file
+├── main.py                # Main application with agent and world logic
+├── agent_state_viewer.py  # Analysis tool for inspecting agent state
+├── agent_state.npz        # Persisted agent state (created at runtime)
+└── README.md              # This documentation file
 ```
 
 ## Future Work
 
-Potential areas for enhancement:
-- Multi-agent interactions
+Potential extensions:
+- Curiosity-driven exploration with intrinsic motivation
 - Dynamic environment with resource regeneration
-- More sophisticated memory structures
-- Learning from repeated interactions
+- Multi-agent interactions and emergent social behaviors
+- Meta-learning to adapt learning parameters over time
+- Integration with larger environment scales and more diverse cell types
