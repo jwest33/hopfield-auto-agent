@@ -17,8 +17,10 @@ CAP_L0, CAP_L1 = 800, 1200
 
 MAX_E, MAX_H, MAX_P = 100, 100, 100
 MOVE_COST, CARRY_COST = 1, 1
-FOOD_E, FOOD_S = 40, 40
-PAIN_HIT, PAIN_DECAY = 25, 1
+FOOD_E, FOOD_S = 60, 50  # Increased energy and satiety from food
+PAIN_HIT, PAIN_DECAY = 10, 1  # Reduced pain from hazards
+HOME_ENERGY_RECOVERY = 5  # Additional energy recovery at home when resting
+HOME_HUNGER_RECOVERY = 5  # Additional hunger reduction at home when resting
 
 BETA = 2.0
 SURPRISE_SCALE = 10
@@ -421,6 +423,10 @@ class Agent:
                 self.energy -= CARRY_COST
         else:
             self.rest_streak += 1
+            # Additional energy recovery when resting at home
+            if self.w.cell(tuple(self.pos)) == "home":
+                self.energy = min(MAX_E, self.energy + HOME_ENERGY_RECOVERY)
+                self.hunger = max(0, self.hunger - HOME_HUNGER_RECOVERY)
 
         # Metabolism
         self.hunger = min(MAX_H, self.hunger + 1)
@@ -457,12 +463,25 @@ class Agent:
                     self.energy = min(MAX_E, self.energy + FOOD_E)
                     self.hunger = max(0, self.hunger - FOOD_S)
         
-        # Calculate reward
+        # Calculate reward with exponential penalties for critical states
         energy_change = self.energy - prev_energy
         pain_change = self.pain - prev_pain
         hunger_change = self.hunger - prev_hunger
         
+        # Base reward
         reward = energy_change - pain_change - hunger_change
+        
+        # Exponential penalties for critical states
+        energy_critical = max(0, 1.0 - (self.energy / MAX_E))
+        hunger_critical = self.hunger / MAX_H
+        pain_critical = self.pain / MAX_P
+        
+        # Apply exponential scaling (squares the values to make them grow more quickly)
+        energy_penalty = -10.0 * energy_critical * energy_critical if energy_critical > 0.5 else 0
+        hunger_penalty = -10.0 * hunger_critical * hunger_critical if hunger_critical > 0.5 else 0
+        pain_penalty = -10.0 * pain_critical * pain_critical if pain_critical > 0.5 else 0
+        
+        reward += energy_penalty + hunger_penalty + pain_penalty
         
         # Bonus for collecting or eating food
         if food_collected:
