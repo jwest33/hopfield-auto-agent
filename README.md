@@ -113,6 +113,8 @@ python agent_state_viewer.py --plot         # Visualize memory patterns
 python agent_state_viewer.py --export       # Export data for further analysis
 ```
 
+![Content-addressable memory store](example_memory-store.png)
+
 ## Project Structure
 
 ```
