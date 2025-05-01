@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pandas as pd
 
-from module_agent import Agent
+from module_agent import Agent, AgentPopulation
 from module_world import World
 
 # ───────────────────── configuration ─────────────────────
@@ -45,13 +45,13 @@ logging.basicConfig(level=logging.INFO,
 
 # ───────────────────── Streamlit app ─────────────────────
 st.set_page_config(
-    page_title="Adaptive Hopfield Agent", 
+    page_title="Multi-Agent Emergent Communication", 
     page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for better UI
+# Custom CSS for better UI (unchanged)
 st.markdown("""
 <style>
     .main {
@@ -82,25 +82,41 @@ st.markdown("""
         font-size: 18px;
         margin-bottom: 20px;
     }
+    .agent-selection {
+        margin-bottom: 15px;
+        padding: 10px;
+        background-color: #f0f0f0;
+        border-radius: 5px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # Header
-st.markdown("<h1 class='header'>Adaptive Hopfield Agent</h1>", unsafe_allow_html=True)
-st.markdown("<p class='subheader'>An exploratory agent that learns from experience using Hopfield networks</p>", unsafe_allow_html=True)
+st.markdown("<h1 class='header'>Multi-Agent Emergent Communication</h1>", unsafe_allow_html=True)
+st.markdown("<p class='subheader'>Agents that develop their own communication patterns through neural networks</p>", unsafe_allow_html=True)
 
 # Initialize state
 if "world" not in st.session_state:
-    # initialise world & agent (try loading state on agent)
-    st.session_state.world = World(grid_size = GRID)
-    st.session_state.agent = Agent(st.session_state.world)
-    st.session_state.agent.load_state()  # harmless if file absent
+    # Initialize world & population
+    st.session_state.world = World(grid_size=GRID)
+    st.session_state.population = AgentPopulation(st.session_state.world, initial_pop=5)
     st.session_state.running = False
-    st.session_state.speed = 0.15  # Default speed
-    logging.info("Session initialised.")
+    st.session_state.speed = 0.15
+    st.session_state.selected_agent_id = list(st.session_state.population.agents.keys())[0] if st.session_state.population.agents else None
+    logging.info("Multi-agent session initialized.")
 
 world: World = st.session_state.world
-agent: Agent = st.session_state.agent
+population: AgentPopulation = st.session_state.population
+
+# Get selected agent (for metrics display)
+selected_agent = None
+if st.session_state.selected_agent_id and st.session_state.selected_agent_id in population.agents:
+    selected_agent = population.agents[st.session_state.selected_agent_id]
+else:
+    # If selected agent doesn't exist (was removed), select first available
+    if population.agents:
+        st.session_state.selected_agent_id = list(population.agents.keys())[0]
+        selected_agent = population.agents[st.session_state.selected_agent_id]
 
 # --- sidebar controls ---
 with st.sidebar:
@@ -124,42 +140,63 @@ with st.sidebar:
     )
     
     if st.button("🔄 Reset Simulation", use_container_width=True):
-        # remove saved state and rebuild everything
+        # Reset everything
         if os.path.exists(STATE_FILE):
             os.remove(STATE_FILE)
             logging.info("🗑️ Saved state cleared.")
-        st.session_state.world = World(grid_size = GRID)
-        st.session_state.agent = Agent(st.session_state.world)
+        st.session_state.world = World(grid_size=GRID)
+        st.session_state.population = AgentPopulation(st.session_state.world, initial_pop=5)
         st.session_state.running = False
+        st.session_state.selected_agent_id = list(st.session_state.population.agents.keys())[0] if st.session_state.population.agents else None
         st.rerun()
     
-    # Display cell type experiences
-    st.markdown("## Cell Type Learning")
-    exp_data = []
-    for cell_type, data in agent.cell_experience.items():
-        exp_data.append({
-            "Type": cell_type.capitalize(),
-            "Reward": f"{data['reward']:.2f}",
-            "Visits": data['visits']
-        })
+    # Population controls
+    st.markdown("## Population Controls")
+    col1, col2 = st.columns(2)
     
-    st.dataframe(
-        pd.DataFrame(exp_data),
-        hide_index=True,
-        use_container_width=True
-    )
+    if col1.button("➕ Add Agent", use_container_width=True):
+        new_agent = population.add_agent()
+        if new_agent:
+            st.session_state.selected_agent_id = new_agent.id
     
-    # Show agent stats
-    st.markdown("## Agent Stats")
-    st.markdown(f"**Tick Count:** {agent.tick_count}")
-    st.markdown(f"**Last Action:** {agent.last_action}")
-    st.markdown(f"**Last Reward:** {agent.last_reward:.2f}")
+    if len(population.agents) > 1 and selected_agent and col2.button("❌ Remove Selected", use_container_width=True):
+        population.remove_agent(st.session_state.selected_agent_id)
+        st.session_state.selected_agent_id = list(population.agents.keys())[0] if population.agents else None
+    
+    # Agent selection
+    if population.agents:
+        st.markdown("## Agent Selection")
+        agent_options = {agent_id: f"Agent {agent_id.split('_')[1]}" for agent_id in population.agents.keys()}
+        selected_agent_name = st.selectbox(
+            "Select Agent to Monitor", 
+            options=list(agent_options.keys()),
+            format_func=lambda x: agent_options[x],
+            index=list(agent_options.keys()).index(st.session_state.selected_agent_id) if st.session_state.selected_agent_id in agent_options else 0
+        )
+        if selected_agent_name != st.session_state.selected_agent_id:
+            st.session_state.selected_agent_id = selected_agent_name
+            st.rerun()
+    
+    # Communication stats
+    st.markdown("## Communication System")
+    st.markdown(f"**Active Signals:** {len(population.comm_system.active_signals)}")
+    
+    # Population overview
+    st.markdown("## Population Overview")
+    st.markdown(f"**Active Agents:** {len(population.agents)}")
+    
+    # Show the 3 most recent interactions if there are any
+    if population.interactions:
+        st.markdown("## Recent Interactions")
+        recent = population.interactions[-3:]
+        for interaction in reversed(recent):
+            st.markdown(f"**{interaction['type'].capitalize()}** between {interaction['agents'][0]} and {interaction['agents'][1]}")
 
 # Main content area
 main_col1, main_col2 = st.columns([2, 1])
 
 with main_col1:
-    # --- grid rendering with improved visuals ---
+    # --- Grid rendering with improved visuals ---
     color_map = {
         "home": [0, 0.8, 0],      # Green
         "food": [1, 0.8, 0],      # Yellow
@@ -171,11 +208,7 @@ with main_col1:
     for i, j in itertools.product(range(GRID), range(GRID)):
         rgb[i, j] = color_map[world.grid[i, j]]
     
-    # Add agent position with different color if carrying food
-    ax, ay = agent.pos
-    rgb[ax, ay] = [0, 0.4, 0.9] if not agent.carrying else [0.8, 0, 0.8]
-    
-    # Create customized figure
+    # Create figure
     fig = px.imshow(rgb, aspect="equal")
     fig.update_layout(
         margin=dict(l=0, r=0, t=0, b=0),
@@ -195,80 +228,121 @@ with main_col1:
         font=dict(size=16)
     )
     
-    # Add agent marker
-    fig.add_annotation(
-        x=ay, 
-        y=ax,
-        text="🤖" if not agent.carrying else "🧠",
-        showarrow=False,
-        font=dict(size=16)
-    )
+    # Add markers for all agents with different colors/emojis
+    agent_emojis = ["🤖", "🧠", "👾", "🦾", "🦿", "👁️"]
+    for i, (agent_id, agent) in enumerate(population.agents.items()):
+        ax, ay = agent.pos
+        emoji_idx = i % len(agent_emojis)
+        emoji = agent_emojis[emoji_idx]
+        
+        # Highlight selected agent
+        if agent_id == st.session_state.selected_agent_id:
+            # Add highlight circle around selected agent
+            fig.add_shape(
+                type="circle",
+                x0=ay-0.4, y0=ax-0.4,
+                x1=ay+0.4, y1=ax+0.4,
+                line=dict(color="blue", width=2),
+                fillcolor="rgba(0,0,255,0.1)"
+            )
+        
+        # Show different emoji if carrying food
+        display_emoji = emoji if not agent.carrying else "🍎"
+        
+        fig.add_annotation(
+            x=ay, 
+            y=ax,
+            text=display_emoji,
+            showarrow=False,
+            font=dict(size=16)
+        )
+    
+    # Add markers for active signals
+    for signal in population.comm_system.active_signals:
+        sx, sy = signal["position"]
+        fig.add_annotation(
+            x=sy,
+            y=sx,
+            text="💬",
+            showarrow=False,
+            font=dict(size=14)
+        )
     
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
 with main_col2:
-    # --- metrics with better visuals ---
-    st.markdown("<div class='metric-card'>", unsafe_allow_html=True)
-    
-    # Energy bar
-    energy_color = "green" if agent.energy > MAX_E * 0.5 else "orange" if agent.energy > MAX_E * 0.2 else "red"
-    st.markdown(f"### Energy: {agent.energy:.0f}/{MAX_E}")
-    st.progress(max(0.0, min(1.0, agent.energy / MAX_E)))
-    
-    # Hunger bar
-    hunger_color = "green" if agent.hunger < MAX_H * 0.3 else "orange" if agent.hunger < MAX_H * 0.7 else "red"
-    st.markdown(f"### Hunger: {agent.hunger}/{MAX_H}")
-    st.progress(max(0.0, min(1.0, agent.hunger / MAX_H)))
-    
-    # Pain bar
-    pain_color = "green" if agent.pain < MAX_P * 0.3 else "orange" if agent.pain < MAX_P * 0.7 else "red"
-    st.markdown(f"### Pain: {agent.pain}/{MAX_P}")
-    st.progress(max(0.0, min(1.0, agent.pain / MAX_P)))
-    
-    # Food stats
-    st.markdown(f"### Food Stored: {agent.store}")
-    st.markdown(f"### Carrying Food: {'Yes' if agent.carrying else 'No'}")
-    
-    st.markdown("</div>", unsafe_allow_html=True)
+    if selected_agent:
+        # --- Agent metrics with better visuals ---
+        st.markdown(f"<div class='metric-card'><h3>Agent {st.session_state.selected_agent_id.split('_')[1]} Stats</h3>", unsafe_allow_html=True)
+        
+        # Energy bar
+        energy_color = "green" if selected_agent.energy > MAX_E * 0.5 else "orange" if selected_agent.energy > MAX_E * 0.2 else "red"
+        st.markdown(f"### Energy: {selected_agent.energy:.0f}/{MAX_E}")
+        st.progress(max(0.0, min(1.0, selected_agent.energy / MAX_E)))
+        
+        # Hunger bar
+        hunger_color = "green" if selected_agent.hunger < MAX_H * 0.3 else "orange" if selected_agent.hunger < MAX_H * 0.7 else "red"
+        st.markdown(f"### Hunger: {selected_agent.hunger}/{MAX_H}")
+        st.progress(max(0.0, min(1.0, selected_agent.hunger / MAX_H)))
+        
+        # Pain bar
+        pain_color = "green" if selected_agent.pain < MAX_P * 0.3 else "orange" if selected_agent.pain < MAX_P * 0.7 else "red"
+        st.markdown(f"### Pain: {selected_agent.pain}/{MAX_P}")
+        st.progress(max(0.0, min(1.0, selected_agent.pain / MAX_P)))
+        
+        # Food stats
+        st.markdown(f"### Food Stored: {selected_agent.store}")
+        st.markdown(f"### Carrying Food: {'Yes' if selected_agent.carrying else 'No'}")
+        
+        # Communication stats
+        st.markdown("### Communication")
+        if selected_agent.last_signal is not None:
+            st.markdown(f"Last Signal: {selected_agent.tick_count - selected_agent.last_signal_time} ticks ago")
+        else:
+            st.markdown("No recent signals")
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        st.warning("No agent selected. Add agents to the simulation.")
 
-# History charts
-if agent.tick_count > 10:
-    st.markdown("## Learning & Performance History")
+# History charts for selected agent
+if selected_agent and selected_agent.tick_count > 10:
+    st.markdown("## Agent History")
     
     # Create history dataframe - ensure all arrays are the same length
-    history_length = min(300, len(agent.history["energy"]))
+    history_length = min(300, len(selected_agent.history["energy"]))
     
     # Make sure rewards and actions match other metrics in length
     # If they're shorter (which can happen with loaded state), pad them
-    rewards_len = len(agent.history["rewards"])
+    rewards_len = len(selected_agent.history["rewards"])
     if rewards_len < history_length and rewards_len > 0:
         padding_needed = history_length - rewards_len
-        agent.history["rewards"] = [0] * padding_needed + agent.history["rewards"]
+        selected_agent.history["rewards"] = [0] * padding_needed + selected_agent.history["rewards"]
         
     # Only include rewards in dataframe if they exist
-    if len(agent.history["rewards"]) >= history_length:
+    if len(selected_agent.history["rewards"]) >= history_length:
         df = pd.DataFrame({
-            "Tick": range(agent.tick_count - history_length + 1, agent.tick_count + 1),
-            "Energy": agent.history["energy"][-history_length:],
-            "Hunger": agent.history["hunger"][-history_length:],
-            "Pain": agent.history["pain"][-history_length:],
-            "Food": agent.history["food_stored"][-history_length:],
-            "Reward": agent.history["rewards"][-history_length:]
+            "Tick": range(selected_agent.tick_count - history_length + 1, selected_agent.tick_count + 1),
+            "Energy": selected_agent.history["energy"][-history_length:],
+            "Hunger": selected_agent.history["hunger"][-history_length:],
+            "Pain": selected_agent.history["pain"][-history_length:],
+            "Food": selected_agent.history["food_stored"][-history_length:],
+            "Reward": selected_agent.history["rewards"][-history_length:]
         })
     else:
         # Create DataFrame without rewards if they're not available
         df = pd.DataFrame({
-            "Tick": range(agent.tick_count - history_length + 1, agent.tick_count + 1),
-            "Energy": agent.history["energy"][-history_length:],
-            "Hunger": agent.history["hunger"][-history_length:],
-            "Pain": agent.history["pain"][-history_length:],
-            "Food": agent.history["food_stored"][-history_length:]
+            "Tick": range(selected_agent.tick_count - history_length + 1, selected_agent.tick_count + 1),
+            "Energy": selected_agent.history["energy"][-history_length:],
+            "Hunger": selected_agent.history["hunger"][-history_length:],
+            "Pain": selected_agent.history["pain"][-history_length:],
+            "Food": selected_agent.history["food_stored"][-history_length:]
         })
     
     # Create subplots
     fig = make_subplots(
         rows=2, cols=1,
-        subplot_titles=("Agent Status", "Rewards"),
+        subplot_titles=(f"Agent {selected_agent.id.split('_')[1]} Status", "Rewards"),
         vertical_spacing=0.12,
         row_heights=[0.6, 0.4]
     )
@@ -322,8 +396,49 @@ if agent.tick_count > 10:
     
     st.plotly_chart(fig, use_container_width=True)
 
+# Population overview dashboard (new)
+if len(population.agents) > 1:
+    st.markdown("## Population Overview")
+    
+    # Create columns for population metrics
+    metrics_cols = st.columns(5)
+    
+    # Calculate population averages
+    avg_energy = sum(agent.energy for agent in population.agents.values()) / len(population.agents)
+    avg_hunger = sum(agent.hunger for agent in population.agents.values()) / len(population.agents)
+    avg_pain = sum(agent.pain for agent in population.agents.values()) / len(population.agents)
+    total_food_stored = sum(agent.store for agent in population.agents.values())
+    carrying_count = sum(1 for agent in population.agents.values() if agent.carrying)
+    
+    # Display metrics
+    metrics_cols[0].metric("Avg Energy", f"{avg_energy:.1f}")
+    metrics_cols[1].metric("Avg Hunger", f"{avg_hunger:.1f}")
+    metrics_cols[2].metric("Avg Pain", f"{avg_pain:.1f}")
+    metrics_cols[3].metric("Total Food Stored", total_food_stored)
+    metrics_cols[4].metric("Agents Carrying Food", carrying_count)
+    
+    # Communication visualization (simplified)
+    if population.comm_system.active_signals:
+        st.markdown("### Active Communications")
+        
+        # Get active signal data
+        signals_df = pd.DataFrame([
+            {
+                "Sender": signal["sender"].split("_")[1],
+                "Position X": signal["position"][0],
+                "Position Y": signal["position"][1],
+                "Range": signal["range"]
+            }
+            for signal in population.comm_system.active_signals
+        ])
+        
+        # Display active signals
+        st.dataframe(signals_df, hide_index=True)
+
 # --- autoplay tick ---
 if st.session_state.running:
-    agent.step()              # take one action & persist
-    time.sleep(st.session_state.speed)  # wait based on speed setting
+    # Step world and all agents
+    world.step()
+    population.step_all()
+    time.sleep(st.session_state.speed)
     st.rerun()

@@ -37,3 +37,17 @@ class World:
             return self.grid_size
         dists = np.abs(fx - pos[0]) + np.abs(fy - pos[1])
         return int(dists.min())
+
+    def replenish_resources(self, rate=0.01):
+        """Occasionally replenish food in the world"""
+        # Count current food
+        food_count = (self.grid == "food").sum()
+        
+        # Replenish if below threshold
+        if food_count < 40 and random.random() < rate:
+            self._rand("food")
+    
+    def step(self):
+        """Update world state for one tick"""
+        # Replenish resources
+        self.replenish_resources()

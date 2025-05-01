@@ -11,6 +11,7 @@ import pandas as pd
 
 from module_hopfield import Hopfield
 from module_world import World
+from module_coms import NeuralCommunicationSystem
 
 # ───────────────────── configuration ─────────────────────
 GRID = 25
@@ -45,9 +46,9 @@ ENC = OneHotEncoder(sparse_output=False, handle_unknown="ignore").fit(CELL_TYPES
 class Agent:
     MOV = {"N": (-1, 0), "S": (1, 0), "W": (0, -1), "E": (0, 1), "REST": (0, 0)}
 
-    def __init__(self, w: World):
-        self.w = w
-        self.pos = list(w.home)
+    def __init__(self, world, agent_id=None, learning_rate=LEARNING_RATE):
+        self.w = world
+        self.pos = list(world.home)
         self.energy, self.hunger, self.pain = MAX_E, 0, 0
         self.carrying, self.store = False, 0
         self.rest_streak = 0
@@ -82,6 +83,19 @@ class Agent:
         
         self.mem0.store(self.observe())
         logging.info(f"Agent initialized at home {self.pos}.")
+
+        self.id = agent_id if agent_id else str(id(self))
+        self.learning_rate = learning_rate
+        
+        # Communication attributes
+        self.signal_cooldown = 0  # Ticks until agent can signal again
+        self.last_signal_time = 0
+        self.last_signal = None
+        self.signal_threshold = 0.65  # Need threshold to signal
+        
+        # Memory of signal observations
+        self.observed_signals = []
+        self.signal_outcomes = []
 
     # ───────────── persistence helpers ─────────────
     def save_state(self, path: str = STATE_FILE):
@@ -320,8 +334,36 @@ class Agent:
         return obs
 
     # -------- acting --------
-    def step(self):
+    def step(self, comm_system=None, other_agents=None):
         """Take one step in the environment and learn from it."""
+        # Decrement signal cooldown if present
+        if hasattr(self, 'signal_cooldown') and self.signal_cooldown > 0:
+            self.signal_cooldown -= 1
+        
+        # Signal processing if communication system is available
+        if comm_system:
+            # Process incoming signals if the method exists
+            if hasattr(self, 'process_signals'):
+                self.process_signals(comm_system)
+            
+            # Check if we should send a signal
+            if hasattr(self, 'should_signal') and self.should_signal(comm_system):
+                if hasattr(self, 'generate_and_broadcast_signal'):
+                    self.generate_and_broadcast_signal(comm_system)
+            
+            # Update signal outcomes from previous signals
+            if hasattr(self, 'update_signal_outcomes'):
+                self.update_signal_outcomes(comm_system)
+            
+            # Learn from signal experiences
+            if hasattr(self, 'learn_from_signals'):
+                self.learn_from_signals(comm_system)
+            
+            # Learn from observing other agents
+            if other_agents and hasattr(self, 'observe_other_agents'):
+                self.observe_other_agents(comm_system, other_agents)
+        
+        # Original step logic starts here
         self.tick_count += 1
         
         # Store previous state
@@ -430,3 +472,169 @@ class Agent:
         
         logging.debug("Tick %d – pos %s, energy %.1f, hunger %d, pain %d, reward %.1f",
                     self.tick_count, self.pos, self.energy, self.hunger, self.pain, reward)
+
+class AgentPopulation:
+    """Manages a population of agents that can communicate and interact"""
+    
+    def __init__(self, world, initial_pop=5, max_pop=20):
+        self.world = world
+        self.agents = {}  # Dictionary with agent_id keys
+        self.max_population = max_pop
+        self.next_id = 0
+        
+        # Initialize communication system
+        self.comm_system = NeuralCommunicationSystem()
+        
+        # Track social metrics
+        self.interactions = []
+        self.groups = {}
+        
+        # Initialize starting population
+        for _ in range(initial_pop):
+            self.add_agent()
+    
+    def add_agent(self, parent_traits=None):
+        """Create a new agent, optionally inheriting traits from parents"""
+        if len(self.agents) >= self.max_population:
+            return None
+            
+        # Create new agent
+        agent_id = f"agent_{self.next_id}"
+        self.next_id += 1
+        
+        # Create agent with optional trait inheritance
+        agent = Agent(self.world, agent_id=agent_id)
+        self.agents[agent_id] = agent
+        
+        # Initialize agent in communication system
+        self.comm_system.initialize_agent(agent_id)
+        
+        return agent
+    
+    def remove_agent(self, agent_id):
+        """Remove an agent from the population (death)"""
+        if agent_id in self.agents:
+            del self.agents[agent_id]
+    
+    def step_all(self):
+        """Process one time step for all agents"""
+        # Clean up old signals
+        self.comm_system.clean_old_signals()
+        
+        # Step each agent
+        for agent_id, agent in self.agents.items():
+            agent.step(self.comm_system, self.agents)
+        
+        # Handle emergent social interactions
+        self.process_interactions()
+        
+        # Handle reproduction/death
+        self.handle_population_changes()
+    
+    def process_interactions(self):
+        """Identify and process social interactions between agents"""
+        # Reset interactions list
+        interactions = []
+        
+        # Check for agents in same location
+        positions = {}
+        for agent_id, agent in self.agents.items():
+            pos = tuple(agent.pos)
+            if pos not in positions:
+                positions[pos] = []
+            positions[pos].append(agent_id)
+        
+        # For positions with multiple agents, create interaction
+        for pos, agents_here in positions.items():
+            if len(agents_here) > 1:
+                for i in range(len(agents_here)):
+                    for j in range(i+1, len(agents_here)):
+                        agent1 = self.agents[agents_here[i]]
+                        agent2 = self.agents[agents_here[j]]
+                        
+                        # Determine interaction type based on state
+                        interaction = self.resolve_agent_interaction(agent1, agent2)
+                        interactions.append(interaction)
+        
+        # Record interactions
+        self.interactions.extend(interactions)
+        return interactions
+    
+    def resolve_agent_interaction(self, agent1, agent2):
+        """Handle interaction between two agents"""
+        interaction = {
+            "agents": [agent1.id, agent2.id],
+            "position": agent1.pos.copy(),
+            "time": agent1.tick_count
+        }
+        
+        # Check if food sharing is possible
+        if agent1.carrying and agent2.hunger > MAX_H * 0.7:
+            # Agent1 shares food with agent2
+            agent1.carrying = False
+            agent2.energy = min(MAX_E, agent2.energy + FOOD_E * 0.5)
+            agent2.hunger = max(0, agent2.hunger - FOOD_S * 0.5)
+            
+            interaction["type"] = "food_sharing"
+            interaction["donor"] = agent1.id
+            interaction["recipient"] = agent2.id
+            
+            # Reward for generous behavior
+            agent1.last_reward += 5
+            agent2.last_reward += 15
+            
+        elif agent2.carrying and agent1.hunger > MAX_H * 0.7:
+            # Agent2 shares food with agent1
+            agent2.carrying = False
+            agent1.energy = min(MAX_E, agent1.energy + FOOD_E * 0.5)
+            agent1.hunger = max(0, agent1.hunger - FOOD_S * 0.5)
+            
+            interaction["type"] = "food_sharing"
+            interaction["donor"] = agent2.id
+            interaction["recipient"] = agent1.id
+            
+            # Reward for generous behavior
+            agent2.last_reward += 5
+            agent1.last_reward += 15
+            
+        else:
+            # Default interaction - just crossed paths
+            interaction["type"] = "encounter"
+        
+        return interaction
+    
+    def handle_population_changes(self):
+        """Handle agent reproduction and death"""
+        # Check for deaths
+        agents_to_remove = []
+        for agent_id, agent in self.agents.items():
+            # Death from starvation or exhaustion
+            if agent.energy <= 0:
+                agents_to_remove.append(agent_id)
+        
+        # Remove dead agents
+        for agent_id in agents_to_remove:
+            self.remove_agent(agent_id)
+        
+        # Check for reproduction opportunities
+        if len(self.agents) < self.max_population:
+            # Find agents with enough resources to reproduce
+            viable_parents = [agent for agent in self.agents.values() 
+                             if agent.energy > MAX_E * 0.7 and 
+                                agent.store > 2]
+            
+            # Reproduction chance
+            if viable_parents and random.random() < 0.05:
+                parent = random.choice(viable_parents)
+                
+                # Create child with inherited traits
+                parent_traits = {
+                    "learning_rate": parent.learning_rate
+                }
+                
+                # Parent expends resources
+                parent.energy -= MAX_E * 0.3
+                parent.store -= 2
+                
+                # Add new agent
+                self.add_agent(parent_traits)
