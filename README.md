@@ -202,4 +202,3 @@ Potential extensions:
 - More complex communication for planning and intentionality
 - Reputation systems and trust-based interactions
 - Environmental pressures that require group adaptation
-```
