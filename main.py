@@ -18,8 +18,10 @@ CAP_L0, CAP_L1 = 800, 1200
 
 MAX_E, MAX_H, MAX_P = 100, 100, 100
 MOVE_COST, CARRY_COST = 1, 1
-FOOD_E, FOOD_S = 40, 40
-PAIN_HIT, PAIN_DECAY = 25, 1
+FOOD_E, FOOD_S = 60, 50  # Increased energy and satiety from food
+PAIN_HIT, PAIN_DECAY = 10, 1  # Reduced pain from hazards
+HOME_ENERGY_RECOVERY = 5  # Additional energy recovery at home when resting
+HOME_HUNGER_RECOVERY = 5  # Additional hunger reduction at home when resting
 
 BETA = 2.0
 SURPRISE_SCALE = 10
