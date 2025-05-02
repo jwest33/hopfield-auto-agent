@@ -1,6 +1,7 @@
+
 from __future__ import annotations
 import itertools, random, time, logging, os, sys
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, Any, List
 import numpy as np
 import streamlit as st
 from sklearn.preprocessing import OneHotEncoder
@@ -10,12 +11,12 @@ from plotly.subplots import make_subplots
 import pandas as pd
 
 from module_hopfield import Hopfield
-from module_world import World
+from module_new_world import World, TerrainCell  # Updated import
 from module_coms import NeuralCommunicationSystem
 
 # ───────────────────── configuration ─────────────────────
-GRID = 25
-OBS_DIM = GRID * GRID * 4
+GRID = 40  # Updated to match module_new_world's default
+OBS_DIM = GRID * GRID * 8  # Expanded for more terrain features
 SEQ_LEN, SEQ_DIM = 5, OBS_DIM * 5
 CAP_L0, CAP_L1 = 800, 1200
 
@@ -23,6 +24,8 @@ MAX_E, MAX_H, MAX_P = 100, 100, 100
 MOVE_COST, CARRY_COST = 1, 1
 FOOD_E, FOOD_S = 40, 40
 PAIN_HIT, PAIN_DECAY = 25, 1
+HOME_ENERGY_RECOVERY = 5  # Added missing global for energy recovery at home
+HOME_HUNGER_RECOVERY = 5  # Added missing global for hunger reduction at home
 
 BETA = 2.0
 SURPRISE_SCALE = 10
@@ -39,7 +42,8 @@ EXPERIENCE_DECAY = 0.999
 
 STATE_FILE = "agent_state.npz"
 
-CELL_TYPES = np.array(["home", "food", "hazard", "empty"]).reshape(-1, 1)
+# Updated to use material types from the new world system
+CELL_TYPES = np.array(["home", "food", "dirt", "stone", "rock", "water", "wood"]).reshape(-1, 1)
 ENC = OneHotEncoder(sparse_output=False, handle_unknown="ignore").fit(CELL_TYPES)
 
 # ───────────────────── Agent ─────────────────────
@@ -58,10 +62,8 @@ class Agent:
         
         # Initialize experience memory
         self.cell_experience = {
-            "home": {"reward": 0, "visits": 0, "last_visit": 0},
-            "food": {"reward": 0, "visits": 0, "last_visit": 0},
-            "hazard": {"reward": 0, "visits": 0, "last_visit": 0},
-            "empty": {"reward": 0, "visits": 0, "last_visit": 0}
+            material: {"reward": 0, "visits": 0, "last_visit": 0}
+            for material in ["home", "food", "dirt", "stone", "rock", "water", "wood"]
         }
         
         # Q-learning state-action values
@@ -96,6 +98,10 @@ class Agent:
         # Memory of signal observations
         self.observed_signals = []
         self.signal_outcomes = []
+        
+        # Perception attributes for terrain (new)
+        self.last_temperature = self.w.ambient_temperature
+        self.temperature_memory = []
 
     # ───────────── persistence helpers ─────────────
     def save_state(self, path: str = STATE_FILE):
@@ -115,7 +121,10 @@ class Agent:
             mem1_t=np.asarray(self.mem1.t, dtype=float),
             cell_experience=np.array([self.cell_experience], dtype=object),
             q_values=np.array([self.q_values], dtype=object),
-            history=np.array([self.history], dtype=object)
+            history=np.array([self.history], dtype=object),
+            # New properties for TerrainCell-based world
+            last_temperature=self.last_temperature,
+            temperature_memory=np.array(self.temperature_memory, dtype=float)
         )
 
     def load_state(self, path: str = STATE_FILE):
@@ -171,6 +180,17 @@ class Agent:
                     "rewards": []
                 }
                 logging.info("No history in saved state, creating new history")
+                
+            # Load terrain attributes if available
+            if "last_temperature" in data:
+                self.last_temperature = float(data["last_temperature"])
+            else:
+                self.last_temperature = self.w.ambient_temperature
+                
+            if "temperature_memory" in data:
+                self.temperature_memory = data["temperature_memory"].tolist()
+            else:
+                self.temperature_memory = []
             
             logging.info("🔄 Agent state loaded ← %s", path)
             
@@ -182,6 +202,11 @@ class Agent:
     # -------- experience and learning --------
     def update_experience(self, cell_type: str, reward: float):
         """Update experience for a cell type based on reward received."""
+        # Get the material type for the terrain cell
+        if cell_type not in self.cell_experience:
+            # If it's a new material type not in our experience, add it
+            self.cell_experience[cell_type] = {"reward": 0, "visits": 0, "last_visit": 0}
+        
         exp = self.cell_experience[cell_type]
         if exp["visits"] == 0:
             exp["reward"] = reward
@@ -197,10 +222,12 @@ class Agent:
             if self.cell_experience[cell_type]["visits"] > 0:
                 self.cell_experience[cell_type]["reward"] *= EXPERIENCE_DECAY
     
-    def get_state_key(self, pos: list[int], carrying: bool = None) -> str:
+    def get_state_key(self, pos: List[int], carrying: bool = None) -> str:
         """Generate a unique key for the current state."""
         carrying_val = self.carrying if carrying is None else carrying
-        return f"{tuple(pos)}|{carrying_val}"
+        # Include local terrain information in the state key
+        cell = self.w.cell(tuple(pos))
+        return f"{tuple(pos)}|{carrying_val}|{cell.material}"
     
     def get_q_value(self, state_key: str, action: str) -> float:
         """Get Q-value for a state-action pair."""
@@ -225,8 +252,85 @@ class Agent:
 
     # -------- perception --------
     def observe(self) -> np.ndarray:
-        flat = self.w.grid.reshape(-1)
-        return ENC.transform(flat[:, None]).flatten()
+        """Create an observation vector from the current environment state."""
+        # Initialize observation vector with zeros
+        observation = []
+        
+        # Add agent's position and state
+        pos_x_norm = self.pos[0] / GRID
+        pos_y_norm = self.pos[1] / GRID
+        energy_norm = self.energy / MAX_E
+        hunger_norm = self.hunger / MAX_H
+        pain_norm = self.pain / MAX_P
+        carrying = 1.0 if self.carrying else 0.0
+        
+        # Add these basic agent states to observation
+        observation.extend([pos_x_norm, pos_y_norm, energy_norm, hunger_norm, pain_norm, carrying])
+        
+        # Get current cell and surrounding cells
+        center_cell = self.w.cell(tuple(self.pos))
+        
+        # Add cell material one-hot encoding
+        cell_type = np.array([center_cell.material]).reshape(-1, 1)
+        material_enc = ENC.transform(cell_type).flatten()
+        observation.extend(material_enc)
+        
+        # Add physical properties of current cell
+        observation.extend([
+            center_cell.height_vector[0] / 5.0,  # Normalize slope components
+            center_cell.height_vector[1] / 5.0,
+            center_cell.normal_vector[0],
+            center_cell.normal_vector[1],
+            center_cell.hardness / 10.0,        # Normalize material properties
+            center_cell.strength / 10.0,
+            center_cell.density / 3.0,
+            center_cell.friction / 3.0,
+            center_cell.elasticity,
+            center_cell.thermal_conductivity,
+            center_cell.temperature / 40.0,     # Normalize temperature (assume range 0-40°C)
+            center_cell.local_risk,
+            1.0 if center_cell.passable else 0.0
+        ])
+        
+        # Check for nearby food
+        food_nearby = False
+        food_cells = []
+        
+        # Look in surrounding cells for food
+        for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1)]:
+            nx, ny = (self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID
+            neighbor_cell = self.w.cell((nx, ny))
+            if "food" in neighbor_cell.tags or neighbor_cell.material == "food":
+                food_nearby = True
+                food_cells.append((nx, ny))
+        
+        observation.append(1.0 if food_nearby else 0.0)
+        
+        # Add environmental factors
+        observation.extend([
+            self.w.ambient_temperature / 40.0,  # Normalize temp
+            1.0 if self.w.is_day else 0.0,      # Day/night indicator
+            {"clear": 0.0, "rain": 0.5, "storm": 1.0}[self.w.weather]  # Weather encoding
+        ])
+        
+        # Add time component
+        observation.append((self.w.time % self.w.day_length) / self.w.day_length)
+        
+        # Distance to home
+        home_x, home_y = self.w.home
+        home_dist_x = abs(self.pos[0] - home_x) / GRID
+        home_dist_y = abs(self.pos[1] - home_y) / GRID
+        observation.extend([home_dist_x, home_dist_y])
+        
+        # Pad to ensure consistent size
+        while len(observation) < OBS_DIM:
+            observation.append(0.0)
+        
+        # Truncate if too long
+        if len(observation) > OBS_DIM:
+            observation = observation[:OBS_DIM]
+        
+        return np.array(observation, dtype=np.float32)
 
     # -------- planning --------
     def plan(self) -> str:
@@ -235,12 +339,23 @@ class Agent:
         pain = self.pain / MAX_P
         energy_def = (MAX_E - self.energy) / MAX_E
         current_state_key = self.get_state_key(self.pos)
-        food_none = self.w.nearest_food_distance(tuple(self.pos)) == GRID
+        current_cell = self.w.cell(tuple(self.pos))
+        
+        # Check if current position is passable
+        if not current_cell.passable:
+            # We're somehow in an impassable location, try to move to a passable adjacent cell
+            for act, (dx, dy) in self.MOV.items():
+                if act == "REST":
+                    continue
+                nx, ny = (self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID
+                if self.w.cell((nx, ny)).passable:
+                    return act
+            # If no passable cells found, just rest and hope something changes
+            return "REST"
         
         # Critical energy check - force REST at home or go home when critical
         if self.energy < MAX_E * 0.15:  # Critical energy threshold
-            current_cell = self.w.cell(tuple(self.pos))
-            if current_cell == "home":
+            if "home" in current_cell.tags or current_cell.material == "home":
                 logging.info("CRITICAL ENERGY: Forcing rest at home")
                 return "REST"
             else:
@@ -261,7 +376,17 @@ class Agent:
         
         if random.random() < epsilon:
             # Random exploration
-            return random.choice(list(self.MOV.keys()))
+            valid_moves = []
+            for act, (dx, dy) in self.MOV.items():
+                nx, ny = (self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID
+                if self.w.cell((nx, ny)).passable:
+                    valid_moves.append(act)
+                    
+            # If no valid moves (though this shouldn't happen), just rest
+            if not valid_moves:
+                return "REST"
+                
+            return random.choice(valid_moves)
         
         best_action, best_value = "REST", float("-inf")
         
@@ -269,30 +394,57 @@ class Agent:
             nxt = [(self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID]
             next_cell = self.w.cell(tuple(nxt))
             
+            # Skip impassable terrain
+            if not next_cell.passable:
+                continue
+                
             # Get Q-value component
             q_value = self.get_q_value(current_state_key, act)
             
             # Calculate combined value using Q-value and heuristics
             value = q_value
             
-            # Add experience-based component if we have experience
-            exp = self.cell_experience[next_cell]
-            if exp["visits"] > 0:
-                value += exp["reward"]
+            # Add experience-based component
+            material = next_cell.material
+            if material in self.cell_experience:
+                exp = self.cell_experience[material]
+                if exp["visits"] > 0:
+                    value += exp["reward"]
+                
+                # Add exploration bonus for less-visited cell types
+                if exp["visits"] < 10:
+                    exploration_factor = 2.0 / (exp["visits"] + 1)
+                    value += exploration_factor
             
-            # Add exploration bonus for less-visited cell types
-            if exp["visits"] < 10:
-                exploration_factor = 2.0 / (exp["visits"] + 1)
-                value += exploration_factor
+            # Add terrain property considerations
+            
+            # Devalue steep terrain (higher energy cost)
+            slope_steepness = np.hypot(*next_cell.height_vector)
+            value -= slope_steepness * 1.5
+            
+            # Devalue high friction terrain
+            value -= (next_cell.friction - 1.0) * 0.5
+            
+            # Devalue hazardous terrain
+            value -= next_cell.local_risk * 10.0
+            
+            # Consider weather effects on terrain
+            if self.w.weather == "rain" and next_cell.material in ["dirt", "stone"]:
+                value -= 0.5  # Slippery when wet
+            elif self.w.weather == "storm":
+                value -= 1.0  # Dangerous in storms
+                
+            # Temperature considerations - avoid extreme temps
+            temp_comfort = 1.0 - abs(next_cell.temperature - 22.0) / 20.0  # 22°C is ideal
+            value += temp_comfort * 0.5
             
             # Add surprise-based exploration
             obs_nxt = self.observe() if act == "REST" else self._obs_after_move(nxt)
             surprise = self.mem0.surprise(obs_nxt)
-            if food_none:
-                value += EXPLORATION_BONUS * (surprise / SURPRISE_SCALE)
+            value += EXPLORATION_BONUS * (surprise / SURPRISE_SCALE)
             
             # Add basic heuristics
-            value -= HUNGER_W * hunger + PAIN_W * pain + energy_def * 2.0  # Increased energy weight
+            value -= HUNGER_W * hunger + PAIN_W * pain + energy_def * 2.0
             if self.carrying and act != "REST":
                 value -= CARRY_COST
             if act == "REST":
@@ -302,7 +454,7 @@ class Agent:
                     rest_bonus = (MAX_E * 0.4 - self.energy) / MAX_E * 10.0
                     value += rest_bonus
                     # Even bigger bonus for resting at home
-                    if next_cell == "home":
+                    if "home" in next_cell.tags or next_cell.material == "home":
                         value += rest_bonus * 2.0
             
             # Goal-directed behavior
@@ -311,21 +463,20 @@ class Agent:
                 value -= CARRY_HOME_W * (home_dist / GRID)
             if energy_def > ENERGY_LOW_FRAC:
                 home_dist = abs(nxt[0] - self.w.home[0]) + abs(nxt[1] - self.w.home[1])
-                value -= HOME_DIST_W * (home_dist / GRID) * (1.0 + energy_def * 2.0)  # Stronger home bias when energy low
+                value -= HOME_DIST_W * (home_dist / GRID) * (1.0 + energy_def * 2.0)
             
             if value > best_value:
                 best_action, best_value = act, value
         
         # Extra energy protection: if energy very low and not heading home, reconsider
         if self.energy < MAX_E * 0.25 and best_action != "REST":
-            current_cell = self.w.cell(tuple(self.pos))
-            if current_cell == "home":
+            if "home" in current_cell.tags or current_cell.material == "home":
                 logging.info(f"Energy low ({self.energy:.1f}): Overriding {best_action} with REST at home")
                 return "REST"
             
         return best_action
 
-    def _obs_after_move(self, nxt: list[int]) -> np.ndarray:
+    def _obs_after_move(self, nxt: List[int]) -> np.ndarray:
         """Simulate observation after a potential move."""
         cur = self.pos
         self.pos = nxt
@@ -382,33 +533,103 @@ class Agent:
         
         # Movement or rest
         if act != "REST":
-            self.pos = [(self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID]
-            self.rest_streak = 0
-            self.energy -= MOVE_COST
-            if self.carrying:
-                self.energy -= CARRY_COST
+            # Calculate next position
+            next_pos = [(self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID]
+            next_cell = self.w.cell(tuple(next_pos))
+            
+            # Check if next cell is passable
+            if next_cell.passable:
+                self.pos = next_pos
+                self.rest_streak = 0
+                
+                # Calculate movement cost based on terrain
+                movement_cost = MOVE_COST
+                
+                # Consider slope/steepness
+                slope_steepness = np.hypot(*next_cell.height_vector)
+                movement_cost += slope_steepness * 0.5
+                
+                # Consider friction
+                movement_cost *= next_cell.friction 
+                
+                # Consider density (harder materials require more energy)
+                movement_cost *= (0.5 + next_cell.density * 0.5)
+                
+                # Apply weather effects
+                if self.w.weather == "rain":
+                    movement_cost *= 1.2  # Harder to move in rain
+                elif self.w.weather == "storm":
+                    movement_cost *= 1.5  # Much harder to move in storms
+                
+                # Apply carrying penalty
+                if self.carrying:
+                    movement_cost += CARRY_COST
+                
+                # Apply final movement cost
+                self.energy -= movement_cost
+            else:
+                # Couldn't move into impassable terrain
+                act = "REST"  # Force REST action since we couldn't move
+                self.rest_streak += 1
         else:
             self.rest_streak += 1
 
         # Metabolism
         self.hunger = min(MAX_H, self.hunger + 1)
         self.pain = max(0, self.pain - PAIN_DECAY)
+        
+        # Base metabolism cost
         self.energy -= self.hunger / MAX_H + self.pain / MAX_P
-
+        
+        # Temperature effects on metabolism
+        current_cell = self.w.cell(tuple(self.pos))
+        temp_diff = abs(current_cell.temperature - 22.0)  # Ideal temperature is 22°C
+        
+        # More energy spent in extreme temperatures
+        if temp_diff > 10:
+            self.energy -= 0.3 * (temp_diff - 10) / 10.0
+        
         # Interaction with environment
-        curr_cell = self.w.cell(tuple(self.pos))
+        # Check for hazards first
+        if current_cell.local_risk > 0:
+            hazard_damage = current_cell.local_risk * PAIN_HIT
+            self.pain = min(MAX_P, self.pain + hazard_damage)
+        
+        # Food collection and consumption
         food_collected = False
         food_eaten = False
         
-        if curr_cell == "hazard":
-            self.pain = min(MAX_P, self.pain + PAIN_HIT)
-        
-        if curr_cell == "food" and not self.carrying:
+        # Check if we found food
+        if (current_cell.material == "food" or "food" in current_cell.tags) and not self.carrying:
             self.carrying = True
             food_collected = True
-            self.w.remove_food(tuple(self.pos))
+            
+            # Change the cell to dirt after collecting food
+            x, y = self.pos
+            food_pos = (x, y)
+            
+            # Create a new terrain cell of type dirt to replace the food
+            dirt_cell = TerrainCell(
+                height_vector=current_cell.height_vector,
+                normal_vector=current_cell.normal_vector,
+                material="dirt",
+                passable=True,
+                hardness=1.0,
+                strength=1.0,
+                density=1.0,
+                friction=1.0,
+                elasticity=0.0,
+                thermal_conductivity=0.1,
+                temperature=current_cell.temperature,
+                local_risk=0.0,
+                tags=set()
+            )
+            
+            # Update the world grid with the new cell
+            self.w.grid[x, y] = dirt_cell
         
-        if curr_cell == "home":
+        # Check for home interaction
+        if (current_cell.material == "home" or "home" in current_cell.tags):
             if self.carrying and act != "REST":
                 self.carrying = False
                 self.store += 1
@@ -424,6 +645,10 @@ class Agent:
                 if food_eaten:
                     self.energy = min(MAX_E, self.energy + FOOD_E)
                     self.hunger = max(0, self.hunger - FOOD_S)
+                
+                # Additional rest benefits at home
+                self.energy = min(MAX_E, self.energy + HOME_ENERGY_RECOVERY * 0.5)
+                self.hunger = max(0, self.hunger - HOME_HUNGER_RECOVERY * 0.5)
         
         # Calculate reward
         energy_change = self.energy - prev_energy
@@ -438,10 +663,28 @@ class Agent:
         if food_eaten:
             reward += 20
         
+        # Terrain-based rewards/penalties
+        if current_cell.temperature > 30:
+            reward -= 0.5  # Penalty for extremely hot areas
+        elif current_cell.temperature < 10:
+            reward -= 0.5  # Penalty for extremely cold areas
+            
+        # Obstacle avoidance reward
+        if not prev_cell.passable and current_cell.passable:
+            reward += 1.0  # Reward for getting out of impassable terrain
+            
+        # Day/night cycle rewards
+        if not self.w.is_day and (current_cell.material == "home" or "home" in current_cell.tags):
+            reward += 0.5  # Small bonus for being home at night
+            
+        # Weather-based rewards
+        if self.w.weather == "storm" and (current_cell.material == "home" or "home" in current_cell.tags):
+            reward += 1.0  # Bonus for seeking shelter during storms
+        
         self.last_reward = reward
         
         # Update experience for previous cell
-        self.update_experience(prev_cell, reward)
+        self.update_experience(prev_cell.material, reward)
         
         # Update Q-values
         next_state_key = self.get_state_key(self.pos, self.carrying)
@@ -458,6 +701,12 @@ class Agent:
             seq = np.concatenate(self.trace[-(SEQ_LEN - 1):] + [obs])
             self.mem1.store(seq)
         self.trace.append(obs)
+        
+        # Update temperature memory
+        self.temperature_memory.append(current_cell.temperature)
+        if len(self.temperature_memory) > 100:
+            self.temperature_memory = self.temperature_memory[-100:]
+        self.last_temperature = current_cell.temperature
         
         # Update history for visualization
         self.history["energy"].append(self.energy)
@@ -492,6 +741,62 @@ class AgentPopulation:
         # Initialize starting population
         for _ in range(initial_pop):
             self.add_agent()
+            
+        # Set up food in the environment if needed
+        self.setup_food_sources()
+    
+    def setup_food_sources(self, num_sources=20):
+        """Add food sources to the world if they don't exist"""
+        # Count existing food cells
+        food_count = 0
+        for x in range(self.world.grid_size):
+            for y in range(self.world.grid_size):
+                cell = self.world.cell((x, y))
+                if cell.material == "food" or "food" in cell.tags:
+                    food_count += 1
+        
+        # Add more food if needed
+        if food_count < num_sources:
+            for _ in range(num_sources - food_count):
+                self.add_random_food()
+    
+    def add_random_food(self):
+        """Add a food source at a random passable location"""
+        # Find a random passable location that isn't home or already food
+        for _ in range(100):  # Try 100 times to find a suitable spot
+            x = random.randint(0, self.world.grid_size - 1)
+            y = random.randint(0, self.world.grid_size - 1)
+            cell = self.world.cell((x, y))
+            
+            # Check if location is suitable
+            if (cell.passable and 
+                cell.material != "home" and 
+                "home" not in cell.tags and
+                cell.material != "food" and
+                "food" not in cell.tags):
+                
+                # Create a food cell based on the current cell
+                food_cell = TerrainCell(
+                    height_vector=cell.height_vector,
+                    normal_vector=cell.normal_vector,
+                    material="food",
+                    passable=True,
+                    hardness=0.5,
+                    strength=0.5,
+                    density=0.8,
+                    friction=1.0,
+                    elasticity=0.0,
+                    thermal_conductivity=0.1,
+                    temperature=cell.temperature,
+                    local_risk=0.0,
+                    tags={"food"}
+                )
+                
+                # Update the grid
+                self.world.grid[x, y] = food_cell
+                return True
+        
+        return False  # Couldn't find a suitable location
     
     def add_agent(self, parent_traits=None):
         """Create a new agent, optionally inheriting traits from parents"""
@@ -530,6 +835,10 @@ class AgentPopulation:
         
         # Handle reproduction/death
         self.handle_population_changes()
+        
+        # Replenish food occasionally
+        if random.random() < 0.05:  # 5% chance each tick
+            self.add_random_food()
     
     def process_interactions(self):
         """Identify and process social interactions between agents"""

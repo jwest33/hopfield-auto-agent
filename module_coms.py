@@ -7,13 +7,13 @@ import time
 import random
 
 MAX_E, MAX_H, MAX_P = 100, 100, 100
-GRID = 25
+GRID = 40  # Updated to match module_new_world's default
 
 # ───────────────────── Neural Communication System ─────────────────────
 class SignalEncoder(nn.Module):
     """Neural network to encode agent state into signal vectors"""
     
-    def __init__(self, state_dim=10, hidden_dim=20, signal_dim=5):
+    def __init__(self, state_dim=18, hidden_dim=24, signal_dim=8):
         super(SignalEncoder, self).__init__()
         self.fc1 = nn.Linear(state_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, signal_dim)
@@ -26,7 +26,7 @@ class SignalEncoder(nn.Module):
 class SignalDecoder(nn.Module):
     """Neural network to decode received signals into meaning"""
     
-    def __init__(self, signal_dim=5, hidden_dim=20, output_dim=3):
+    def __init__(self, signal_dim=8, hidden_dim=24, output_dim=5):
         super(SignalDecoder, self).__init__()
         self.fc1 = nn.Linear(signal_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, output_dim)
@@ -39,7 +39,7 @@ class SignalDecoder(nn.Module):
 class NeuralCommunicationSystem:
     """System for emergent communication between agents using neural networks"""
     
-    def __init__(self, state_dim=10, signal_dim=5, output_dim=3):
+    def __init__(self, state_dim=18, signal_dim=8, output_dim=5):
         self.state_dim = state_dim
         self.signal_dim = signal_dim
         self.output_dim = output_dim  # Number of meaning categories
@@ -56,14 +56,14 @@ class NeuralCommunicationSystem:
         # Active signals in the environment
         self.active_signals = []  # List of {sender, signal, position, time, range}
         
-        # Meaning categories
-        self.meaning_categories = ["food", "danger", "help"]
+        # Meaning categories (expanded for richer terrain-based communications)
+        self.meaning_categories = ["food", "danger", "shelter", "weather", "help"]
     
     def initialize_agent(self, agent_id):
         """Set up neural networks for a new agent"""
         # Create neural networks
-        self.encoders[agent_id] = SignalEncoder(self.state_dim, 20, self.signal_dim)
-        self.decoders[agent_id] = SignalDecoder(self.signal_dim, 20, self.output_dim)
+        self.encoders[agent_id] = SignalEncoder(self.state_dim, 24, self.signal_dim)
+        self.decoders[agent_id] = SignalDecoder(self.signal_dim, 24, self.output_dim)
         
         # Create optimizers
         self.optimizers_enc[agent_id] = optim.Adam(self.encoders[agent_id].parameters(), lr=0.001)
@@ -81,25 +81,49 @@ class NeuralCommunicationSystem:
         carrying_food = 1.0 if agent.carrying else 0.0
         stored_food = min(agent.store / 10, 1.0)  # Normalize food store
         
+        # Get current cell
+        current_cell = agent.w.cell(tuple(agent.pos))
+        
         # Distance to home
         home_x, home_y = agent.w.home
         home_dist = (abs(agent.pos[0] - home_x) + abs(agent.pos[1] - home_y)) / (GRID * 2)
         
-        # Distance to nearest food
-        food_dist = agent.w.nearest_food_distance(tuple(agent.pos)) / GRID
+        # Terrain features
+        terrain_danger = current_cell.local_risk
+        terrain_passable = 1.0 if current_cell.passable else 0.0
+        terrain_temp = current_cell.temperature / 40.0  # Normalize temp to 0-1 range
         
-        # Create state vector
+        # Current weather conditions
+        weather_value = {
+            "clear": 0.0,
+            "rain": 0.5,
+            "storm": 1.0
+        }[agent.w.weather]
+        
+        # Day/night indicator
+        is_day = 1.0 if agent.w.is_day else 0.0
+        
+        # Create state vector with expanded terrain information
         state = torch.tensor([
             energy_pct, 
             hunger_pct, 
             pain_pct, 
             carrying_food, 
             stored_food, 
-            home_dist, 
-            food_dist,
+            home_dist,
             agent.pos[0] / GRID,  # Normalized position
             agent.pos[1] / GRID,
-            agent.tick_count / 1000.0  # Time factor
+            terrain_danger,
+            terrain_passable,
+            terrain_temp,
+            weather_value,
+            is_day,
+            agent.tick_count / 1000.0,  # Time factor
+            # Add terrain properties
+            current_cell.friction / 3.0,
+            current_cell.density / 3.0,
+            current_cell.strength / 10.0,
+            bool(current_cell.tags) * 1.0  # Has special tags
         ], dtype=torch.float32)
         
         return state
@@ -141,7 +165,14 @@ class NeuralCommunicationSystem:
             agent_pos = agent.pos
             distance = abs(sender_pos[0] - agent_pos[0]) + abs(sender_pos[1] - agent_pos[1])
             
-            if distance <= signal_data["range"]:
+            # Adjust range based on weather conditions
+            effective_range = signal_data["range"]
+            if agent.w.weather == "rain":
+                effective_range = max(1, effective_range - 1)  # Reduced range in rain
+            elif agent.w.weather == "storm":
+                effective_range = max(1, effective_range - 2)  # Greatly reduced range in storms
+            
+            if distance <= effective_range:
                 received.append({
                     "signal": signal_data["signal"],
                     "sender": signal_data["sender"],
@@ -259,19 +290,43 @@ class NeuralCommunicationSystem:
         signals = torch.stack([b["signal"] for b in batch])
         rewards = torch.tensor([b["reward"] for b in batch], dtype=torch.float32)
         
-        # Create target values based on reward
-        # We'll use a simple classification:
-        # reward > 0 -> category 0 (food/good)
-        # reward < -5 -> category 1 (danger/bad)
-        # otherwise -> category 2 (neutral/help)
+        # Create target values based on reward and context
+        # Expanded categories for terrain-rich world:
+        # 0: food/beneficial
+        # 1: danger/harmful
+        # 2: shelter/home
+        # 3: weather warning
+        # 4: help/neutral
         targets = torch.zeros(batch_size, dtype=torch.long)
-        for i, reward in enumerate(rewards):
+        
+        for i, (reward, batch_item) in enumerate(zip(rewards, batch)):
+            # Extract context (agent state) to determine signal meaning
+            context = batch_item["context"]
+            
+            # Check energy level in context
+            energy_level = context[0].item()  # First element is energy percentage
+            hunger_level = context[1].item()  # Second element is hunger percentage
+            temperature = context[10].item() * 40.0  # Temperature normalized to 0-1 range
+            weather = context[11].item()  # Weather value
+            
             if reward > 5:
-                targets[i] = 0  # Food/beneficial
+                if context[3].item() > 0.5:  # If carrying food
+                    targets[i] = 0  # Food signal
+                elif temperature > 0.8 or temperature < 0.2 or weather > 0.8:
+                    targets[i] = 3  # Weather warning
+                elif energy_level < 0.3:
+                    targets[i] = 4  # Help needed
+                else:
+                    targets[i] = 2  # Shelter/home
             elif reward < -5:
-                targets[i] = 1  # Danger/harmful
+                targets[i] = 1  # Danger
             else:
-                targets[i] = 2  # Help/neutral
+                if hunger_level > 0.7:
+                    targets[i] = 0  # Food needed
+                elif energy_level < 0.3:
+                    targets[i] = 4  # Help needed
+                else:
+                    targets[i] = 4  # Neutral/help
         
         # Zero gradients
         self.optimizers_dec[agent_id].zero_grad()
@@ -319,3 +374,84 @@ class NeuralCommunicationSystem:
         current_time = time.time()
         self.active_signals = [s for s in self.active_signals 
                               if current_time - s["time"] < max_age]
+    
+    # New methods for terrain-aware communication
+    
+    def generate_terrain_warning(self, agent):
+        """Generate a warning signal about dangerous terrain"""
+        current_cell = agent.w.cell(tuple(agent.pos))
+        
+        # Only generate warnings for genuinely dangerous terrain
+        if current_cell.local_risk < 0.2:
+            return None
+            
+        # Create a context that emphasizes the danger
+        context = self.agent_state_to_vector(agent)
+        
+        # Generate warning signal
+        with torch.no_grad():
+            encoder = self.encoders[agent.id]
+            # Modify context to emphasize danger
+            modified_context = context.clone()
+            modified_context[8] = 1.0  # Set terrain danger to maximum
+            signal = encoder(modified_context)
+        
+        return signal.numpy()
+    
+    def generate_weather_warning(self, agent):
+        """Generate a warning signal about dangerous weather"""
+        # Only warn about truly dangerous weather
+        if agent.w.weather != "storm":
+            return None
+            
+        # Create a context that emphasizes the weather danger
+        context = self.agent_state_to_vector(agent)
+        
+        # Generate warning signal
+        with torch.no_grad():
+            encoder = self.encoders[agent.id]
+            # Modify context to emphasize weather danger
+            modified_context = context.clone()
+            modified_context[11] = 1.0  # Set weather to maximum danger
+            signal = encoder(modified_context)
+        
+        return signal.numpy()
+    
+    def generate_food_signal(self, agent):
+        """Generate a signal about food location"""
+        if not agent.carrying:
+            return None
+            
+        # Create context that emphasizes food
+        context = self.agent_state_to_vector(agent)
+        
+        # Generate food signal
+        with torch.no_grad():
+            encoder = self.encoders[agent.id]
+            # Modify context to emphasize food
+            modified_context = context.clone()
+            modified_context[3] = 1.0  # Set carrying food to 1
+            signal = encoder(modified_context)
+        
+        return signal.numpy()
+    
+    def generate_shelter_signal(self, agent):
+        """Generate a signal about shelter/home"""
+        current_cell = agent.w.cell(tuple(agent.pos))
+        
+        # Only signal about home when actually at home
+        if not (current_cell.material == "home" or "home" in current_cell.tags):
+            return None
+            
+        # Create context that emphasizes shelter
+        context = self.agent_state_to_vector(agent)
+        
+        # Generate shelter signal
+        with torch.no_grad():
+            encoder = self.encoders[agent.id]
+            # Modify context to emphasize home
+            modified_context = context.clone()
+            modified_context[5] = 0.0  # Set home distance to 0
+            signal = encoder(modified_context)
+        
+        return signal.numpy()
