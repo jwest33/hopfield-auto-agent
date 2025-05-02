@@ -215,3 +215,684 @@
 11:12:05 [INFO] CRITICAL ENERGY: Forcing rest at home
 11:12:05 [INFO] CRITICAL ENERGY: Forcing rest at home
 11:12:05 [INFO] Simulation paused
+11:13:35 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:13:35 [INFO] NumExpr defaulting to 16 threads.
+11:13:38 [INFO] PyTorch found - communication features enabled
+11:13:38 [INFO] Loaded world from world.pkl
+11:13:38 [INFO] Agent initialized at home [20, 20].
+11:13:39 [INFO] Agent initialized at home [20, 20].
+11:13:39 [INFO] Agent initialized at home [20, 20].
+11:13:39 [INFO] Agent initialized at home [20, 20].
+11:13:39 [INFO] Agent initialized at home [20, 20].
+11:13:40 [INFO] Simulation initialized
+11:21:25 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:21:25 [INFO] NumExpr defaulting to 16 threads.
+11:21:42 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:21:42 [INFO] NumExpr defaulting to 16 threads.
+11:21:44 [INFO] PyTorch found - communication features enabled
+11:21:45 [INFO] Loaded world from world.pkl
+11:21:45 [INFO] Agent initialized at home [20, 20].
+11:21:46 [INFO] Agent initialized at home [20, 20].
+11:21:46 [INFO] Agent initialized at home [20, 20].
+11:21:46 [INFO] Agent initialized at home [20, 20].
+11:21:46 [INFO] Agent initialized at home [20, 20].
+11:21:46 [INFO] Simulation initialized
+11:21:48 [INFO] Simulation resumed
+11:21:53 [INFO] Agent agent_2 detected food at distance 3, heading W
+11:21:54 [INFO] Agent agent_2 detected food at distance 9, heading W
+11:21:54 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:21:54 [INFO] Agent agent_1 detected food at distance 8, heading W
+11:21:54 [INFO] Agent agent_2 detected food at distance 1, heading S
+11:21:54 [INFO] Agent agent_2 collected food at (22, 15)
+11:21:54 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:21:54 [INFO] Agent agent_1 detected food at distance 9, heading E
+11:21:55 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:21:55 [INFO] Agent agent_4 detected food at distance 9, heading W
+11:21:55 [INFO] Agent agent_0 detected food at distance 11, heading E
+11:21:55 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:21:55 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:21:55 [INFO] Agent agent_4 detected food at distance 8, heading W
+11:21:55 [INFO] Agent agent_0 detected food at distance 10, heading E
+11:21:55 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:21:55 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:21:56 [INFO] Agent agent_4 detected food at distance 7, heading W
+11:21:56 [INFO] Agent agent_0 detected food at distance 9, heading E
+11:21:56 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:21:56 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:21:56 [INFO] Agent agent_4 detected food at distance 6, heading W
+11:21:56 [INFO] Agent agent_0 detected food at distance 8, heading E
+11:21:56 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:21:56 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:21:56 [INFO] Agent agent_4 detected food at distance 5, heading W
+11:21:57 [INFO] Agent agent_0 detected food at distance 7, heading E
+11:21:57 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:21:57 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:21:57 [INFO] Agent agent_4 detected food at distance 4, heading W
+11:21:57 [INFO] Agent agent_0 detected food at distance 6, heading E
+11:21:57 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:21:57 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:21:57 [INFO] Agent agent_4 detected food at distance 3, heading W
+11:21:58 [INFO] Agent agent_0 detected food at distance 5, heading E
+11:21:58 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:21:58 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:21:58 [INFO] Agent agent_4 detected food at distance 2, heading W
+11:21:58 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:21:58 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:21:58 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:21:58 [INFO] Agent agent_4 detected food at distance 1, heading W
+11:21:58 [INFO] Agent agent_4 collected food at (23, 9)
+11:21:59 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:21:59 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:21:59 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:21:59 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:21:59 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:21:59 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:00 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:00 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:00 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:00 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:00 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:01 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:01 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:01 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:01 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:01 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:01 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:02 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:02 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:02 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:02 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:03 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:03 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:03 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:03 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:03 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:03 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:04 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:04 [INFO] Agent agent_0 recalled food location from memory
+11:22:04 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:04 [INFO] Agent agent_1 recalled food location from memory
+11:22:04 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:04 [INFO] Agent agent_3 recalled food location from memory
+11:22:04 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:04 [INFO] Agent agent_0 recalled food location from memory
+11:22:04 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:04 [INFO] Agent agent_1 recalled food location from memory
+11:22:05 [INFO] Agent agent_2 stored food at home. Total: 1
+11:22:05 [INFO] Agent agent_2 recalled food location from memory
+11:22:05 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:05 [INFO] Agent agent_3 recalled food location from memory
+11:22:05 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:05 [INFO] Agent agent_0 recalled food location from memory
+11:22:05 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:05 [INFO] Agent agent_1 recalled food location from memory
+11:22:05 [INFO] Agent agent_2 detected food at distance 11, heading E
+11:22:05 [INFO] Agent agent_2 recalled food location from memory
+11:22:05 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:05 [INFO] Agent agent_3 recalled food location from memory
+11:22:06 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:06 [INFO] Agent agent_0 recalled food location from memory
+11:22:06 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:06 [INFO] Agent agent_1 recalled food location from memory
+11:22:06 [INFO] Agent agent_2 detected food at distance 10, heading E
+11:22:06 [INFO] Agent agent_2 recalled food location from memory
+11:22:06 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:06 [INFO] Agent agent_3 recalled food location from memory
+11:22:06 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:06 [INFO] Agent agent_0 recalled food location from memory
+11:22:06 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:06 [INFO] Agent agent_1 recalled food location from memory
+11:22:07 [INFO] Agent agent_2 detected food at distance 9, heading E
+11:22:07 [INFO] Agent agent_2 recalled food location from memory
+11:22:07 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:07 [INFO] Agent agent_3 recalled food location from memory
+11:22:07 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:07 [INFO] Agent agent_0 recalled food location from memory
+11:22:07 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:07 [INFO] Agent agent_1 recalled food location from memory
+11:22:07 [INFO] Agent agent_2 detected food at distance 8, heading E
+11:22:07 [INFO] Agent agent_2 recalled food location from memory
+11:22:07 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:07 [INFO] Agent agent_3 recalled food location from memory
+11:22:08 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:08 [INFO] Agent agent_0 recalled food location from memory
+11:22:08 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:08 [INFO] Agent agent_1 recalled food location from memory
+11:22:08 [INFO] Agent agent_2 detected food at distance 7, heading E
+11:22:08 [INFO] Agent agent_2 recalled food location from memory
+11:22:08 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:08 [INFO] Agent agent_3 recalled food location from memory
+11:22:08 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:08 [INFO] Agent agent_0 recalled food location from memory
+11:22:09 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:09 [INFO] Agent agent_1 recalled food location from memory
+11:22:09 [INFO] Agent agent_2 detected food at distance 6, heading E
+11:22:09 [INFO] Agent agent_2 recalled food location from memory
+11:22:09 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:09 [INFO] Agent agent_3 recalled food location from memory
+11:22:09 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:09 [INFO] Agent agent_0 recalled food location from memory
+11:22:09 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:09 [INFO] Agent agent_1 recalled food location from memory
+11:22:09 [INFO] Agent agent_2 detected food at distance 5, heading E
+11:22:09 [INFO] Agent agent_2 recalled food location from memory
+11:22:10 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:10 [INFO] Agent agent_3 recalled food location from memory
+11:22:10 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:10 [INFO] Agent agent_0 recalled food location from memory
+11:22:10 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:10 [INFO] Agent agent_1 recalled food location from memory
+11:22:10 [INFO] Agent agent_2 detected food at distance 4, heading E
+11:22:10 [INFO] Agent agent_2 recalled food location from memory
+11:22:10 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:10 [INFO] Agent agent_3 recalled food location from memory
+11:22:11 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:11 [INFO] Agent agent_0 recalled food location from memory
+11:22:11 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:11 [INFO] Agent agent_1 recalled food location from memory
+11:22:11 [INFO] Agent agent_2 detected food at distance 3, heading E
+11:22:11 [INFO] Agent agent_2 recalled food location from memory
+11:22:11 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:11 [INFO] Agent agent_3 recalled food location from memory
+11:22:11 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:11 [INFO] Agent agent_0 recalled food location from memory
+11:22:12 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:12 [INFO] Agent agent_1 recalled food location from memory
+11:22:12 [INFO] Agent agent_2 detected food at distance 3, heading E
+11:22:12 [INFO] Agent agent_2 recalled food location from memory
+11:22:12 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:12 [INFO] Agent agent_3 recalled food location from memory
+11:22:12 [INFO] Agent agent_4 stored food at home. Total: 1
+11:22:12 [INFO] Agent agent_4 recalled food location from memory
+11:22:12 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:12 [INFO] Agent agent_0 recalled food location from memory
+11:22:12 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:12 [INFO] Agent agent_1 recalled food location from memory
+11:22:12 [INFO] Agent agent_2 detected food at distance 3, heading E
+11:22:12 [INFO] Agent agent_2 recalled food location from memory
+11:22:13 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:13 [INFO] Agent agent_3 recalled food location from memory
+11:22:13 [INFO] Agent agent_4 detected food at distance 11, heading E
+11:22:13 [INFO] Agent agent_4 recalled food location from memory
+11:22:13 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:13 [INFO] Agent agent_0 recalled food location from memory
+11:22:13 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:13 [INFO] Agent agent_1 recalled food location from memory
+11:22:13 [INFO] Agent agent_2 detected food at distance 3, heading E
+11:22:13 [INFO] Agent agent_2 recalled food location from memory
+11:22:13 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:13 [INFO] Agent agent_3 recalled food location from memory
+11:22:14 [INFO] Agent agent_4 detected food at distance 10, heading E
+11:22:14 [INFO] Agent agent_4 recalled food location from memory
+11:22:14 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:14 [INFO] Agent agent_0 recalled food location from memory
+11:22:14 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:14 [INFO] Agent agent_1 recalled food location from memory
+11:22:14 [INFO] Agent agent_2 detected food at distance 3, heading E
+11:22:14 [INFO] Agent agent_2 recalled food location from memory
+11:22:14 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:14 [INFO] Agent agent_3 recalled food location from memory
+11:22:15 [INFO] Agent agent_4 detected food at distance 9, heading E
+11:22:15 [INFO] Agent agent_4 recalled food location from memory
+11:22:15 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:15 [INFO] Agent agent_0 recalled food location from memory
+11:22:15 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:15 [INFO] Agent agent_1 recalled food location from memory
+11:22:15 [INFO] Agent agent_2 detected food at distance 3, heading E
+11:22:15 [INFO] Agent agent_2 recalled food location from memory
+11:22:15 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:15 [INFO] Agent agent_3 recalled food location from memory
+11:22:15 [INFO] Agent agent_4 detected food at distance 8, heading E
+11:22:15 [INFO] Agent agent_4 recalled food location from memory
+11:22:15 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:16 [INFO] Agent agent_0 recalled food location from memory
+11:22:16 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:16 [INFO] Agent agent_1 recalled food location from memory
+11:22:16 [INFO] Agent agent_2 detected food at distance 3, heading E
+11:22:16 [INFO] Agent agent_2 recalled food location from memory
+11:22:16 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:16 [INFO] Agent agent_3 recalled food location from memory
+11:22:16 [INFO] Agent agent_4 detected food at distance 7, heading E
+11:22:16 [INFO] Agent agent_4 recalled food location from memory
+11:22:16 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:16 [INFO] Agent agent_0 recalled food location from memory
+11:22:17 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:17 [INFO] Agent agent_1 recalled food location from memory
+11:22:17 [INFO] Agent agent_2 detected food at distance 3, heading E
+11:22:17 [INFO] Agent agent_2 recalled food location from memory
+11:22:17 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:17 [INFO] Agent agent_3 recalled food location from memory
+11:22:17 [INFO] Agent agent_4 detected food at distance 6, heading E
+11:22:17 [INFO] Agent agent_4 recalled food location from memory
+11:22:17 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:17 [INFO] Agent agent_0 recalled food location from memory
+11:22:17 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:17 [INFO] Agent agent_1 recalled food location from memory
+11:22:18 [INFO] Agent agent_2 detected food at distance 3, heading E
+11:22:18 [INFO] Agent agent_2 recalled food location from memory
+11:22:18 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:18 [INFO] Agent agent_3 recalled food location from memory
+11:22:18 [INFO] Agent agent_4 detected food at distance 5, heading E
+11:22:18 [INFO] Agent agent_4 recalled food location from memory
+11:22:18 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:18 [INFO] Agent agent_0 recalled food location from memory
+11:22:18 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:18 [INFO] Agent agent_1 recalled food location from memory
+11:22:18 [INFO] Agent agent_2 detected food at distance 3, heading E
+11:22:18 [INFO] Agent agent_2 recalled food location from memory
+11:22:19 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:19 [INFO] Agent agent_3 recalled food location from memory
+11:22:19 [INFO] Agent agent_4 detected food at distance 4, heading E
+11:22:19 [INFO] Agent agent_4 recalled food location from memory
+11:22:19 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:19 [INFO] Agent agent_0 recalled food location from memory
+11:22:19 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:19 [INFO] Agent agent_1 recalled food location from memory
+11:22:19 [INFO] Agent agent_2 detected food at distance 3, heading E
+11:22:19 [INFO] Agent agent_2 recalled food location from memory
+11:22:20 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:20 [INFO] Agent agent_3 recalled food location from memory
+11:22:20 [INFO] Agent agent_4 detected food at distance 3, heading E
+11:22:20 [INFO] Agent agent_4 recalled food location from memory
+11:22:20 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:20 [INFO] Agent agent_0 recalled food location from memory
+11:22:20 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:20 [INFO] Agent agent_1 recalled food location from memory
+11:22:20 [INFO] Agent agent_2 detected food at distance 3, heading E
+11:22:20 [INFO] Agent agent_2 recalled food location from memory
+11:22:20 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:20 [INFO] Agent agent_3 recalled food location from memory
+11:22:21 [INFO] Agent agent_4 detected food at distance 3, heading E
+11:22:21 [INFO] Agent agent_4 recalled food location from memory
+11:22:21 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:21 [INFO] Agent agent_0 recalled food location from memory
+11:22:21 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:21 [INFO] Agent agent_1 recalled food location from memory
+11:22:21 [INFO] Agent agent_2 detected food at distance 3, heading E
+11:22:21 [INFO] Agent agent_2 recalled food location from memory
+11:22:21 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:21 [INFO] Agent agent_3 recalled food location from memory
+11:22:22 [INFO] Agent agent_4 detected food at distance 3, heading E
+11:22:22 [INFO] Agent agent_4 recalled food location from memory
+11:22:22 [INFO] Agent agent_0 detected food at distance 4, heading E
+11:22:22 [INFO] Agent agent_0 recalled food location from memory
+11:22:22 [INFO] Agent agent_1 detected food at distance 8, heading E
+11:22:22 [INFO] Agent agent_1 recalled food location from memory
+11:22:22 [INFO] Agent agent_2 detected food at distance 3, heading E
+11:22:22 [INFO] Agent agent_2 recalled food location from memory
+11:22:22 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:22:22 [INFO] Agent agent_3 recalled food location from memory
+11:22:22 [INFO] Agent agent_4 detected food at distance 3, heading E
+11:22:22 [INFO] Agent agent_4 recalled food location from memory
+11:22:23 [INFO] Simulation paused
+11:24:41 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:24:41 [INFO] NumExpr defaulting to 16 threads.
+11:24:44 [INFO] PyTorch found - communication features enabled
+11:24:44 [INFO] Loaded world from world.pkl
+11:24:44 [INFO] Agent initialized at home [20, 20].
+11:24:46 [INFO] Agent initialized at home [20, 20].
+11:24:46 [INFO] Agent initialized at home [20, 20].
+11:24:46 [INFO] Agent initialized at home [20, 20].
+11:24:46 [INFO] Agent initialized at home [20, 20].
+11:24:46 [INFO] Simulation initialized
+11:24:47 [INFO] Simulation resumed
+11:24:54 [INFO] Agent agent_2 detected food at distance 4, heading W
+11:24:55 [INFO] Agent agent_2 detected food at distance 3, heading S
+11:24:55 [INFO] Agent agent_3 detected food at distance 6, heading W
+11:24:55 [INFO] Agent agent_4 detected food at distance 6, heading W
+11:24:55 [INFO] Agent agent_1 detected food at distance 4, heading W
+11:24:55 [INFO] Agent agent_2 detected food at distance 9, heading W
+11:24:55 [INFO] Agent agent_3 detected food at distance 5, heading W
+11:24:55 [INFO] Agent agent_4 detected food at distance 5, heading N
+11:24:55 [INFO] Agent agent_1 detected food at distance 3, heading W
+11:24:55 [INFO] Agent agent_2 detected food at distance 1, heading S
+11:24:55 [INFO] Agent agent_2 collected food at (22, 15)
+11:24:56 [INFO] Agent agent_3 detected food at distance 9, heading W
+11:24:56 [INFO] Agent agent_4 detected food at distance 9, heading W
+11:24:56 [INFO] Agent agent_1 detected food at distance 9, heading W
+11:24:56 [INFO] Agent agent_3 detected food at distance 8, heading W
+11:24:56 [INFO] Agent agent_4 detected food at distance 8, heading W
+11:24:56 [INFO] Agent agent_1 detected food at distance 8, heading W
+11:24:56 [INFO] Agent agent_3 detected food at distance 7, heading W
+11:24:57 [INFO] Agent agent_4 detected food at distance 7, heading W
+11:24:57 [INFO] Agent agent_1 detected food at distance 7, heading W
+11:24:57 [INFO] Agent agent_3 detected food at distance 6, heading W
+11:24:57 [INFO] Agent agent_4 detected food at distance 6, heading W
+11:24:57 [INFO] Agent agent_0 detected food at distance 10, heading W
+11:24:57 [INFO] Agent agent_1 detected food at distance 6, heading W
+11:24:57 [INFO] Agent agent_3 detected food at distance 5, heading W
+11:24:58 [INFO] Agent agent_4 detected food at distance 5, heading W
+11:24:58 [INFO] Agent agent_0 detected food at distance 9, heading W
+11:24:58 [INFO] Agent agent_1 detected food at distance 5, heading W
+11:24:58 [INFO] Agent agent_3 detected food at distance 4, heading W
+11:24:58 [INFO] Agent agent_4 detected food at distance 4, heading W
+11:24:58 [INFO] Agent agent_0 detected food at distance 8, heading W
+11:24:58 [INFO] Agent agent_1 detected food at distance 4, heading W
+11:24:58 [INFO] Agent agent_3 detected food at distance 3, heading W
+11:24:59 [INFO] Agent agent_4 detected food at distance 3, heading W
+11:24:59 [INFO] Agent agent_0 detected food at distance 7, heading W
+11:24:59 [INFO] Agent agent_1 detected food at distance 3, heading W
+11:24:59 [INFO] Agent agent_3 detected food at distance 6, heading N
+11:24:59 [INFO] Agent agent_4 detected food at distance 6, heading N
+11:24:59 [INFO] Agent agent_0 detected food at distance 6, heading W
+11:24:59 [INFO] Agent agent_0 hit impassable terrain, pain: 50.0
+11:24:59 [INFO] Agent agent_1 detected food at distance 4, heading N
+11:25:00 [INFO] Agent agent_3 detected food at distance 1, heading W
+11:25:00 [INFO] Agent agent_3 collected food at (23, 9)
+11:25:00 [INFO] Agent agent_4 detected food at distance 5, heading N
+11:25:00 [INFO] Agent agent_0 detected food at distance 6, heading W
+11:25:00 [INFO] Agent agent_0 hit impassable terrain, pain: 99.0
+11:25:00 [INFO] Agent agent_1 detected food at distance 3, heading N
+11:25:00 [INFO] Agent agent_4 detected food at distance 4, heading N
+11:25:00 [INFO] Agent agent_0 detected food at distance 6, heading W
+11:25:00 [INFO] Agent agent_0 hit impassable terrain, pain: 100.0
+11:25:00 [INFO] Agent agent_1 detected food at distance 2, heading N
+11:25:01 [INFO] Agent agent_4 detected food at distance 3, heading N
+11:25:01 [INFO] Agent agent_0 detected food at distance 6, heading W
+11:25:01 [INFO] Agent agent_0 hit impassable terrain, pain: 100.0
+11:25:01 [INFO] Agent agent_1 detected food at distance 1, heading N
+11:25:01 [INFO] Agent agent_1 collected food at (18, 10)
+11:25:01 [INFO] Agent agent_4 detected food at distance 4, heading N
+11:25:01 [INFO] Agent agent_0 detected food at distance 6, heading W
+11:25:01 [INFO] Agent agent_0 hit impassable terrain, pain: 100.0
+11:25:02 [INFO] Agent agent_4 detected food at distance 3, heading N
+11:25:02 [INFO] Agent agent_0 detected food at distance 6, heading W
+11:25:02 [INFO] Agent agent_0 hit impassable terrain, pain: 100.0
+11:25:03 [INFO] Agent agent_4 detected food at distance 2, heading N
+11:25:03 [INFO] Agent agent_0 detected food at distance 6, heading W
+11:25:03 [INFO] Agent agent_0 hit impassable terrain, pain: 100.0
+11:25:03 [INFO] Agent agent_4 detected food at distance 1, heading N
+11:25:03 [INFO] Agent agent_4 collected food at (16, 10)
+11:25:03 [INFO] Agent agent_0 detected food at distance 8, heading W
+11:25:03 [INFO] Agent agent_0 hit impassable terrain, pain: 100.0
+11:25:04 [INFO] Agent agent_0 detected food at distance 8, heading W
+11:25:04 [INFO] Agent agent_0 hit impassable terrain, pain: 100.0
+11:25:04 [INFO] Agent agent_0 recalled food location from memory
+11:25:04 [INFO] Agent agent_0 detected food at distance 8, heading W
+11:25:04 [INFO] Agent agent_0 hit impassable terrain, pain: 100.0
+11:25:04 [INFO] Agent agent_0 recalled food location from memory
+11:25:05 [INFO] Agent agent_0 detected food at distance 8, heading W
+11:25:05 [INFO] Agent agent_0 hit impassable terrain, pain: 100.0
+11:25:05 [INFO] Agent agent_0 recalled food location from memory
+11:25:06 [INFO] Agent agent_0 detected food at distance 8, heading W
+11:25:06 [INFO] Agent agent_0 hit impassable terrain, pain: 100.0
+11:25:06 [INFO] Agent agent_0 recalled food location from memory
+11:25:06 [INFO] Simulation paused
+11:30:39 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+11:30:39 [INFO] NumExpr defaulting to 16 threads.
+11:30:42 [INFO] PyTorch found - communication features enabled
+11:30:42 [INFO] Loaded world from world.pkl
+11:30:42 [INFO] Agent initialized at home [20, 20].
+11:30:44 [INFO] Agent initialized at home [20, 20].
+11:30:44 [INFO] Agent initialized at home [20, 20].
+11:30:44 [INFO] Agent initialized at home [20, 20].
+11:30:44 [INFO] Agent initialized at home [20, 20].
+11:30:44 [INFO] Simulation initialized
+11:30:46 [INFO] Simulation resumed
+11:30:47 [INFO] Agent agent_1 detects obstacle ahead, reconsidering path
+11:30:47 [INFO] Agent agent_3 detects obstacle ahead, reconsidering path
+11:30:47 [INFO] Agent agent_1 detects obstacle ahead, reconsidering path
+11:30:47 [INFO] Agent agent_2 detects obstacle ahead, reconsidering path
+11:30:47 [INFO] Agent agent_1 detects obstacle ahead, reconsidering path
+11:30:48 [INFO] Agent agent_0 detects obstacle ahead, reconsidering path
+11:30:48 [INFO] Agent agent_2 detects obstacle ahead, reconsidering path
+11:30:49 [INFO] Agent agent_3 detects obstacle ahead, reconsidering path
+11:30:49 [INFO] Agent agent_2 detects obstacle ahead, reconsidering path
+11:30:49 [INFO] Agent agent_2 detects obstacle ahead, reconsidering path
+11:30:49 [INFO] Agent agent_0 detects obstacle ahead, reconsidering path
+11:30:50 [INFO] Agent agent_3 detects obstacle ahead, reconsidering path
+11:30:50 [INFO] Agent agent_4 detects obstacle ahead, reconsidering path
+11:30:51 [INFO] Agent agent_1 detects obstacle ahead, reconsidering path
+11:30:51 [INFO] Agent agent_1 detects obstacle ahead, reconsidering path
+11:30:53 [INFO] Agent agent_2 detects obstacle ahead, reconsidering path
+11:30:53 [INFO] Agent agent_0 detects obstacle ahead, reconsidering path
+11:30:53 [INFO] Agent agent_1 detects obstacle ahead, reconsidering path
+11:30:53 [INFO] Agent agent_2 detects obstacle ahead, reconsidering path
+11:30:54 [INFO] Agent agent_0 detects obstacle ahead, reconsidering path
+11:30:54 [INFO] Agent agent_4 detects obstacle ahead, reconsidering path
+11:30:55 [INFO] Agent agent_0 detects obstacle ahead, reconsidering path
+11:30:56 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:30:56 [INFO] Agent agent_4 detects obstacle ahead, reconsidering path
+11:30:56 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:30:56 [INFO] Agent agent_4 detects obstacle ahead, reconsidering path
+11:30:56 [INFO] Agent agent_1 detects obstacle ahead, reconsidering path
+11:30:57 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:30:57 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:30:57 [INFO] Agent agent_4 detects obstacle ahead, reconsidering path
+11:30:57 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:30:58 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:30:58 [INFO] Agent agent_0 detects obstacle ahead, reconsidering path
+11:30:58 [INFO] Agent agent_1 found food, going to collect it
+11:30:58 [INFO] Agent agent_1 collected food at (21, 30)
+11:30:58 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:30:59 [INFO] Agent agent_4 detects obstacle ahead, reconsidering path
+11:30:59 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:30:59 [INFO] Agent agent_4 detects obstacle ahead, reconsidering path
+11:30:59 [INFO] Agent agent_1 detects obstacle ahead, reconsidering path
+11:30:59 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:00 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:00 [INFO] Agent agent_4 detects obstacle ahead, reconsidering path
+11:31:00 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:01 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:01 [INFO] Agent agent_0 recalled food location from memory
+11:31:01 [INFO] Agent agent_2 recalled food location from memory
+11:31:02 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:02 [INFO] Agent agent_4 recalled food location from memory
+11:31:02 [INFO] Agent agent_0 recalled food location from memory
+11:31:02 [INFO] Agent agent_2 recalled food location from memory
+11:31:02 [INFO] Agent agent_4 recalled food location from memory
+11:31:02 [INFO] Agent agent_0 recalled food location from memory
+11:31:02 [INFO] Agent agent_1 detects obstacle ahead, reconsidering path
+11:31:03 [INFO] Agent agent_2 recalled food location from memory
+11:31:03 [INFO] Agent agent_4 recalled food location from memory
+11:31:03 [INFO] Agent agent_0 recalled food location from memory
+11:31:03 [INFO] Agent agent_1 detects obstacle ahead, reconsidering path
+11:31:03 [INFO] Agent agent_2 recalled food location from memory
+11:31:03 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:03 [INFO] Agent agent_4 recalled food location from memory
+11:31:04 [INFO] Agent agent_0 recalled food location from memory
+11:31:04 [INFO] Agent agent_2 recalled food location from memory
+11:31:04 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:04 [INFO] Agent agent_4 recalled food location from memory
+11:31:04 [INFO] Agent agent_0 recalled food location from memory
+11:31:04 [INFO] Agent agent_2 recalled food location from memory
+11:31:05 [INFO] Agent agent_4 recalled food location from memory
+11:31:05 [INFO] Agent agent_0 recalled food location from memory
+11:31:05 [INFO] Agent agent_2 recalled food location from memory
+11:31:05 [INFO] Agent agent_4 recalled food location from memory
+11:31:05 [INFO] Agent agent_0 recalled food location from memory
+11:31:06 [INFO] Agent agent_2 recalled food location from memory
+11:31:06 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:06 [INFO] Agent agent_4 recalled food location from memory
+11:31:06 [INFO] Agent agent_0 detects obstacle ahead, reconsidering path
+11:31:06 [INFO] Agent agent_0 recalled food location from memory
+11:31:06 [INFO] Agent agent_2 recalled food location from memory
+11:31:06 [INFO] Agent agent_3 recalled food location from memory
+11:31:07 [INFO] Agent agent_4 recalled food location from memory
+11:31:07 [INFO] Agent agent_0 recalled food location from memory
+11:31:07 [INFO] Agent agent_1 detects obstacle ahead, reconsidering path
+11:31:07 [INFO] Agent agent_2 recalled food location from memory
+11:31:07 [INFO] Agent agent_3 recalled food location from memory
+11:31:07 [INFO] Agent agent_4 recalled food location from memory
+11:31:07 [INFO] Agent agent_0 detects obstacle ahead, reconsidering path
+11:31:07 [INFO] Agent agent_0 recalled food location from memory
+11:31:08 [INFO] Agent agent_2 recalled food location from memory
+11:31:08 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:08 [INFO] Agent agent_3 recalled food location from memory
+11:31:08 [INFO] Agent agent_4 recalled food location from memory
+11:31:08 [INFO] Agent agent_0 recalled food location from memory
+11:31:08 [INFO] Agent agent_1 detects obstacle ahead, reconsidering path
+11:31:08 [INFO] Agent agent_2 recalled food location from memory
+11:31:08 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:08 [INFO] Agent agent_3 recalled food location from memory
+11:31:08 [INFO] Agent agent_4 recalled food location from memory
+11:31:09 [INFO] Agent agent_0 recalled food location from memory
+11:31:09 [INFO] Agent agent_2 recalled food location from memory
+11:31:09 [INFO] Agent agent_3 recalled food location from memory
+11:31:09 [INFO] Agent agent_4 recalled food location from memory
+11:31:09 [INFO] Agent agent_0 recalled food location from memory
+11:31:09 [INFO] Agent agent_1 detects obstacle ahead, reconsidering path
+11:31:10 [INFO] Agent agent_2 recalled food location from memory
+11:31:10 [INFO] Agent agent_3 recalled food location from memory
+11:31:10 [INFO] Agent agent_4 recalled food location from memory
+11:31:10 [INFO] Agent agent_0 recalled food location from memory
+11:31:10 [INFO] Agent agent_2 recalled food location from memory
+11:31:10 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:10 [INFO] Agent agent_3 recalled food location from memory
+11:31:11 [INFO] Agent agent_4 recalled food location from memory
+11:31:11 [INFO] Agent agent_0 recalled food location from memory
+11:31:11 [INFO] Agent agent_1 detects obstacle ahead, reconsidering path
+11:31:11 [INFO] Agent agent_2 recalled food location from memory
+11:31:11 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:11 [INFO] Agent agent_3 recalled food location from memory
+11:31:11 [INFO] Agent agent_4 recalled food location from memory
+11:31:11 [INFO] Agent agent_0 recalled food location from memory
+11:31:12 [INFO] Agent agent_2 recalled food location from memory
+11:31:12 [INFO] Agent agent_3 recalled food location from memory
+11:31:12 [INFO] Agent agent_4 recalled food location from memory
+11:31:12 [INFO] Agent agent_0 recalled food location from memory
+11:31:12 [INFO] Agent agent_2 recalled food location from memory
+11:31:13 [INFO] Agent agent_3 recalled food location from memory
+11:31:13 [INFO] Agent agent_4 recalled food location from memory
+11:31:13 [INFO] Agent agent_0 recalled food location from memory
+11:31:13 [INFO] Agent agent_2 recalled food location from memory
+11:31:13 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:13 [INFO] Agent agent_3 recalled food location from memory
+11:31:13 [INFO] Agent agent_4 recalled food location from memory
+11:31:14 [INFO] Agent agent_0 recalled food location from memory
+11:31:14 [INFO] Agent agent_2 recalled food location from memory
+11:31:14 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:14 [INFO] Agent agent_3 recalled food location from memory
+11:31:14 [INFO] Agent agent_4 recalled food location from memory
+11:31:14 [INFO] Agent agent_0 recalled food location from memory
+11:31:15 [INFO] Agent agent_2 recalled food location from memory
+11:31:15 [INFO] Agent agent_3 recalled food location from memory
+11:31:15 [INFO] Agent agent_4 recalled food location from memory
+11:31:15 [INFO] Agent agent_0 recalled food location from memory
+11:31:15 [INFO] Agent agent_1 recalled food location from memory
+11:31:15 [INFO] Agent agent_2 recalled food location from memory
+11:31:16 [INFO] Agent agent_3 recalled food location from memory
+11:31:16 [INFO] Agent agent_4 recalled food location from memory
+11:31:16 [INFO] Agent agent_0 recalled food location from memory
+11:31:16 [INFO] Agent agent_1 recalled food location from memory
+11:31:16 [INFO] Agent agent_2 recalled food location from memory
+11:31:16 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:16 [INFO] Agent agent_3 recalled food location from memory
+11:31:17 [INFO] Agent agent_4 recalled food location from memory
+11:31:17 [INFO] Agent agent_0 recalled food location from memory
+11:31:17 [INFO] Agent agent_1 recalled food location from memory
+11:31:17 [INFO] Agent agent_2 recalled food location from memory
+11:31:17 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:17 [INFO] Agent agent_3 recalled food location from memory
+11:31:17 [INFO] Agent agent_4 recalled food location from memory
+11:31:18 [INFO] Agent agent_0 recalled food location from memory
+11:31:18 [INFO] Agent agent_1 recalled food location from memory
+11:31:18 [INFO] Agent agent_2 recalled food location from memory
+11:31:18 [INFO] Agent agent_3 recalled food location from memory
+11:31:18 [INFO] Agent agent_4 recalled food location from memory
+11:31:18 [INFO] Agent agent_0 recalled food location from memory
+11:31:18 [INFO] Agent agent_1 recalled food location from memory
+11:31:19 [INFO] Agent agent_2 recalled food location from memory
+11:31:19 [INFO] Agent agent_3 recalled food location from memory
+11:31:19 [INFO] Agent agent_4 recalled food location from memory
+11:31:19 [INFO] Agent agent_0 recalled food location from memory
+11:31:19 [INFO] Agent agent_1 recalled food location from memory
+11:31:19 [INFO] Agent agent_2 recalled food location from memory
+11:31:20 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:20 [INFO] Agent agent_3 recalled food location from memory
+11:31:20 [INFO] Agent agent_4 recalled food location from memory
+11:31:20 [INFO] Agent agent_0 recalled food location from memory
+11:31:20 [INFO] Agent agent_1 recalled food location from memory
+11:31:20 [INFO] Agent agent_2 recalled food location from memory
+11:31:20 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:20 [INFO] Agent agent_3 recalled food location from memory
+11:31:21 [INFO] Agent agent_4 recalled food location from memory
+11:31:21 [INFO] Agent agent_0 recalled food location from memory
+11:31:21 [INFO] Agent agent_1 recalled food location from memory
+11:31:21 [INFO] Agent agent_2 recalled food location from memory
+11:31:21 [INFO] Agent agent_3 recalled food location from memory
+11:31:21 [INFO] Agent agent_4 recalled food location from memory
+11:31:22 [INFO] Agent agent_0 recalled food location from memory
+11:31:22 [INFO] Agent agent_1 recalled food location from memory
+11:31:22 [INFO] Agent agent_2 recalled food location from memory
+11:31:22 [INFO] Agent agent_3 recalled food location from memory
+11:31:22 [INFO] Agent agent_4 recalled food location from memory
+11:31:23 [INFO] Agent agent_0 recalled food location from memory
+11:31:23 [INFO] Agent agent_1 recalled food location from memory
+11:31:23 [INFO] Agent agent_2 recalled food location from memory
+11:31:23 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:23 [INFO] Agent agent_3 recalled food location from memory
+11:31:23 [INFO] Agent agent_4 recalled food location from memory
+11:31:23 [INFO] Agent agent_0 recalled food location from memory
+11:31:24 [INFO] Agent agent_1 recalled food location from memory
+11:31:24 [INFO] Agent agent_2 recalled food location from memory
+11:31:24 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:24 [INFO] Agent agent_3 recalled food location from memory
+11:31:24 [INFO] Agent agent_4 recalled food location from memory
+11:31:24 [INFO] Agent agent_0 recalled food location from memory
+11:31:24 [INFO] Agent agent_1 recalled food location from memory
+11:31:25 [INFO] Agent agent_2 recalled food location from memory
+11:31:25 [INFO] Agent agent_3 recalled food location from memory
+11:31:25 [INFO] Agent agent_4 recalled food location from memory
+11:31:25 [INFO] Agent agent_0 recalled food location from memory
+11:31:25 [INFO] Agent agent_1 recalled food location from memory
+11:31:25 [INFO] Agent agent_2 recalled food location from memory
+11:31:26 [INFO] Agent agent_3 recalled food location from memory
+11:31:26 [INFO] Agent agent_4 recalled food location from memory
+11:31:26 [INFO] Agent agent_0 recalled food location from memory
+11:31:26 [INFO] Agent agent_1 recalled food location from memory
+11:31:26 [INFO] Agent agent_2 recalled food location from memory
+11:31:27 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:27 [INFO] Agent agent_3 recalled food location from memory
+11:31:27 [INFO] Agent agent_4 recalled food location from memory
+11:31:27 [INFO] Agent agent_0 recalled food location from memory
+11:31:27 [INFO] Agent agent_1 recalled food location from memory
+11:31:27 [INFO] Agent agent_2 recalled food location from memory
+11:31:28 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:28 [INFO] Agent agent_3 recalled food location from memory
+11:31:28 [INFO] Agent agent_4 recalled food location from memory
+11:31:28 [INFO] Agent agent_0 recalled food location from memory
+11:31:28 [INFO] Agent agent_1 recalled food location from memory
+11:31:28 [INFO] Agent agent_2 recalled food location from memory
+11:31:28 [INFO] Agent agent_3 recalled food location from memory
+11:31:29 [INFO] Agent agent_4 recalled food location from memory
+11:31:29 [INFO] Agent agent_0 recalled food location from memory
+11:31:29 [INFO] Agent agent_1 recalled food location from memory
+11:31:29 [INFO] Agent agent_2 recalled food location from memory
+11:31:29 [INFO] Agent agent_3 recalled food location from memory
+11:31:30 [INFO] Agent agent_4 recalled food location from memory
+11:31:30 [INFO] Agent agent_0 recalled food location from memory
+11:31:30 [INFO] Agent agent_1 recalled food location from memory
+11:31:30 [INFO] Agent agent_2 recalled food location from memory
+11:31:30 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:30 [INFO] Agent agent_3 recalled food location from memory
+11:31:31 [INFO] Agent agent_4 recalled food location from memory
+11:31:31 [INFO] Agent agent_0 recalled food location from memory
+11:31:31 [INFO] Agent agent_1 recalled food location from memory
+11:31:31 [INFO] Agent agent_2 recalled food location from memory
+11:31:31 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:31 [INFO] Agent agent_3 recalled food location from memory
+11:31:32 [INFO] Agent agent_4 recalled food location from memory
+11:31:32 [INFO] Agent agent_0 recalled food location from memory
+11:31:32 [INFO] Agent agent_1 recalled food location from memory
+11:31:32 [INFO] Agent agent_2 recalled food location from memory
+11:31:32 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:32 [INFO] Agent agent_3 recalled food location from memory
+11:31:32 [INFO] Agent agent_4 recalled food location from memory
+11:31:33 [INFO] Agent agent_0 recalled food location from memory
+11:31:33 [INFO] Agent agent_1 recalled food location from memory
+11:31:33 [INFO] Agent agent_2 recalled food location from memory
+11:31:33 [INFO] Agent agent_3 recalled food location from memory
+11:31:33 [INFO] Agent agent_4 recalled food location from memory
+11:31:34 [INFO] Agent agent_0 recalled food location from memory
+11:31:34 [INFO] Agent agent_1 recalled food location from memory
+11:31:34 [INFO] Agent agent_2 recalled food location from memory
+11:31:34 [INFO] Agent agent_3 recalled food location from memory
+11:31:34 [INFO] Agent agent_4 recalled food location from memory
+11:31:35 [INFO] Agent agent_0 recalled food location from memory
+11:31:35 [INFO] Agent agent_1 recalled food location from memory
+11:31:35 [INFO] Agent agent_2 recalled food location from memory
+11:31:35 [INFO] CRITICAL ENERGY: Forcing rest at home
+11:31:35 [INFO] Agent agent_3 recalled food location from memory
+11:31:35 [INFO] Agent agent_4 recalled food location from memory
+11:31:36 [INFO] Simulation paused

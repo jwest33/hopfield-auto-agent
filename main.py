@@ -847,11 +847,11 @@ class Simulation:
         # Draw home marker
         hx, hy = self.world.home
         home_rect = pygame.Rect(hy * CELL_SIZE, hx * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-        home_icon = self.font_large.render("🏠", True, (0, 0, 0))
+        home_icon = self.font_large.render("H", True, (0, 0, 0))
         self.screen.blit(home_icon, home_icon.get_rect(center=home_rect.center))
         
         # Draw agents
-        agent_icons = ["🤖", "🧠", "👾", "🦾", "🦿", "👁️"]
+        agent_icons = ["1", "2", "3", "4", "5", "6"]
         for i, (agent_id, agent) in enumerate(self.population.agents.items()):
             ax, ay = agent.pos
             agent_rect = pygame.Rect(ay * CELL_SIZE, ax * CELL_SIZE, CELL_SIZE, CELL_SIZE)
