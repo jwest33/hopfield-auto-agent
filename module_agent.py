@@ -618,15 +618,20 @@ class Agent:
         else:
             self.rest_streak += 1
 
+        current_cell = self.w.cell(tuple(self.pos))
+        
         # Metabolism
-        self.hunger = min(MAX_H, self.hunger + 1)
+        hunger_increase = 1.0
+        # If we're resting at home, reduce the hunger increase rate
+        if act == "REST" and (current_cell.material == "home" or "home" in current_cell.tags):
+            hunger_increase *= 0.5  # Half the hunger increase when resting at home
+        self.hunger = min(MAX_H, self.hunger + hunger_increase)
         self.pain = max(0, self.pain - PAIN_DECAY)
         
         # Base metabolism cost
         self.energy -= self.hunger / MAX_H + self.pain / MAX_P
         
         # Temperature effects on metabolism
-        current_cell = self.w.cell(tuple(self.pos))
         temp_diff = abs(current_cell.temperature - 22.0)  # Ideal temperature is 22°C
         
         # More energy spent in extreme temperatures
@@ -695,10 +700,9 @@ class Agent:
                     self.energy = min(MAX_E, self.energy + FOOD_E)
                     self.hunger = max(0, self.hunger - FOOD_S)
                 
-                # Additional rest benefits at home
+                # Additional rest benefits at home - only energy recovery
                 self.energy = min(MAX_E, self.energy + HOME_ENERGY_RECOVERY * 0.5)
-                self.hunger = max(0, self.hunger - HOME_HUNGER_RECOVERY * 0.5)
-        
+                
         # Calculate reward
         energy_change = self.energy - prev_energy
         pain_change = self.pain - prev_pain
@@ -965,17 +969,17 @@ class AgentPopulation:
         """Handle agent reproduction and death"""
         # Check for deaths
         agents_to_remove = []
-        for agent_id, agent in self.agents.items():
+        #for agent_id, agent in self.agents.items():
             # Death from starvation or exhaustion
-            if agent.energy <= 0:
-                agents_to_remove.append(agent_id)
+            #if agent.energy <= 0:
+            #    agents_to_remove.append(agent_id)
                 
             # Death from extreme temperature
-            current_cell = self.world.cell(tuple(agent.pos))
-            if current_cell.temperature > 38 and random.random() < 0.1:  # 10% chance of death in extreme heat
-                agents_to_remove.append(agent_id)
-            if current_cell.temperature < 2 and random.random() < 0.1:  # 10% chance of death in extreme cold
-                agents_to_remove.append(agent_id)
+            #current_cell = self.world.cell(tuple(agent.pos))
+            #if current_cell.temperature > 38 and random.random() < 0.1:  # 10% chance of death in extreme heat
+            #    agents_to_remove.append(agent_id)
+            #if current_cell.temperature < 2 and random.random() < 0.1:  # 10% chance of death in extreme cold
+            #    agents_to_remove.append(agent_id)
         
         # Remove dead agents
         for agent_id in agents_to_remove:
