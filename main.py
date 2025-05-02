@@ -7,8 +7,33 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pandas as pd
 
+# Import PyTorch-related modules first - to avoid the torch.classes error
+try:
+    import torch
+    import torch.nn as nn
+    import torch.optim as optim
+    import torch.nn.functional as F
+    HAS_TORCH = True
+except ImportError:
+    HAS_TORCH = False
+    st.error("PyTorch is not installed. Communication features will be disabled.")
+
 from module_agent import Agent, AgentPopulation
 from module_new_world import World  # Updated import from module_new_world
+from module_hopfield import Hopfield
+
+# Make sure we have torch before importing module_coms
+if not HAS_TORCH:
+    # Create a minimal communication system substitute
+    class DummyCommSystem:
+        def __init__(self):
+            self.active_signals = []
+        def clean_old_signals(self):
+            pass
+        def initialize_agent(self, agent_id):
+            pass
+else:
+    from module_coms import NeuralCommunicationSystem
 
 # ───────────────────── configuration ─────────────────────
 GRID = 40  # Updated to match module_new_world's default
@@ -105,6 +130,13 @@ def load_or_create_world(grid_size=GRID):
     # If no file exists or loading failed, create a new world
     return World(grid_size)
 
+# Check if we're in a new session
+if 'initialized' not in st.session_state:
+    # Initialize with a welcome message
+    st.session_state.initialized = True
+    if not HAS_TORCH:
+        st.error("⚠️ PyTorch not found. Communication features will be disabled. Please install PyTorch to enable full functionality.")
+
 # Header
 st.markdown("<h1 class='header'>Multi-Agent Emergent Communication</h1>", unsafe_allow_html=True)
 st.markdown("<p class='subheader'>Agents that develop their own communication patterns through neural networks</p>", unsafe_allow_html=True)
@@ -113,7 +145,15 @@ st.markdown("<p class='subheader'>Agents that develop their own communication pa
 if "world" not in st.session_state:
     # Initialize world & population
     st.session_state.world = load_or_create_world(GRID)
-    st.session_state.population = AgentPopulation(st.session_state.world, initial_pop=5)
+    
+    # Use dummy comm system if PyTorch is not available
+    if not HAS_TORCH:
+        st.session_state.population = AgentPopulation(st.session_state.world, initial_pop=5)
+        # Replace the communication system with a dummy
+        st.session_state.population.comm_system = DummyCommSystem()
+    else:
+        st.session_state.population = AgentPopulation(st.session_state.world, initial_pop=5)
+        
     st.session_state.running = False
     st.session_state.speed = 0.15
     st.session_state.selected_agent_id = list(st.session_state.population.agents.keys())[0] if st.session_state.population.agents else None
@@ -159,7 +199,14 @@ with st.sidebar:
             os.remove(STATE_FILE)
             logging.info("🗑️ Saved state cleared.")
         st.session_state.world = load_or_create_world(GRID)
-        st.session_state.population = AgentPopulation(st.session_state.world, initial_pop=5)
+        
+        # Use appropriate communication system
+        if not HAS_TORCH:
+            st.session_state.population = AgentPopulation(st.session_state.world, initial_pop=5)
+            st.session_state.population.comm_system = DummyCommSystem()
+        else:
+            st.session_state.population = AgentPopulation(st.session_state.world, initial_pop=5)
+            
         st.session_state.running = False
         st.session_state.selected_agent_id = list(st.session_state.population.agents.keys())[0] if st.session_state.population.agents else None
         st.rerun()
@@ -191,9 +238,10 @@ with st.sidebar:
             st.session_state.selected_agent_id = selected_agent_name
             st.rerun()
     
-    # Communication stats
-    st.markdown("## Communication System")
-    st.markdown(f"**Active Signals:** {len(population.comm_system.active_signals)}")
+    # Communication stats (if PyTorch is available)
+    if HAS_TORCH:
+        st.markdown("## Communication System")
+        st.markdown(f"**Active Signals:** {len(population.comm_system.active_signals)}")
     
     # Population overview
     st.markdown("## Population Overview")
@@ -232,10 +280,21 @@ with main_col1:
     
     rgb = np.zeros((GRID, GRID, 3))
     
+    # Function to check if a cell has food
+    def is_food_cell(cell):
+        return cell.material == "food" or "food" in cell.tags
+    
     # Process the TerrainCell grid to a color grid
     for i, j in itertools.product(range(GRID), range(GRID)):
-        material = world.cell((i, j)).material
-        rgb[i, j] = material_color_map.get(material, [0.9, 0.9, 0.9])  # Default to light gray
+        cell = world.cell((i, j))
+        
+        # Check for food cells and make sure they're properly highlighted
+        if is_food_cell(cell):
+            rgb[i, j] = material_color_map["food"]
+        elif cell.material == "home" or "home" in cell.tags:
+            rgb[i, j] = material_color_map["home"]
+        else:
+            rgb[i, j] = material_color_map.get(cell.material, [0.9, 0.9, 0.9])  # Default to light gray
     
     # Create figure
     fig = px.imshow(rgb, aspect="equal")
@@ -286,16 +345,17 @@ with main_col1:
             font=dict(size=16)
         )
     
-    # Add markers for active signals
-    for signal in population.comm_system.active_signals:
-        sx, sy = signal["position"]
-        fig.add_annotation(
-            x=sy,
-            y=sx,
-            text="💬",
-            showarrow=False,
-            font=dict(size=14)
-        )
+    # Add markers for active signals (if PyTorch is available)
+    if HAS_TORCH:
+        for signal in population.comm_system.active_signals:
+            sx, sy = signal["position"]
+            fig.add_annotation(
+                x=sy,
+                y=sx,
+                text="💬",
+                showarrow=False,
+                font=dict(size=14)
+            )
     
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
@@ -323,20 +383,21 @@ with main_col2:
         st.markdown(f"### Food Stored: {selected_agent.store}")
         st.markdown(f"### Carrying Food: {'Yes' if selected_agent.carrying else 'No'}")
         
-        # Communication stats
-        st.markdown("### Communication")
-        if selected_agent.last_signal is not None:
-            st.markdown(f"Last Signal: {selected_agent.tick_count - selected_agent.last_signal_time} ticks ago")
-        else:
-            st.markdown("No recent signals")
+        # Communication stats (if PyTorch is available)
+        if HAS_TORCH:
+            st.markdown("### Communication")
+            if selected_agent.last_signal is not None:
+                st.markdown(f"Last Signal: {selected_agent.tick_count - selected_agent.last_signal_time} ticks ago")
+            else:
+                st.markdown("No recent signals")
         
         # Environment stats - new for module_new_world
         current_cell = world.cell(tuple(selected_agent.pos))
         st.markdown("### Environment")
         st.markdown(f"Terrain: {current_cell.material.title()}")
         st.markdown(f"Temperature: {current_cell.temperature:.1f}°C")
-        st.markdown(f"Risk: {current_cell.local_risk * 100:.1f}%")
         st.markdown(f"Passable: {'Yes' if current_cell.passable else 'No'}")
+        st.markdown(f"Risk: {current_cell.local_risk * 100:.1f}%")
         
         st.markdown("</div>", unsafe_allow_html=True)
     else:
@@ -454,8 +515,8 @@ if len(population.agents) > 1:
     metrics_cols[3].metric("Total Food Stored", total_food_stored)
     metrics_cols[4].metric("Agents Carrying Food", carrying_count)
     
-    # Communication visualization (simplified)
-    if population.comm_system.active_signals:
+    # Communication visualization (simplified) - only if PyTorch is available
+    if HAS_TORCH and population.comm_system.active_signals:
         st.markdown("### Active Communications")
         
         # Get active signal data

@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 import itertools, random, time, logging, os, sys
 from typing import Tuple, Dict, Any, List
@@ -24,8 +23,8 @@ MAX_E, MAX_H, MAX_P = 100, 100, 100
 MOVE_COST, CARRY_COST = 1, 1
 FOOD_E, FOOD_S = 40, 40
 PAIN_HIT, PAIN_DECAY = 25, 1
-HOME_ENERGY_RECOVERY = 5  # Added missing global for energy recovery at home
-HOME_HUNGER_RECOVERY = 5  # Added missing global for hunger reduction at home
+HOME_ENERGY_RECOVERY = 5  # Energy recovery at home
+HOME_HUNGER_RECOVERY = 5  # Hunger reduction at home
 
 BETA = 2.0
 SURPRISE_SCALE = 10
@@ -45,6 +44,11 @@ STATE_FILE = "agent_state.npz"
 # Updated to use material types from the new world system
 CELL_TYPES = np.array(["home", "food", "dirt", "stone", "rock", "water", "wood"]).reshape(-1, 1)
 ENC = OneHotEncoder(sparse_output=False, handle_unknown="ignore").fit(CELL_TYPES)
+
+# ───────────────────── Helper Functions ─────────────────────
+def is_food_cell(cell: TerrainCell) -> bool:
+    """Helper function to determine if a cell contains food"""
+    return (cell.material == "food" or "food" in cell.tags)
 
 # ───────────────────── Agent ─────────────────────
 class Agent:
@@ -251,6 +255,36 @@ class Agent:
         self.q_values[state_key][action] = new_q
 
     # -------- perception --------
+    def check_nearby_food(self) -> bool:
+        """Check nearby cells for food. Return True if found."""
+        # Check the current cell first
+        current_cell = self.w.cell(tuple(self.pos))
+        if is_food_cell(current_cell):
+            return True
+            
+        # Look in surrounding cells for food
+        for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1)]:
+            nx, ny = (self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID
+            neighbor_cell = self.w.cell((nx, ny))
+            if is_food_cell(neighbor_cell):
+                return True
+                
+        return False
+            
+    def find_nearest_food_distance(self) -> int:
+        """Find the distance to the nearest food cell."""
+        # Check in increasing radius
+        for radius in range(1, GRID // 2):
+            for dx in range(-radius, radius + 1):
+                for dy in range(-radius, radius + 1):
+                    if abs(dx) == radius or abs(dy) == radius:  # only check perimeter
+                        nx, ny = (self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID
+                        cell = self.w.cell((nx, ny))
+                        if is_food_cell(cell):
+                            return radius
+        
+        return GRID  # Default to max distance if nothing found
+
     def observe(self) -> np.ndarray:
         """Create an observation vector from the current environment state."""
         # Initialize observation vector with zeros
@@ -292,19 +326,13 @@ class Agent:
             1.0 if center_cell.passable else 0.0
         ])
         
-        # Check for nearby food
-        food_nearby = False
-        food_cells = []
-        
-        # Look in surrounding cells for food
-        for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1)]:
-            nx, ny = (self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID
-            neighbor_cell = self.w.cell((nx, ny))
-            if "food" in neighbor_cell.tags or neighbor_cell.material == "food":
-                food_nearby = True
-                food_cells.append((nx, ny))
-        
+        # Check for food in current and nearby cells (fixed)
+        food_nearby = self.check_nearby_food()
         observation.append(1.0 if food_nearby else 0.0)
+        
+        # Add food distance information
+        food_distance = self.find_nearest_food_distance()
+        observation.append(1.0 - min(1.0, food_distance / (GRID // 2)))  # Normalize to 0-1 range (1 = close, 0 = far)
         
         # Add environmental factors
         observation.extend([
@@ -352,6 +380,18 @@ class Agent:
                     return act
             # If no passable cells found, just rest and hope something changes
             return "REST"
+        
+        # Food detection - prioritize going to food if hungry and not carrying food
+        if self.hunger > MAX_H * 0.5 and not self.carrying:
+            # Check surrounding cells for food
+            for act, (dx, dy) in self.MOV.items():
+                if act == "REST":
+                    continue
+                nx, ny = (self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID
+                next_cell = self.w.cell((nx, ny))
+                if is_food_cell(next_cell) and next_cell.passable:
+                    logging.info(f"Agent {self.id} found food, going to collect it")
+                    return act
         
         # Critical energy check - force REST at home or go home when critical
         if self.energy < MAX_E * 0.15:  # Critical energy threshold
@@ -403,6 +443,10 @@ class Agent:
             
             # Calculate combined value using Q-value and heuristics
             value = q_value
+            
+            # Check for food in the next cell - prioritize food gathering
+            if is_food_cell(next_cell) and not self.carrying:
+                value += 20.0  # Strong bonus for moving to food
             
             # Add experience-based component
             material = next_cell.material
@@ -600,7 +644,7 @@ class Agent:
         food_eaten = False
         
         # Check if we found food
-        if (current_cell.material == "food" or "food" in current_cell.tags) and not self.carrying:
+        if is_food_cell(current_cell) and not self.carrying:
             self.carrying = True
             food_collected = True
             
@@ -627,20 +671,25 @@ class Agent:
             
             # Update the world grid with the new cell
             self.w.grid[x, y] = dirt_cell
+            
+            logging.info(f"Agent {self.id} collected food at {food_pos}")
         
         # Check for home interaction
         if (current_cell.material == "home" or "home" in current_cell.tags):
             if self.carrying and act != "REST":
                 self.carrying = False
                 self.store += 1
+                logging.info(f"Agent {self.id} stored food at home. Total: {self.store}")
             
             if act == "REST":
                 if self.carrying:
                     self.carrying = False
                     food_eaten = True
+                    logging.info(f"Agent {self.id} ate carried food at home")
                 elif self.store > 0:
                     self.store -= 1
                     food_eaten = True
+                    logging.info(f"Agent {self.id} ate stored food at home")
                 
                 if food_eaten:
                     self.energy = min(MAX_E, self.energy + FOOD_E)
@@ -742,7 +791,7 @@ class AgentPopulation:
         for _ in range(initial_pop):
             self.add_agent()
             
-        # Set up food in the environment if needed
+        # Set up food sources in the environment if needed
         self.setup_food_sources()
     
     def setup_food_sources(self, num_sources=20):
@@ -752,13 +801,14 @@ class AgentPopulation:
         for x in range(self.world.grid_size):
             for y in range(self.world.grid_size):
                 cell = self.world.cell((x, y))
-                if cell.material == "food" or "food" in cell.tags:
+                if is_food_cell(cell):
                     food_count += 1
         
         # Add more food if needed
         if food_count < num_sources:
             for _ in range(num_sources - food_count):
                 self.add_random_food()
+            logging.info(f"Added food sources. Total in world: {food_count + num_sources - food_count}")
     
     def add_random_food(self):
         """Add a food source at a random passable location"""
@@ -772,8 +822,7 @@ class AgentPopulation:
             if (cell.passable and 
                 cell.material != "home" and 
                 "home" not in cell.tags and
-                cell.material != "food" and
-                "food" not in cell.tags):
+                not is_food_cell(cell)):
                 
                 # Create a food cell based on the current cell
                 food_cell = TerrainCell(
@@ -919,6 +968,13 @@ class AgentPopulation:
         for agent_id, agent in self.agents.items():
             # Death from starvation or exhaustion
             if agent.energy <= 0:
+                agents_to_remove.append(agent_id)
+                
+            # Death from extreme temperature
+            current_cell = self.world.cell(tuple(agent.pos))
+            if current_cell.temperature > 38 and random.random() < 0.1:  # 10% chance of death in extreme heat
+                agents_to_remove.append(agent_id)
+            if current_cell.temperature < 2 and random.random() < 0.1:  # 10% chance of death in extreme cold
                 agents_to_remove.append(agent_id)
         
         # Remove dead agents
