@@ -881,9 +881,13 @@ class Agent:
         # Update energy, hunger, pain based on action
         # Different actions have different costs
         energy_cost = MOVE_COST
+        hunger_increase = 0.5  # Base hunger increase rate
+        
         if action == "REST":
             # Resting has a lower energy cost
             energy_cost = MOVE_COST * 0.5
+            # Hunger increases at a slower rate when resting
+            hunger_increase = 0.2
             self.rest_streak += 1
         else:
             self.rest_streak = 0
@@ -894,7 +898,7 @@ class Agent:
         
         # Update agent state
         self.energy = max(0, self.energy - energy_cost)
-        self.hunger = min(MAX_H, self.hunger + 0.5)
+        self.hunger = min(MAX_H, self.hunger + hunger_increase)
         self.pain = max(0, self.pain - PAIN_DECAY)  # Natural pain decay
         
         # Check if new position is valid before moving
@@ -926,10 +930,9 @@ class Agent:
         
         # Process environment feedback
         if action == "REST" and current_cell.material == "home":
-            # Recover energy and reduce hunger when resting at home
+            # Recover energy when resting at home
             self.energy = min(MAX_E, self.energy + HOME_ENERGY_RECOVERY)
-            self.hunger = max(0, self.hunger - HOME_HUNGER_RECOVERY)
-            
+                
             # Store food if carrying
             if self.carrying:
                 self.carrying = False
