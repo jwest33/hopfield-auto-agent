@@ -5,6 +5,7 @@ import random
 import logging
 from typing import Tuple, Set
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 
 import numpy as np
 
@@ -63,6 +64,12 @@ class World:
         self.is_day = True
         self.weather = "clear"
         self._weather_timer = 0
+        
+        # ---- agent bookkeeping -------------------------------------------
+        self.positions = {}   # agent -> (x,y)
+        self.homes     = {}   # agent -> (x,y)  # their personal “home” cell
+        self.hunger    = {}   # agent -> 0.0‥1.0
+        self.fatigue   = {}   # agent -> 0.0‥1.0
 
         # Initialize ambient & cell temperatures
         self.ambient_temperature = self._compute_ambient_temperature()
@@ -100,6 +107,26 @@ class World:
 
         effort = slope * cell.density * friction_local
         return 1.0 + effort
+
+    def valid_moves(self, pos: tuple[int, int]) -> list[str]:
+        """Return the action symbols the agent may attempt from *pos*.
+
+        We always include REST and PICK; the four cardinal moves are only
+        returned when the destination cell is in-bounds.
+        """
+        x, y = pos
+        moves = ["REST", "PICK"]          # always allowed
+
+        if self.in_bounds((x, y + 1)):
+            moves.append("N")
+        if self.in_bounds((x, y - 1)):
+            moves.append("S")
+        if self.in_bounds((x + 1, y)):
+            moves.append("E")
+        if self.in_bounds((x - 1, y)):
+            moves.append("W")
+
+        return moves
 
     def hazard_risk(self, pos: Tuple[int, int]) -> float:
         """Risk (pain) from slope steepness and material."""
@@ -277,3 +304,53 @@ class World:
                 cell = self.grid[x, y]
                 delta = self.ambient_temperature - cell.temperature
                 cell.temperature += cell.thermal_conductivity * delta
+
+    def add_agent(self, agent, start_pos):
+        self.positions[agent] = start_pos
+        self.homes[agent]     = start_pos
+        self.hunger[agent]    = 0.0
+        self.fatigue[agent]   = 0.0
+
+    def in_bounds(self, pos):
+        x, y = pos
+        return 0 <= x < self.grid_size and 0 <= y < self.grid_size
+
+    def is_free(self, pos):
+        return self.in_bounds(pos) and pos not in self.positions.values()
+
+    def valid_neighbors(self, pos):
+        x, y = pos
+        for dx, dy in ((1,0),(-1,0),(0,1),(0,-1)):
+            nxt = (x+dx, y+dy)
+            if self.in_bounds(nxt):
+                yield nxt
+
+    # -------- observation & apply for new agents ----------------------
+
+    def observe(self, agent):
+        pos     = self.positions[agent]
+        hunger  = self.hunger[agent]
+        fatigue = self.fatigue[agent]
+        vec = np.array([hunger, fatigue], dtype=float)
+        # you can add visible‑terrain, temps, etc.
+        return SimpleNamespace(
+            vector=vec,
+            hunger_level=lambda: hunger,
+            fatigue_level=lambda: fatigue,
+            is_hungry=lambda: hunger > 0.7,
+            is_tired=lambda: fatigue > 0.7
+        )
+
+    def apply(self, action, agent):
+        # very basic movement & metabolism
+        self.hunger[agent]  = min(1.0, self.hunger[agent]  + 0.01)
+        self.fatigue[agent] = min(1.0, self.fatigue[agent] + 0.01)
+        x, y = self.positions[agent]
+        if action == "N": new = (x, y+1)
+        elif action == "S": new = (x, y-1)
+        elif action == "E": new = (x+1, y)
+        elif action == "W": new = (x-1, y)
+        else: new = (x, y)
+        if self.is_free(new):                   # move if passable
+            self.positions[agent] = new
+            agent.pos = new

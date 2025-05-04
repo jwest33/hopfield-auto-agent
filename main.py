@@ -155,6 +155,176 @@ def load_simulation(filepath):
         logging.error(f"Error loading simulation: {e}")
         return None, None
 
+# Function to create a visualization of agent's goal planning and execution
+def create_goal_visualization(agent, width=350, height=200):
+    """Create a visualization of agent's goal planning and execution"""
+    # Create a new surface
+    surface = pygame.Surface((width, height))
+    surface.fill((50, 50, 50))  # Dark gray background
+    
+    # Check if agent has planning system
+    if not hasattr(agent, 'planning_system') or not agent.planning_system:
+        # Draw message
+        font = pygame.font.SysFont("Arial", 14)
+        text = font.render("No planning system available", True, (200, 200, 200))
+        surface.blit(text, (width//2 - text.get_width()//2, height//2 - text.get_height()//2))
+        return surface
+    
+    # Fonts
+    header_font = pygame.font.SysFont("Arial", 16, bold=True)
+    normal_font = pygame.font.SysFont("Arial", 14)
+    small_font = pygame.font.SysFont("Arial", 12)
+    
+    # Draw title
+    title = header_font.render("Agent Planning Visualization", True, (220, 220, 220))
+    surface.blit(title, (width//2 - title.get_width()//2, 10))
+    
+    # Draw current goal information
+    y_pos = 40
+    if agent.current_goal:
+        goal_text = f"Current Goal: {agent.current_goal.goal_type}"
+        goal_surf = normal_font.render(goal_text, True, (220, 220, 220))
+        surface.blit(goal_surf, (20, y_pos))
+        y_pos += 20
+        
+        # Draw goal details
+        if agent.current_goal.target:
+            target_text = f"Target: {agent.current_goal.target}"
+            target_surf = small_font.render(target_text, True, (200, 200, 200))
+            surface.blit(target_surf, (30, y_pos))
+            y_pos += 16
+        
+        priority_text = f"Priority: {agent.current_goal.priority:.2f}"
+        priority_surf = small_font.render(priority_text, True, (200, 200, 200))
+        surface.blit(priority_surf, (30, y_pos))
+        y_pos += 16
+        
+        # Draw plan progress bar
+        if agent.current_goal.plan:
+            plan_length = len(agent.current_goal.plan)
+            progress = agent.current_goal.plan_index
+            plan_text = f"Plan Progress: {progress}/{plan_length}"
+            plan_surf = small_font.render(plan_text, True, (200, 200, 200))
+            surface.blit(plan_surf, (30, y_pos))
+            y_pos += 16
+            
+            # Draw progress bar
+            progress_rect = pygame.Rect(30, y_pos, width - 60, 10)
+            pygame.draw.rect(surface, (80, 80, 80), progress_rect)  # Background
+            
+            if plan_length > 0:
+                fill_width = int(progress_rect.width * (progress / plan_length))
+                fill_rect = pygame.Rect(progress_rect.left, progress_rect.top, fill_width, progress_rect.height)
+                pygame.draw.rect(surface, (50, 150, 255), fill_rect)  # Fill
+            
+            pygame.draw.rect(surface, (150, 150, 150), progress_rect, 1)  # Border
+            y_pos += 20
+            
+            # Show plan steps
+            remaining = max(0, plan_length - progress)
+            if remaining > 0:
+                steps_text = "Next Steps: "
+                steps_surf = small_font.render(steps_text, True, (200, 200, 200))
+                surface.blit(steps_surf, (30, y_pos))
+                y_pos += 16
+                
+                # Show up to 5 upcoming actions
+                upcoming_actions = agent.current_goal.plan[progress:progress + min(5, remaining)]
+                for i, action in enumerate(upcoming_actions):
+                    action_text = f"{i+1}. {action}"
+                    action_surf = small_font.render(action_text, True, (180, 180, 180))
+                    surface.blit(action_surf, (40, y_pos))
+                    y_pos += 16
+    else:
+        no_goal_surf = normal_font.render("No active goal", True, (220, 220, 220))
+        surface.blit(no_goal_surf, (20, y_pos))
+        y_pos += 20
+    
+    # Draw other goals section
+    y_pos = max(y_pos + 10, 120)
+    other_goals_surf = normal_font.render("Other Goals:", True, (220, 220, 220))
+    surface.blit(other_goals_surf, (20, y_pos))
+    y_pos += 20
+    
+    # List other goals
+    if hasattr(agent, 'planning_system') and agent.planning_system:
+        other_goals = [g for g in agent.planning_system.goals if g != agent.current_goal]
+        if other_goals:
+            for i, goal in enumerate(other_goals[:4]):  # Show up to 4 other goals
+                goal_text = f"- {goal.goal_type} (Priority: {goal.priority:.2f})"
+                goal_surf = small_font.render(goal_text, True, (200, 200, 200))
+                surface.blit(goal_surf, (30, y_pos))
+                y_pos += 16
+        else:
+            no_other_surf = small_font.render("- No other goals", True, (200, 200, 200))
+            surface.blit(no_other_surf, (30, y_pos))
+    
+    # Draw border
+    pygame.draw.rect(surface, (100, 100, 100), (0, 0, width, height), 1)
+    
+    return surface
+
+# Function to draw a visualization of the agent's planned path
+def draw_agent_path(screen, world, agent, cell_size, grid_size):
+    """Draw a visualization of the agent's planned path on the grid"""
+    if not hasattr(agent, 'current_goal') or not agent.current_goal or not agent.current_goal.plan:
+        return
+    
+    # Get current position and plan
+    current_pos = agent.pos.copy()
+    plan = agent.current_goal.plan[agent.current_goal.plan_index:]
+    
+    if not plan:
+        return
+    
+    # Create a simulated path from the plan
+    path_positions = [current_pos.copy()]
+    sim_pos = current_pos.copy()
+    
+    for action in plan:
+        if action == "REST":
+            continue
+            
+        dx, dy = agent.MOV[action]
+        sim_pos = [(sim_pos[0] + dx) % grid_size, (sim_pos[1] + dy) % grid_size]
+        path_positions.append(sim_pos.copy())
+    
+    # Draw the path
+    for i, pos in enumerate(path_positions):
+        x, y = pos
+        alpha = 255 - min(255, i * 25)  # Fade out over distance
+        color = (255, 150, 0, alpha)  # Orange with alpha
+        
+        # Calculate rect
+        rect = pygame.Rect(y * cell_size, x * cell_size, cell_size, cell_size)
+        
+        # Skip drawing on agent's current position
+        if i == 0:
+            continue
+            
+        # Create surface with transparency
+        s = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
+        pygame.draw.rect(s, color, (0, 0, cell_size, cell_size), 2)
+        
+        # Draw a smaller rectangle to indicate path
+        inner_size = cell_size // 3
+        inner_rect = pygame.Rect(
+            (cell_size - inner_size) // 2, 
+            (cell_size - inner_size) // 2, 
+            inner_size, 
+            inner_size
+        )
+        pygame.draw.rect(s, color, inner_rect)
+        
+        # Add to screen
+        screen.blit(s, rect)
+        
+        # Add path step number for first few steps
+        if i < 6:
+            step_surf = pygame.font.SysFont(None, 14).render(f"{i}", True, (255, 255, 255))
+            step_rect = step_surf.get_rect(center=rect.center)
+            screen.blit(step_surf, step_rect)
+
 # ───────────────────── UI Components ─────────────────────
 class Button:
     """Interactive button with hover and click states"""
@@ -547,7 +717,7 @@ class Simulation:
         tab_top = world_info_top + 100  # Leave room for world info
         self.tabs = TabControl(
             (panel_left, tab_top, panel_width, WINDOW_HEIGHT - tab_top - margin),
-            ["Agent", "Population", "Interactions"]
+            ["Agent", "Planning", "Population", "Interactions"]
         )
         
         # Scrollable area for agent stats
@@ -563,6 +733,7 @@ class Simulation:
         # Cached visualization surfaces
         self.visualization_cache = {
             "agent_graph": None,
+            "goal_visualization": None,
             "population_stats": None,
             "interaction_graph": None,
             "minimap": None,
@@ -629,6 +800,7 @@ class Simulation:
             # Clear visualization cache
             self.visualization_cache = {
                 "agent_graph": None,
+                "goal_visualization": None,
                 "population_stats": None,
                 "interaction_graph": None,
                 "minimap": None,
@@ -649,6 +821,7 @@ class Simulation:
         # Clear visualization cache
         self.visualization_cache = {
             "agent_graph": None,
+            "goal_visualization": None,
             "population_stats": None,
             "interaction_graph": None,
             "minimap": None,
@@ -686,6 +859,7 @@ class Simulation:
                                 self.selected_agent_id = agent_id
                                 # Clear agent graph cache on agent change
                                 self.visualization_cache["agent_graph"] = None
+                                self.visualization_cache["goal_visualization"] = None
                                 break
                     
                     # Handle agent dropdown
@@ -706,6 +880,7 @@ class Simulation:
                                 self.agent_dropdown_open = False
                                 # Clear agent graph cache on agent change
                                 self.visualization_cache["agent_graph"] = None
+                                self.visualization_cache["goal_visualization"] = None
                                 break
                         else:
                             # Close dropdown if clicked outside
@@ -724,47 +899,6 @@ class Simulation:
         self.tabs.update(events)
         self.stats_area.update(events)
     
-    def update_caches(self):
-        """Update visualization caches if needed"""
-        # Only update caches every 30 ticks (about once per second) to save performance
-        if self.tick_count % 30 != 0 and self.visualization_cache["cache_tick"] > 0:
-            return
-            
-        # Update agent graph
-        if self.selected_agent_id in self.population.agents:
-            agent = self.population.agents[self.selected_agent_id]
-            if len(agent.history["energy"]) > 10:
-                self.visualization_cache["agent_graph"] = create_graph_surface(
-                    agent, 
-                    width=self.stats_area.rect.width, 
-                    height=150
-                )
-        
-        # Update population stats
-        if len(self.population.agents) > 1:
-            self.visualization_cache["population_stats"] = create_population_stats_surface(
-                self.population,
-                width=self.stats_area.rect.width,
-                height=150
-            )
-        
-        # Update interaction graph
-        if len(self.population.interactions) > 3:
-            self.visualization_cache["interaction_graph"] = create_interaction_graph(
-                self.population,
-                width=self.stats_area.rect.width,
-                height=150
-            )
-        
-        # Update minimap cache
-        self.visualization_cache["minimap"] = draw_minimap(
-            pygame.Surface((120, 120)), 
-            self.world, 
-            size=120
-        )
-        
-        # Update cache tick
-        self.visualization_cache["cache_tick"] = self.tick_count
     
     def update(self):
         """Update the simulation state"""
@@ -782,15 +916,41 @@ class Simulation:
             self.last_tick_time = current_time
             self.tick_count += 1
             self.step_manually = False
-        
-        # Update visualization caches
-        self.update_caches()
+            
+            # Update visualizations when tick count changes
+            self.update_visualization_cache()
         
         # Update agent dropdown height
         if self.agent_dropdown_open:
             self.agent_dropdown_rect.height = len(self.population.agents) * 25
         else:
             self.agent_dropdown_rect.height = 0
+    
+    def update_visualization_cache(self):
+        """Update cached visualizations when needed"""
+        # Only update when tick count changes
+        if self.tick_count == self.visualization_cache["cache_tick"]:
+            return
+        
+        # Update agent graph if selected
+        if self.selected_agent_id in self.population.agents:
+            agent = self.population.agents[self.selected_agent_id]
+            self.visualization_cache["agent_graph"] = create_graph_surface(agent)
+            
+            # Add the new goal visualization
+            self.visualization_cache["goal_visualization"] = create_goal_visualization(agent)
+        
+        # Update population stats
+        self.visualization_cache["population_stats"] = create_population_stats_surface(self.population)
+        
+        # Update interaction graph
+        self.visualization_cache["interaction_graph"] = create_interaction_graph(self.population)
+        
+        # Update minimap
+        self.visualization_cache["minimap"] = draw_minimap(None, self.world)
+        
+        # Update cache tick
+        self.visualization_cache["cache_tick"] = self.tick_count
     
     def render(self):
         """Render the simulation to the screen"""
@@ -850,6 +1010,11 @@ class Simulation:
         home_icon = self.font_large.render("H", True, (0, 0, 0))
         self.screen.blit(home_icon, home_icon.get_rect(center=home_rect.center))
         
+        # Draw selected agent's path if applicable
+        if self.selected_agent_id in self.population.agents:
+            agent = self.population.agents[self.selected_agent_id]
+            draw_agent_path(self.screen, self.world, agent, CELL_SIZE, GRID)
+        
         # Draw agents
         agent_icons = ["1", "2", "3", "4", "5", "6"]
         for i, (agent_id, agent) in enumerate(self.population.agents.items()):
@@ -879,18 +1044,7 @@ class Simulation:
             id_surf = self.font_small.render(id_num, True, (0, 0, 0))
             id_rect = id_surf.get_rect(center=agent_rect.center)
             self.screen.blit(id_surf, id_rect)
-            
-            # Draw carrying indicator if agent is carrying something
-            if agent.carrying:
-                # Draw a smaller red circle at top-right
-                carry_pos = (agent_rect.right - CELL_SIZE//4, agent_rect.top + CELL_SIZE//4)
-                pygame.draw.circle(
-                    self.screen, 
-                    (220, 20, 60),  # Red
-                    carry_pos, 
-                    CELL_SIZE//4
-                )
-        
+
         # Draw communication signals
         if HAS_TORCH:
             for signal in self.population.comm_system.active_signals:
@@ -984,7 +1138,27 @@ class Simulation:
                 # No agent selected
                 info = self.font_normal.render("No agent selected", True, COLOR_TEXT)
                 self.screen.blit(info, info.get_rect(center=content_rect.center))
-        elif self.tabs.active_tab == 1:  # Population tab
+        elif self.tabs.active_tab == 1:  # Planning tab
+            if self.selected_agent_id in self.population.agents:
+                agent = self.population.agents[self.selected_agent_id]
+                if self.visualization_cache["goal_visualization"] is not None:
+                    # Set up proper positioning
+                    goal_viz_rect = self.visualization_cache["goal_visualization"].get_rect(
+                        topleft=(self.stats_area.rect.left, 
+                                self.stats_area.rect.top + 10 - self.stats_area.scroll_y)
+                    )
+                    
+                    # Render the visualization
+                    if goal_viz_rect.top > 0 and goal_viz_rect.top < WINDOW_HEIGHT:
+                        self.screen.blit(self.visualization_cache["goal_visualization"], goal_viz_rect)
+                    
+                    # Update content height for scrolling
+                    self.stats_area.content_height = goal_viz_rect.height + 50
+            else:
+                # No agent selected
+                info = self.font_normal.render("No agent selected", True, COLOR_TEXT)
+                self.screen.blit(info, info.get_rect(center=content_rect.center))
+        elif self.tabs.active_tab == 2:  # Population tab
             self.render_population_stats()
         else:  # Interactions tab
             self.render_interaction_stats()
@@ -1153,6 +1327,58 @@ class Simulation:
                 self.screen.blit(info_surf, info_rect)
             content_height += line_height
         
+        # Goals & Planning information
+        if hasattr(agent, 'current_goal') and agent.current_goal:
+            content_height += section_spacing
+            goal_header = self.font_normal.render("Goals & Planning", True, COLOR_TEXT_HEADER)
+            goal_header_rect = self.stats_area.get_content_rect(content_height)
+            if goal_header_rect.top > 0 and goal_header_rect.top < WINDOW_HEIGHT:
+                self.screen.blit(goal_header, goal_header_rect)
+            content_height += line_height
+            
+            goal_text = f"Current Goal: {agent.current_goal.goal_type}"
+            if agent.current_goal.target:
+                goal_text += f" (Target: {agent.current_goal.target})"
+            
+            goal_rect = self.stats_area.get_content_rect(content_height)
+            if goal_rect.top > 0 and goal_rect.top < WINDOW_HEIGHT:
+                goal_surf = self.font_normal.render(goal_text, True, COLOR_TEXT)
+                self.screen.blit(goal_surf, goal_rect)
+            content_height += line_height
+            
+            # Goal priority
+            priority_text = f"Priority: {agent.current_goal.priority:.2f}"
+            priority_rect = self.stats_area.get_content_rect(content_height)
+            if priority_rect.top > 0 and priority_rect.top < WINDOW_HEIGHT:
+                priority_surf = self.font_normal.render(priority_text, True, COLOR_TEXT)
+                self.screen.blit(priority_surf, priority_rect)
+            content_height += line_height
+            
+            # Plan information
+            if hasattr(agent.current_goal, 'plan') and agent.current_goal.plan:
+                plan_length = len(agent.current_goal.plan)
+                progress = agent.current_goal.plan_index
+                remaining = max(0, plan_length - progress)
+                
+                plan_text = f"Plan Progress: {progress}/{plan_length} steps"
+                plan_rect = self.stats_area.get_content_rect(content_height)
+                if plan_rect.top > 0 and plan_rect.top < WINDOW_HEIGHT:
+                    plan_surf = self.font_normal.render(plan_text, True, COLOR_TEXT)
+                    self.screen.blit(plan_surf, plan_rect)
+                content_height += line_height
+                
+                # Show upcoming actions in plan
+                if remaining > 0:
+                    upcoming_text = "Upcoming: "
+                    upcoming_actions = agent.current_goal.plan[agent.current_goal.plan_index:agent.current_goal.plan_index + min(5, remaining)]
+                    upcoming_text += ", ".join(upcoming_actions)
+                    
+                    upcoming_rect = self.stats_area.get_content_rect(content_height)
+                    if upcoming_rect.top > 0 and upcoming_rect.top < WINDOW_HEIGHT:
+                        upcoming_surf = self.font_normal.render(upcoming_text, True, COLOR_TEXT)
+                        self.screen.blit(upcoming_surf, upcoming_rect)
+                    content_height += line_height
+        
         # Communication information (if PyTorch available)
         if HAS_TORCH:
             content_height += section_spacing
@@ -1163,8 +1389,8 @@ class Simulation:
             content_height += line_height
             
             comm_info = [
-                f"Signals Sent: {agent.last_signal_time if agent.last_signal is not None else 0}",
-                f"Signal Cooldown: {agent.signal_cooldown}"
+                f"Signals Sent: {agent.last_signal_time if hasattr(agent, 'last_signal_time') and agent.last_signal is not None else 0}",
+                f"Signal Cooldown: {agent.signal_cooldown if hasattr(agent, 'signal_cooldown') else 0}"
             ]
             
             for info in comm_info:

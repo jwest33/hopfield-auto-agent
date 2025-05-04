@@ -896,3 +896,436 @@
 11:31:35 [INFO] Agent agent_3 recalled food location from memory
 11:31:35 [INFO] Agent agent_4 recalled food location from memory
 11:31:36 [INFO] Simulation paused
+07:18:49 [WARNING] PyTorch not found - communication features disabled
+07:18:49 [INFO] Loaded world from world.pkl
+07:19:48 [WARNING] PyTorch not found - communication features disabled
+07:19:48 [INFO] Loaded world from world.pkl
+07:24:27 [WARNING] PyTorch not found - communication features disabled
+07:24:28 [INFO] Loaded world from world.pkl
+07:32:53 [WARNING] PyTorch not found - communication features disabled
+07:32:53 [INFO] Loaded world from world.pkl
+07:37:35 [WARNING] PyTorch not found - communication features disabled
+07:37:35 [INFO] Loaded world from world.pkl
+07:39:21 [WARNING] PyTorch not found - communication features disabled
+07:39:21 [INFO] Loaded world from world.pkl
+07:40:31 [WARNING] PyTorch not found - communication features disabled
+07:40:32 [INFO] Created new world with grid size 40
+07:40:32 [INFO] Simulation initialized
+07:41:08 [WARNING] PyTorch not found - communication features disabled
+07:41:08 [INFO] Created new world with grid size 40
+07:41:08 [INFO] Simulation initialized
+09:27:00 [WARNING] PyTorch not found - communication features disabled
+09:27:00 [INFO] Loaded world from world.pkl
+09:27:00 [INFO] Simulation initialized
+09:27:29 [WARNING] PyTorch not found - communication features disabled
+09:27:29 [INFO] Loaded world from world.pkl
+09:27:29 [INFO] Simulation initialized
+09:27:53 [WARNING] PyTorch not found - communication features disabled
+09:27:53 [INFO] Loaded world from world.pkl
+09:27:53 [INFO] Simulation initialized
+09:31:08 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+09:31:08 [INFO] NumExpr defaulting to 16 threads.
+09:31:11 [INFO] PyTorch found - communication features enabled
+09:31:11 [INFO] Loaded world from world.pkl
+09:31:11 [INFO] Agent initialized at home [20, 20].
+09:31:13 [INFO] Agent initialized at home [20, 20].
+09:31:13 [INFO] Agent initialized at home [20, 20].
+09:31:13 [INFO] Agent initialized at home [20, 20].
+09:31:13 [INFO] Agent initialized at home [20, 20].
+09:31:13 [INFO] Simulation initialized
+09:31:14 [INFO] Simulation resumed
+09:31:15 [INFO] Agent agent_3 detects obstacle ahead, reconsidering path
+09:31:15 [INFO] Agent agent_4 detects obstacle ahead, reconsidering path
+09:31:15 [INFO] Agent agent_0 detects obstacle ahead, reconsidering path
+09:31:15 [INFO] Agent agent_3 detects obstacle ahead, reconsidering path
+09:31:15 [INFO] Agent agent_0 detects obstacle ahead, reconsidering path
+09:31:15 [INFO] Agent agent_3 detects obstacle ahead, reconsidering path
+09:31:16 [INFO] Agent agent_0 detects obstacle ahead, reconsidering path
+09:31:17 [INFO] Simulation paused
+10:02:08 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+10:02:08 [INFO] NumExpr defaulting to 16 threads.
+10:02:10 [INFO] PyTorch found - communication features enabled
+10:02:11 [INFO] Loaded world from world.pkl
+10:02:11 [INFO] Agent initialized at home [20, 20].
+10:02:12 [INFO] Agent initialized at home [20, 20].
+10:02:12 [INFO] Agent initialized at home [20, 20].
+10:02:12 [INFO] Agent initialized at home [20, 20].
+10:02:12 [INFO] Agent initialized at home [20, 20].
+10:02:12 [INFO] Simulation initialized
+10:02:14 [INFO] Simulation resumed
+10:02:20 [INFO] Agent agent_1 losing energy from high pain: 1.5
+10:02:20 [INFO] Agent agent_1 losing energy from high pain: 1.5
+10:02:21 [INFO] Agent agent_1 losing energy from high pain: 1.6
+10:02:21 [INFO] Agent agent_1 losing energy from high pain: 1.7
+10:02:21 [INFO] Agent agent_1 losing energy from high pain: 1.8
+10:02:22 [INFO] Agent agent_1 losing energy from high pain: 1.9
+10:02:22 [INFO] Simulation paused
+10:10:16 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+10:10:16 [INFO] NumExpr defaulting to 16 threads.
+10:10:18 [INFO] PyTorch found - communication features enabled
+10:10:19 [INFO] Loaded world from world.pkl
+10:10:19 [INFO] Agent initialized at home [20, 20].
+10:10:20 [INFO] Agent initialized at home [20, 20].
+10:10:20 [INFO] Agent initialized at home [20, 20].
+10:10:20 [INFO] Agent initialized at home [20, 20].
+10:10:20 [INFO] Agent initialized at home [20, 20].
+10:10:20 [INFO] Simulation initialized
+10:10:26 [INFO] Simulation resumed
+10:10:36 [INFO] Simulation paused
+10:10:39 [INFO] Simulation resumed
+10:10:45 [INFO] Agent agent_0 recalled food location from memory
+10:10:45 [INFO] Agent agent_1 recalled food location from memory
+10:10:45 [INFO] Agent agent_2 recalled food location from memory
+10:10:46 [INFO] Agent agent_3 recalled food location from memory
+10:10:46 [INFO] Agent agent_4 recalled food location from memory
+10:10:46 [INFO] Agent agent_0 recalled food location from memory
+10:10:46 [INFO] Agent agent_1 recalled food location from memory
+10:10:46 [INFO] Agent agent_2 recalled food location from memory
+10:10:46 [INFO] Agent agent_3 recalled food location from memory
+10:10:46 [INFO] Agent agent_4 collected food at (22, 14)
+10:10:47 [INFO] Agent agent_0 recalled food location from memory
+10:10:47 [INFO] Agent agent_1 recalled food location from memory
+10:10:47 [INFO] Agent agent_2 recalled food location from memory
+10:10:47 [INFO] Agent agent_3 recalled food location from memory
+10:10:47 [INFO] Agent agent_0 recalled food location from memory
+10:10:47 [INFO] Agent agent_1 recalled food location from memory
+10:10:47 [INFO] Agent agent_2 recalled food location from memory
+10:10:48 [INFO] Agent agent_3 recalled food location from memory
+10:10:48 [INFO] Agent agent_0 recalled food location from memory
+10:10:48 [INFO] Agent agent_1 recalled food location from memory
+10:10:48 [INFO] Agent agent_2 recalled food location from memory
+10:10:48 [INFO] Agent agent_3 recalled food location from memory
+10:10:48 [INFO] Agent agent_0 recalled food location from memory
+10:10:49 [INFO] Agent agent_1 recalled food location from memory
+10:10:49 [INFO] Agent agent_2 recalled food location from memory
+10:10:49 [INFO] Agent agent_3 recalled food location from memory
+10:10:49 [INFO] Agent agent_0 recalled food location from memory
+10:10:49 [INFO] Agent agent_1 recalled food location from memory
+10:10:49 [INFO] Agent agent_2 recalled food location from memory
+10:10:49 [INFO] Agent agent_3 recalled food location from memory
+10:10:50 [INFO] Agent agent_0 recalled food location from memory
+10:10:50 [INFO] Agent agent_1 recalled food location from memory
+10:10:50 [INFO] Agent agent_2 recalled food location from memory
+10:10:50 [INFO] Agent agent_3 recalled food location from memory
+10:10:50 [INFO] Agent agent_0 recalled food location from memory
+10:10:51 [INFO] Agent agent_1 recalled food location from memory
+10:10:51 [INFO] Agent agent_2 recalled food location from memory
+10:10:51 [INFO] Agent agent_3 recalled food location from memory
+10:10:51 [INFO] Agent agent_0 recalled food location from memory
+10:10:51 [INFO] Agent agent_1 recalled food location from memory
+10:10:51 [INFO] Agent agent_2 recalled food location from memory
+10:10:51 [INFO] Agent agent_3 recalled food location from memory
+10:10:52 [INFO] Agent agent_0 recalled food location from memory
+10:10:52 [INFO] Agent agent_1 recalled food location from memory
+10:10:52 [INFO] Agent agent_2 recalled food location from memory
+10:10:52 [INFO] Agent agent_3 recalled food location from memory
+10:10:52 [INFO] Agent agent_0 recalled food location from memory
+10:10:53 [INFO] Agent agent_1 recalled food location from memory
+10:10:53 [INFO] Agent agent_2 recalled food location from memory
+10:10:53 [INFO] Agent agent_3 recalled food location from memory
+10:10:53 [INFO] Agent agent_0 recalled food location from memory
+10:10:53 [INFO] Agent agent_1 recalled food location from memory
+10:10:53 [INFO] Agent agent_2 recalled food location from memory
+10:10:54 [INFO] Agent agent_3 recalled food location from memory
+10:10:54 [INFO] Agent agent_0 recalled food location from memory
+10:10:54 [INFO] Agent agent_1 recalled food location from memory
+10:10:54 [INFO] Agent agent_2 recalled food location from memory
+10:10:54 [INFO] Agent agent_3 recalled food location from memory
+10:10:55 [INFO] Agent agent_0 recalled food location from memory
+10:10:55 [INFO] Agent agent_1 recalled food location from memory
+10:10:55 [INFO] Agent agent_2 recalled food location from memory
+10:10:55 [INFO] Agent agent_3 recalled food location from memory
+10:10:55 [INFO] Agent agent_0 recalled food location from memory
+10:10:56 [INFO] Agent agent_1 recalled food location from memory
+10:10:56 [INFO] Agent agent_2 recalled food location from memory
+10:10:56 [INFO] Agent agent_3 recalled food location from memory
+10:10:56 [INFO] Agent agent_0 recalled food location from memory
+10:10:56 [INFO] Agent agent_1 recalled food location from memory
+10:10:56 [INFO] Agent agent_2 recalled food location from memory
+10:10:57 [INFO] Agent agent_3 recalled food location from memory
+10:10:57 [INFO] Agent agent_0 recalled food location from memory
+10:10:57 [INFO] Agent agent_1 recalled food location from memory
+10:10:57 [INFO] Agent agent_2 recalled food location from memory
+10:10:57 [INFO] Agent agent_3 recalled food location from memory
+10:10:58 [INFO] Agent agent_0 recalled food location from memory
+10:10:58 [INFO] Agent agent_1 recalled food location from memory
+10:10:58 [INFO] Agent agent_2 recalled food location from memory
+10:10:58 [INFO] Agent agent_3 recalled food location from memory
+10:10:58 [INFO] Agent agent_0 recalled food location from memory
+10:10:59 [INFO] Agent agent_1 recalled food location from memory
+10:10:59 [INFO] Agent agent_2 recalled food location from memory
+10:10:59 [INFO] Agent agent_3 recalled food location from memory
+10:10:59 [INFO] Agent agent_0 recalled food location from memory
+10:10:59 [INFO] Agent agent_1 recalled food location from memory
+10:11:00 [INFO] Agent agent_2 recalled food location from memory
+10:11:00 [INFO] Agent agent_3 recalled food location from memory
+10:11:00 [INFO] Agent agent_0 recalled food location from memory
+10:11:00 [INFO] Agent agent_1 recalled food location from memory
+10:11:00 [INFO] Agent agent_2 recalled food location from memory
+10:11:00 [INFO] Agent agent_3 recalled food location from memory
+10:11:01 [INFO] Agent agent_0 recalled food location from memory
+10:11:01 [INFO] Agent agent_1 recalled food location from memory
+10:11:01 [INFO] Agent agent_2 recalled food location from memory
+10:11:01 [INFO] Agent agent_3 recalled food location from memory
+10:11:02 [INFO] Agent agent_0 recalled food location from memory
+10:11:02 [INFO] Agent agent_1 recalled food location from memory
+10:11:02 [INFO] Agent agent_2 recalled food location from memory
+10:11:02 [INFO] Agent agent_3 recalled food location from memory
+10:11:02 [INFO] Agent agent_0 recalled food location from memory
+10:11:03 [INFO] Agent agent_1 recalled food location from memory
+10:11:03 [INFO] Agent agent_2 recalled food location from memory
+10:11:03 [INFO] Agent agent_3 recalled food location from memory
+10:11:03 [INFO] Agent agent_0 recalled food location from memory
+10:11:03 [INFO] Agent agent_1 recalled food location from memory
+10:11:04 [INFO] Agent agent_2 recalled food location from memory
+10:11:04 [INFO] Agent agent_3 recalled food location from memory
+10:11:04 [INFO] Agent agent_0 recalled food location from memory
+10:11:04 [INFO] Agent agent_1 recalled food location from memory
+10:11:04 [INFO] Agent agent_2 recalled food location from memory
+10:11:05 [INFO] Agent agent_3 recalled food location from memory
+10:11:05 [INFO] Agent agent_0 recalled food location from memory
+10:11:05 [INFO] Agent agent_1 recalled food location from memory
+10:11:05 [INFO] Agent agent_2 recalled food location from memory
+10:11:06 [INFO] Agent agent_3 recalled food location from memory
+10:11:06 [INFO] Agent agent_0 recalled food location from memory
+10:11:06 [INFO] Agent agent_1 recalled food location from memory
+10:11:06 [INFO] Agent agent_2 recalled food location from memory
+10:11:06 [INFO] Agent agent_3 recalled food location from memory
+10:11:07 [INFO] Agent agent_0 recalled food location from memory
+10:11:07 [INFO] Agent agent_1 recalled food location from memory
+10:11:07 [INFO] Agent agent_2 recalled food location from memory
+10:11:07 [INFO] Agent agent_3 recalled food location from memory
+10:11:08 [INFO] Agent agent_0 recalled food location from memory
+10:11:08 [INFO] Agent agent_1 recalled food location from memory
+10:11:08 [INFO] Agent agent_2 recalled food location from memory
+10:11:08 [INFO] Agent agent_3 recalled food location from memory
+10:11:09 [INFO] Agent agent_0 recalled food location from memory
+10:11:09 [INFO] Agent agent_1 recalled food location from memory
+10:11:09 [INFO] Agent agent_2 recalled food location from memory
+10:11:09 [INFO] Agent agent_3 recalled food location from memory
+10:11:10 [INFO] Agent agent_0 recalled food location from memory
+10:11:10 [INFO] Agent agent_1 recalled food location from memory
+10:11:10 [INFO] Agent agent_2 recalled food location from memory
+10:11:10 [INFO] Agent agent_3 recalled food location from memory
+10:11:10 [INFO] Agent agent_0 recalled food location from memory
+10:11:11 [INFO] Agent agent_1 recalled food location from memory
+10:15:50 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+10:15:50 [INFO] NumExpr defaulting to 16 threads.
+10:16:00 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+10:16:00 [INFO] NumExpr defaulting to 16 threads.
+10:16:03 [INFO] PyTorch found - communication features enabled
+10:16:03 [INFO] Loaded world from world.pkl
+10:16:03 [INFO] Agent initialized at home [20, 20].
+10:16:04 [INFO] Agent initialized at home [20, 20].
+10:16:04 [INFO] Agent initialized at home [20, 20].
+10:16:04 [INFO] Agent initialized at home [20, 20].
+10:16:04 [INFO] Agent initialized at home [20, 20].
+10:16:04 [INFO] Simulation initialized
+10:16:06 [INFO] Simulation resumed
+10:16:13 [INFO] Simulation paused
+10:16:26 [INFO] Simulation resumed
+10:16:34 [INFO] Agent agent_0 recalled food location from memory
+10:16:34 [INFO] Agent agent_1 recalled food location from memory
+10:16:34 [INFO] Agent agent_2 recalled food location from memory
+10:16:34 [INFO] Agent agent_3 recalled food location from memory
+10:16:34 [INFO] Agent agent_4 recalled food location from memory
+10:16:35 [INFO] Agent agent_0 recalled food location from memory
+10:16:35 [INFO] Agent agent_1 recalled food location from memory
+10:16:35 [INFO] Agent agent_2 recalled food location from memory
+10:16:35 [INFO] Agent agent_3 recalled food location from memory
+10:16:35 [INFO] Agent agent_4 recalled food location from memory
+10:16:35 [INFO] Agent agent_0 recalled food location from memory
+10:16:35 [INFO] Agent agent_1 recalled food location from memory
+10:16:35 [INFO] Agent agent_2 recalled food location from memory
+10:16:35 [INFO] Agent agent_3 recalled food location from memory
+10:16:36 [INFO] Agent agent_4 recalled food location from memory
+10:16:36 [INFO] Agent agent_0 recalled food location from memory
+10:16:36 [INFO] Agent agent_1 recalled food location from memory
+10:16:36 [INFO] Agent agent_2 recalled food location from memory
+10:16:36 [INFO] Agent agent_3 recalled food location from memory
+10:16:36 [INFO] Agent agent_4 recalled food location from memory
+10:16:36 [INFO] Agent agent_0 recalled food location from memory
+10:16:36 [INFO] Agent agent_1 recalled food location from memory
+10:16:37 [INFO] Agent agent_2 recalled food location from memory
+10:16:37 [INFO] Agent agent_3 recalled food location from memory
+10:16:37 [INFO] Agent agent_4 recalled food location from memory
+10:16:37 [INFO] Agent agent_0 recalled food location from memory
+10:16:37 [INFO] Agent agent_1 recalled food location from memory
+10:16:37 [INFO] Agent agent_2 recalled food location from memory
+10:16:37 [INFO] Agent agent_3 recalled food location from memory
+10:16:37 [INFO] Agent agent_4 recalled food location from memory
+10:16:38 [INFO] Agent agent_0 recalled food location from memory
+10:16:38 [INFO] Agent agent_1 recalled food location from memory
+10:16:38 [INFO] Agent agent_2 recalled food location from memory
+10:16:38 [INFO] Agent agent_3 recalled food location from memory
+10:16:38 [INFO] Agent agent_4 recalled food location from memory
+10:16:38 [INFO] Agent agent_0 recalled food location from memory
+10:16:38 [INFO] Agent agent_1 recalled food location from memory
+10:16:39 [INFO] Agent agent_2 recalled food location from memory
+10:16:39 [INFO] Agent agent_3 recalled food location from memory
+10:16:39 [INFO] Agent agent_4 recalled food location from memory
+10:16:39 [INFO] Agent agent_0 recalled food location from memory
+10:16:39 [INFO] Agent agent_1 recalled food location from memory
+10:16:39 [INFO] Agent agent_2 recalled food location from memory
+10:16:39 [INFO] Agent agent_3 recalled food location from memory
+10:16:39 [INFO] Agent agent_4 recalled food location from memory
+10:16:40 [INFO] Agent agent_0 recalled food location from memory
+10:16:40 [INFO] Agent agent_1 recalled food location from memory
+10:16:40 [INFO] Agent agent_2 recalled food location from memory
+10:16:40 [INFO] Agent agent_3 recalled food location from memory
+10:16:40 [INFO] Agent agent_4 recalled food location from memory
+10:16:40 [INFO] Agent agent_0 recalled food location from memory
+10:16:40 [INFO] Agent agent_1 recalled food location from memory
+10:16:41 [INFO] Agent agent_2 recalled food location from memory
+10:16:41 [INFO] Agent agent_3 recalled food location from memory
+10:16:41 [INFO] Agent agent_4 recalled food location from memory
+10:16:41 [INFO] Agent agent_0 recalled food location from memory
+10:16:41 [INFO] Agent agent_1 recalled food location from memory
+10:16:41 [INFO] Agent agent_2 recalled food location from memory
+10:16:41 [INFO] Agent agent_3 recalled food location from memory
+10:16:41 [INFO] Agent agent_4 recalled food location from memory
+10:16:42 [INFO] Agent agent_0 recalled food location from memory
+10:16:42 [INFO] Agent agent_1 recalled food location from memory
+10:16:42 [INFO] Agent agent_2 recalled food location from memory
+10:16:42 [INFO] Agent agent_3 recalled food location from memory
+10:16:42 [INFO] Agent agent_4 recalled food location from memory
+10:16:42 [INFO] Agent agent_0 recalled food location from memory
+10:16:42 [INFO] Agent agent_1 recalled food location from memory
+10:16:43 [INFO] Agent agent_2 recalled food location from memory
+10:16:43 [INFO] Agent agent_3 recalled food location from memory
+10:16:43 [INFO] Agent agent_4 recalled food location from memory
+10:16:43 [INFO] Agent agent_0 recalled food location from memory
+10:16:43 [INFO] Agent agent_1 recalled food location from memory
+10:16:43 [INFO] Agent agent_2 recalled food location from memory
+10:16:43 [INFO] Agent agent_3 recalled food location from memory
+10:16:44 [INFO] Agent agent_4 recalled food location from memory
+10:16:44 [INFO] Agent agent_0 recalled food location from memory
+10:16:44 [INFO] Agent agent_1 recalled food location from memory
+10:16:44 [INFO] Agent agent_2 recalled food location from memory
+10:16:44 [INFO] Agent agent_3 recalled food location from memory
+10:16:44 [INFO] Agent agent_4 recalled food location from memory
+10:16:44 [INFO] Agent agent_0 recalled food location from memory
+10:16:45 [INFO] Agent agent_1 recalled food location from memory
+10:16:45 [INFO] Agent agent_2 recalled food location from memory
+10:16:45 [INFO] Agent agent_3 recalled food location from memory
+10:16:45 [INFO] Agent agent_4 recalled food location from memory
+10:16:45 [INFO] Agent agent_0 recalled food location from memory
+10:16:45 [INFO] Agent agent_1 recalled food location from memory
+10:16:45 [INFO] Agent agent_2 recalled food location from memory
+10:16:46 [INFO] Agent agent_3 recalled food location from memory
+10:16:46 [INFO] Agent agent_4 recalled food location from memory
+10:16:46 [INFO] Agent agent_0 recalled food location from memory
+10:16:46 [INFO] Agent agent_1 recalled food location from memory
+10:16:46 [INFO] Agent agent_2 recalled food location from memory
+10:16:46 [INFO] Agent agent_3 recalled food location from memory
+10:16:46 [INFO] Agent agent_4 recalled food location from memory
+10:16:47 [INFO] Agent agent_0 recalled food location from memory
+10:16:47 [INFO] Agent agent_1 recalled food location from memory
+10:16:47 [INFO] Agent agent_2 recalled food location from memory
+10:16:47 [INFO] Agent agent_3 recalled food location from memory
+10:16:47 [INFO] Agent agent_4 recalled food location from memory
+10:16:47 [INFO] Agent agent_0 recalled food location from memory
+10:16:48 [INFO] Agent agent_1 recalled food location from memory
+10:16:48 [INFO] Agent agent_2 recalled food location from memory
+10:16:48 [INFO] Agent agent_3 recalled food location from memory
+10:16:48 [INFO] Agent agent_4 recalled food location from memory
+10:16:48 [INFO] Agent agent_0 recalled food location from memory
+10:16:48 [INFO] Agent agent_1 recalled food location from memory
+10:16:48 [INFO] Agent agent_2 recalled food location from memory
+10:16:49 [INFO] Agent agent_3 recalled food location from memory
+10:16:49 [INFO] Agent agent_4 recalled food location from memory
+10:16:49 [INFO] Agent agent_0 recalled food location from memory
+10:16:49 [INFO] Agent agent_1 recalled food location from memory
+10:16:49 [INFO] Agent agent_2 recalled food location from memory
+10:16:49 [INFO] Agent agent_3 recalled food location from memory
+10:16:50 [INFO] Agent agent_4 recalled food location from memory
+10:16:50 [INFO] Agent agent_0 recalled food location from memory
+10:16:50 [INFO] Agent agent_1 recalled food location from memory
+10:16:50 [INFO] Agent agent_2 recalled food location from memory
+10:16:50 [INFO] Agent agent_3 recalled food location from memory
+10:16:50 [INFO] Agent agent_4 recalled food location from memory
+10:16:51 [INFO] Agent agent_0 recalled food location from memory
+10:16:51 [INFO] Agent agent_1 collected food at (15, 30)
+10:16:51 [INFO] Agent agent_2 recalled food location from memory
+10:16:51 [INFO] Agent agent_3 recalled food location from memory
+10:16:51 [INFO] Agent agent_0 recalled food location from memory
+10:16:52 [INFO] Agent agent_2 recalled food location from memory
+10:16:52 [INFO] Agent agent_3 recalled food location from memory
+10:16:52 [INFO] Agent agent_0 recalled food location from memory
+10:16:52 [INFO] Agent agent_2 recalled food location from memory
+10:16:52 [INFO] Agent agent_3 recalled food location from memory
+10:16:53 [INFO] Agent agent_0 recalled food location from memory
+10:16:53 [INFO] Agent agent_2 recalled food location from memory
+10:16:53 [INFO] Agent agent_3 recalled food location from memory
+10:16:53 [INFO] Agent agent_0 recalled food location from memory
+10:16:54 [INFO] Agent agent_2 recalled food location from memory
+10:16:54 [INFO] Agent agent_3 recalled food location from memory
+10:16:54 [INFO] Agent agent_0 recalled food location from memory
+10:16:54 [INFO] Agent agent_2 recalled food location from memory
+10:16:54 [INFO] Agent agent_3 recalled food location from memory
+10:16:54 [INFO] Agent agent_0 recalled food location from memory
+10:16:55 [INFO] Agent agent_2 recalled food location from memory
+10:16:55 [INFO] Agent agent_3 recalled food location from memory
+10:16:55 [INFO] Agent agent_0 recalled food location from memory
+10:16:55 [INFO] Agent agent_2 recalled food location from memory
+10:16:55 [INFO] Agent agent_3 recalled food location from memory
+10:16:56 [INFO] Agent agent_0 recalled food location from memory
+10:16:56 [INFO] Agent agent_2 recalled food location from memory
+10:16:56 [INFO] Agent agent_3 recalled food location from memory
+10:16:56 [INFO] Agent agent_0 recalled food location from memory
+10:16:56 [INFO] Agent agent_2 recalled food location from memory
+10:16:56 [INFO] Agent agent_3 recalled food location from memory
+10:16:57 [INFO] Agent agent_0 recalled food location from memory
+10:16:57 [INFO] Agent agent_2 recalled food location from memory
+10:16:57 [INFO] Agent agent_3 recalled food location from memory
+10:16:57 [INFO] Agent agent_0 recalled food location from memory
+10:16:57 [INFO] Agent agent_2 recalled food location from memory
+10:16:58 [INFO] Agent agent_3 recalled food location from memory
+10:16:58 [INFO] Agent agent_0 recalled food location from memory
+10:16:58 [INFO] Agent agent_2 recalled food location from memory
+10:16:58 [INFO] Agent agent_3 recalled food location from memory
+10:16:58 [INFO] Agent agent_0 recalled food location from memory
+10:16:58 [INFO] Agent agent_2 recalled food location from memory
+10:16:59 [INFO] Agent agent_3 recalled food location from memory
+10:16:59 [INFO] Agent agent_0 recalled food location from memory
+10:16:59 [INFO] Agent agent_2 recalled food location from memory
+10:16:59 [INFO] Agent agent_3 recalled food location from memory
+10:16:59 [INFO] Agent agent_0 recalled food location from memory
+10:17:00 [INFO] Agent agent_2 recalled food location from memory
+10:17:00 [INFO] Agent agent_3 recalled food location from memory
+10:17:00 [INFO] Simulation paused
+10:28:03 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+10:28:03 [INFO] NumExpr defaulting to 16 threads.
+10:28:05 [INFO] PyTorch found - communication features enabled
+10:28:06 [INFO] Loaded world from world.pkl
+10:28:18 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+10:28:18 [INFO] NumExpr defaulting to 16 threads.
+10:28:21 [INFO] PyTorch found - communication features enabled
+10:28:21 [INFO] Loaded world from world.pkl
+10:30:02 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+10:30:02 [INFO] NumExpr defaulting to 16 threads.
+10:30:05 [INFO] PyTorch found - communication features enabled
+10:30:05 [INFO] Loaded world from world.pkl
+10:30:22 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+10:30:22 [INFO] NumExpr defaulting to 16 threads.
+10:30:24 [INFO] PyTorch found - communication features enabled
+10:30:25 [INFO] Loaded world from world.pkl
+10:30:25 [INFO] Agent initialized at home [20, 20].
+10:30:26 [INFO] Agent initialized at home [20, 20].
+10:30:26 [INFO] Agent initialized at home [20, 20].
+10:30:26 [INFO] Agent initialized at home [20, 20].
+10:30:26 [INFO] Agent initialized at home [20, 20].
+10:30:26 [INFO] Simulation initialized
+10:30:28 [INFO] Simulation resumed
+10:43:13 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+10:43:13 [INFO] NumExpr defaulting to 16 threads.
+10:43:15 [INFO] PyTorch found - communication features enabled
+10:43:16 [INFO] Loaded world from world.pkl
+10:43:16 [INFO] Agent initialized at home [20, 20].
+10:43:17 [INFO] Agent initialized at home [20, 20].
+10:43:17 [INFO] Agent initialized at home [20, 20].
+10:43:17 [INFO] Agent initialized at home [20, 20].
+10:43:17 [INFO] Agent initialized at home [20, 20].
+10:43:17 [INFO] Simulation initialized
+10:43:19 [INFO] Simulation resumed
+10:43:47 [INFO] Simulation paused
