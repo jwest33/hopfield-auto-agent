@@ -1396,3 +1396,834 @@
 12:27:30 [INFO] Agent agent_3 using known food location at [18, 18]
 12:27:30 [INFO] Agent agent_3 recorded false food location at [19, 17]
 12:27:30 [INFO] Agent agent_3 using known food location at [18, 18]
+15:15:35 [INFO] PyTorch found - communication features enabled
+15:15:35 [INFO] Loaded world from world.pkl
+15:18:32 [INFO] PyTorch found - communication features enabled
+15:18:32 [INFO] Loaded world from world.pkl
+15:18:32 [INFO] Agent agent_0 initialized at home [20, 20].
+15:18:32 [INFO] Agent agent_1 initialized at home [20, 20].
+15:18:32 [INFO] Agent agent_2 initialized at home [20, 20].
+15:18:32 [INFO] Agent agent_3 initialized at home [20, 20].
+15:18:32 [INFO] Agent agent_4 initialized at home [20, 20].
+15:18:32 [INFO] Simulation initialized
+15:19:36 [INFO] PyTorch found - communication features enabled
+15:19:36 [INFO] Loaded world from world.pkl
+15:19:36 [INFO] Agent agent_0 initialized at home [20, 20].
+15:19:36 [INFO] Agent agent_1 initialized at home [20, 20].
+15:19:36 [INFO] Agent agent_2 initialized at home [20, 20].
+15:19:36 [INFO] Agent agent_3 initialized at home [20, 20].
+15:19:37 [INFO] Agent agent_4 initialized at home [20, 20].
+15:19:37 [INFO] Simulation initialized
+15:19:40 [INFO] Simulation resumed
+15:23:39 [INFO] PyTorch found - communication features enabled
+15:23:40 [INFO] Loaded world from world.pkl
+15:23:40 [INFO] Agent agent_0 initialized at home [20, 20].
+15:23:40 [INFO] Agent agent_1 initialized at home [20, 20].
+15:23:40 [INFO] Agent agent_2 initialized at home [20, 20].
+15:23:40 [INFO] Agent agent_3 initialized at home [20, 20].
+15:23:40 [INFO] Agent agent_4 initialized at home [20, 20].
+15:23:40 [INFO] Simulation initialized
+15:23:42 [INFO] Simulation resumed
+15:28:15 [INFO] PyTorch found - communication features enabled
+15:28:15 [INFO] Loaded world from world.pkl
+15:28:15 [INFO] Agent agent_0 initialized at home [20, 20].
+15:28:15 [INFO] Agent agent_1 initialized at home [20, 20].
+15:28:15 [INFO] Agent agent_2 initialized at home [20, 20].
+15:28:15 [INFO] Agent agent_3 initialized at home [20, 20].
+15:28:15 [INFO] Agent agent_4 initialized at home [20, 20].
+15:28:15 [INFO] Simulation initialized
+15:28:16 [INFO] Simulation resumed
+15:28:30 [INFO] Agent agent_1 recorded false food location at [20, 20]
+15:28:30 [INFO] Agent agent_3 recorded false food location at [20, 20]
+15:28:30 [INFO] Agent agent_4 recorded false food location at [20, 20]
+15:28:40 [INFO] Agent agent_0 recorded false food location at [20, 22]
+15:28:48 [INFO] Simulation paused
+15:50:09 [INFO] PyTorch found - communication features enabled
+15:50:09 [INFO] Loaded world from world.pkl
+15:50:09 [INFO] Agent agent_0 initialized at home [20, 20].
+15:50:09 [INFO] Agent agent_1 initialized at home [20, 20].
+15:50:09 [INFO] Agent agent_2 initialized at home [20, 20].
+15:50:09 [INFO] Agent agent_3 initialized at home [20, 20].
+15:50:09 [INFO] Agent agent_4 initialized at home [20, 20].
+15:50:09 [INFO] Simulation initialized
+15:50:11 [INFO] Simulation resumed
+15:50:13 [INFO] Simulation paused
+15:56:41 [INFO] PyTorch found - communication features enabled
+15:56:42 [INFO] Loaded world from world.pkl
+15:56:42 [INFO] Agent agent_0 initialized at home [20, 20].
+15:56:42 [INFO] Agent agent_1 initialized at home [20, 20].
+15:56:42 [INFO] Agent agent_2 initialized at home [20, 20].
+15:56:42 [INFO] Agent agent_3 initialized at home [20, 20].
+15:56:42 [INFO] Agent agent_4 initialized at home [20, 20].
+15:56:42 [INFO] Simulation initialized
+15:56:43 [INFO] Simulation resumed
+15:56:43 [INFO] Agent agent_0 recorded verified food at [22, 14]
+15:56:43 [INFO] Agent agent_1 recorded verified food at [22, 14]
+15:56:43 [INFO] Agent agent_2 recorded verified food at [22, 14]
+15:56:43 [INFO] Agent agent_3 recorded verified food at [22, 14]
+15:56:43 [INFO] Agent agent_4 recorded verified food at [22, 14]
+15:56:43 [INFO] Agent agent_0 using known food location at [22, 14]
+15:56:43 [INFO] Agent agent_1 using known food location at [22, 14]
+15:56:43 [INFO] Agent agent_2 using known food location at [22, 14]
+15:56:43 [INFO] Agent agent_3 using known food location at [22, 14]
+15:56:43 [INFO] Agent agent_4 using known food location at [22, 14]
+15:56:44 [INFO] Agent agent_0 using known food location at [22, 14]
+15:56:44 [INFO] Agent agent_1 using known food location at [22, 14]
+15:56:44 [INFO] Agent agent_2 using known food location at [22, 14]
+15:56:44 [INFO] Agent agent_3 using known food location at [22, 14]
+15:56:44 [INFO] Agent agent_4 using known food location at [22, 14]
+15:56:44 [INFO] Agent agent_0 using known food location at [22, 14]
+15:56:44 [INFO] Agent agent_1 using known food location at [22, 14]
+15:56:44 [INFO] Agent agent_2 using known food location at [22, 14]
+15:56:44 [INFO] Agent agent_3 using known food location at [22, 14]
+15:56:44 [INFO] Agent agent_4 using known food location at [22, 14]
+15:56:44 [INFO] Agent agent_0 using known food location at [22, 14]
+15:56:44 [INFO] Agent agent_1 using known food location at [22, 14]
+15:56:44 [INFO] Agent agent_2 using known food location at [22, 14]
+15:56:44 [INFO] Agent agent_3 using known food location at [22, 14]
+15:56:44 [INFO] Agent agent_4 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_0 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_1 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_2 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_3 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_4 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_0 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_1 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_2 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_3 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_4 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_0 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_1 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_2 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_3 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_4 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_0 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_1 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_2 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_3 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_4 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_0 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_1 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_2 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_3 using known food location at [22, 14]
+15:56:45 [INFO] Agent agent_4 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_0 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_1 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_2 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_3 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_4 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_0 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_1 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_2 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_3 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_4 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_0 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_1 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_2 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_3 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_4 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_0 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_1 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_2 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_3 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_4 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_0 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_1 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_2 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_3 using known food location at [22, 14]
+15:56:46 [INFO] Agent agent_4 using known food location at [22, 14]
+15:56:47 [INFO] Agent agent_0 using known food location at [22, 14]
+15:56:47 [INFO] Agent agent_1 using known food location at [22, 14]
+15:56:47 [INFO] Agent agent_2 using known food location at [22, 14]
+15:56:47 [INFO] Agent agent_3 using known food location at [22, 14]
+15:56:47 [INFO] Agent agent_4 using known food location at [22, 14]
+15:56:47 [INFO] Simulation paused
+15:57:56 [INFO] Simulation resumed
+15:57:56 [INFO] Agent agent_0 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_1 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_2 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_3 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_4 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_0 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_1 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_2 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_3 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_4 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_0 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_1 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_2 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_3 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_4 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_0 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_1 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_2 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_3 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_4 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_0 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_1 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_2 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_3 using known food location at [22, 14]
+15:57:56 [INFO] Agent agent_4 using known food location at [22, 14]
+15:57:57 [INFO] Agent agent_0 using known food location at [22, 14]
+15:57:57 [INFO] Agent agent_1 using known food location at [22, 14]
+15:57:57 [INFO] Agent agent_2 using known food location at [22, 14]
+15:57:57 [INFO] Agent agent_3 using known food location at [22, 14]
+15:57:57 [INFO] Agent agent_4 using known food location at [22, 14]
+15:57:57 [INFO] Simulation paused
+16:00:01 [INFO] PyTorch found - communication features enabled
+16:00:01 [INFO] Loaded world from world.pkl
+16:00:01 [INFO] Agent agent_0 initialized at home [20, 20].
+16:00:01 [INFO] Agent agent_1 initialized at home [20, 20].
+16:00:01 [INFO] Agent agent_2 initialized at home [20, 20].
+16:00:01 [INFO] Agent agent_3 initialized at home [20, 20].
+16:00:01 [INFO] Agent agent_4 initialized at home [20, 20].
+16:00:01 [INFO] Simulation initialized
+16:00:02 [INFO] Simulation resumed
+16:00:02 [INFO] Agent agent_0 recorded verified food at [22, 14]
+16:00:02 [INFO] Agent agent_1 recorded verified food at [22, 14]
+16:00:02 [INFO] Agent agent_2 recorded verified food at [22, 14]
+16:00:02 [INFO] Agent agent_3 recorded verified food at [22, 14]
+16:00:02 [INFO] Agent agent_4 recorded verified food at [22, 14]
+16:00:03 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:03 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:03 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:03 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:03 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:03 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:03 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:03 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:03 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:03 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:04 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:05 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:06 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:07 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:08 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:08 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:08 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:08 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:08 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:08 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:08 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:08 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:08 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:08 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:08 [INFO] Agent agent_0 using known food location at [22, 14]
+16:00:08 [INFO] Agent agent_1 using known food location at [22, 14]
+16:00:08 [INFO] Agent agent_2 using known food location at [22, 14]
+16:00:08 [INFO] Agent agent_3 using known food location at [22, 14]
+16:00:08 [INFO] Agent agent_4 using known food location at [22, 14]
+16:00:08 [INFO] Simulation paused
+16:02:46 [INFO] PyTorch found - communication features enabled
+16:02:47 [INFO] Loaded world from world.pkl
+16:02:47 [INFO] Agent agent_0 initialized at home [20, 20].
+16:02:47 [INFO] Agent agent_1 initialized at home [20, 20].
+16:02:47 [INFO] Agent agent_2 initialized at home [20, 20].
+16:02:47 [INFO] Agent agent_3 initialized at home [20, 20].
+16:02:47 [INFO] Agent agent_4 initialized at home [20, 20].
+16:02:47 [INFO] Simulation initialized
+16:02:49 [INFO] Simulation resumed
+16:02:49 [INFO] Agent agent_0 recorded verified food at [22, 14]
+16:02:49 [INFO] Agent agent_1 recorded verified food at [22, 14]
+16:02:49 [INFO] Agent agent_2 recorded verified food at [22, 14]
+16:02:49 [INFO] Agent agent_3 recorded verified food at [22, 14]
+16:02:49 [INFO] Agent agent_4 recorded verified food at [22, 14]
+16:02:50 [INFO] Agent agent_0 using known food location at [22, 14]
+16:02:50 [INFO] Agent agent_1 using known food location at [22, 14]
+16:02:50 [INFO] Agent agent_2 using known food location at [22, 14]
+16:02:50 [INFO] Agent agent_3 using known food location at [22, 14]
+16:02:50 [INFO] Agent agent_4 using known food location at [22, 14]
+16:02:50 [INFO] Agent agent_0 using known food location at [22, 14]
+16:02:50 [INFO] Agent agent_1 using known food location at [22, 14]
+16:02:50 [INFO] Agent agent_2 using known food location at [22, 14]
+16:02:50 [INFO] Agent agent_3 using known food location at [22, 14]
+16:02:50 [INFO] Agent agent_4 using known food location at [22, 14]
+16:02:50 [INFO] Agent agent_0 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_1 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_2 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_3 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_4 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_0 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_1 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_2 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_3 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_4 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_0 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_1 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_2 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_3 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_4 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_0 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_1 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_2 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_3 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_4 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_0 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_1 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_2 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_3 using known food location at [22, 14]
+16:02:51 [INFO] Agent agent_4 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_0 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_1 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_2 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_3 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_4 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_0 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_1 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_2 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_3 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_4 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_0 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_1 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_2 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_3 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_4 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_0 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_1 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_2 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_3 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_4 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_0 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_1 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_2 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_3 using known food location at [22, 14]
+16:02:52 [INFO] Agent agent_4 using known food location at [22, 14]
+16:02:52 [INFO] Simulation paused
+16:03:41 [INFO] PyTorch found - communication features enabled
+16:03:41 [INFO] Loaded world from world.pkl
+16:03:41 [INFO] Agent agent_0 initialized at home [20, 20].
+16:03:41 [INFO] Agent agent_1 initialized at home [20, 20].
+16:03:41 [INFO] Agent agent_2 initialized at home [20, 20].
+16:03:41 [INFO] Agent agent_3 initialized at home [20, 20].
+16:03:41 [INFO] Agent agent_4 initialized at home [20, 20].
+16:03:41 [INFO] Simulation initialized
+16:03:43 [INFO] Simulation resumed
+16:03:43 [INFO] Agent agent_0 recorded verified food at [22, 14]
+16:03:43 [INFO] Agent agent_1 recorded verified food at [22, 14]
+16:03:43 [INFO] Agent agent_2 recorded verified food at [22, 14]
+16:03:43 [INFO] Agent agent_3 recorded verified food at [22, 14]
+16:03:43 [INFO] Agent agent_4 recorded verified food at [22, 14]
+16:03:43 [INFO] Agent agent_0 using known food location at [22, 14]
+16:03:43 [INFO] Agent agent_1 using known food location at [22, 14]
+16:03:43 [INFO] Agent agent_2 using known food location at [22, 14]
+16:03:43 [INFO] Agent agent_3 using known food location at [22, 14]
+16:03:43 [INFO] Agent agent_4 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_0 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_1 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_2 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_3 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_4 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_0 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_1 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_2 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_3 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_4 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_0 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_1 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_2 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_3 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_4 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_0 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_1 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_2 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_3 using known food location at [22, 14]
+16:03:44 [INFO] Agent agent_4 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_0 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_1 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_2 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_3 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_4 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_0 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_1 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_2 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_3 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_4 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_0 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_1 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_2 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_3 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_4 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_0 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_1 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_2 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_3 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_4 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_0 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_1 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_2 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_3 using known food location at [22, 14]
+16:03:45 [INFO] Agent agent_4 using known food location at [22, 14]
+16:03:46 [INFO] Agent agent_0 using known food location at [22, 14]
+16:03:46 [INFO] Agent agent_1 using known food location at [22, 14]
+16:03:46 [INFO] Agent agent_2 using known food location at [22, 14]
+16:03:46 [INFO] Agent agent_3 using known food location at [22, 14]
+16:03:46 [INFO] Agent agent_4 using known food location at [22, 14]
+16:03:46 [INFO] Agent agent_0 using known food location at [22, 14]
+16:03:46 [INFO] Agent agent_1 using known food location at [22, 14]
+16:03:46 [INFO] Agent agent_2 using known food location at [22, 14]
+16:03:46 [INFO] Agent agent_3 using known food location at [22, 14]
+16:03:46 [INFO] Agent agent_4 using known food location at [22, 14]
+16:03:46 [INFO] Agent agent_0 using known food location at [22, 14]
+16:03:46 [INFO] Agent agent_1 using known food location at [22, 14]
+16:03:46 [INFO] Agent agent_2 using known food location at [22, 14]
+16:03:46 [INFO] Agent agent_3 using known food location at [22, 14]
+16:03:46 [INFO] Agent agent_4 using known food location at [22, 14]
+16:03:46 [INFO] Simulation paused
+16:06:50 [INFO] PyTorch found - communication features enabled
+16:06:50 [INFO] Loaded world from world.pkl
+16:06:50 [INFO] Agent agent_0 initialized at home [20, 20].
+16:06:50 [INFO] Agent agent_1 initialized at home [20, 20].
+16:06:50 [INFO] Agent agent_2 initialized at home [20, 20].
+16:06:50 [INFO] Agent agent_3 initialized at home [20, 20].
+16:06:50 [INFO] Agent agent_4 initialized at home [20, 20].
+16:06:50 [INFO] Simulation initialized
+16:06:51 [INFO] Simulation resumed
+16:06:51 [INFO] Agent agent_0 recorded verified food at [22, 14]
+16:06:51 [INFO] Agent agent_1 recorded verified food at [22, 14]
+16:06:51 [INFO] Agent agent_2 recorded verified food at [22, 14]
+16:06:51 [INFO] Agent agent_3 recorded verified food at [22, 14]
+16:06:51 [INFO] Agent agent_4 recorded verified food at [22, 14]
+16:06:52 [INFO] Agent agent_0 using known food location at [22, 14]
+16:06:52 [INFO] Agent agent_1 using known food location at [22, 14]
+16:06:52 [INFO] Agent agent_2 using known food location at [22, 14]
+16:06:52 [INFO] Agent agent_3 using known food location at [22, 14]
+16:06:52 [INFO] Agent agent_4 using known food location at [22, 14]
+16:06:52 [INFO] Agent agent_0 using known food location at [22, 14]
+16:06:52 [INFO] Agent agent_1 using known food location at [22, 14]
+16:06:52 [INFO] Agent agent_2 using known food location at [22, 14]
+16:06:52 [INFO] Agent agent_3 using known food location at [22, 14]
+16:06:52 [INFO] Agent agent_4 using known food location at [22, 14]
+16:06:52 [INFO] Agent agent_0 using known food location at [22, 14]
+16:06:52 [INFO] Agent agent_1 using known food location at [22, 14]
+16:06:52 [INFO] Agent agent_2 using known food location at [22, 14]
+16:06:52 [INFO] Agent agent_3 using known food location at [22, 14]
+16:06:52 [INFO] Agent agent_4 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_0 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_1 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_2 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_3 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_4 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_0 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_1 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_2 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_3 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_4 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_0 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_1 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_2 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_3 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_4 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_0 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_1 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_2 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_3 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_4 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_0 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_1 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_2 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_3 using known food location at [22, 14]
+16:06:53 [INFO] Agent agent_4 using known food location at [22, 14]
+16:06:54 [INFO] Agent agent_0 using known food location at [22, 14]
+16:06:54 [INFO] Agent agent_1 using known food location at [22, 14]
+16:06:54 [INFO] Agent agent_2 using known food location at [22, 14]
+16:06:54 [INFO] Agent agent_3 using known food location at [22, 14]
+16:06:54 [INFO] Agent agent_4 using known food location at [22, 14]
+16:06:54 [INFO] Simulation paused
+16:08:33 [INFO] PyTorch found - communication features enabled
+16:08:33 [INFO] Loaded world from world.pkl
+16:08:33 [INFO] Agent agent_0 initialized at home [20, 20].
+16:08:33 [INFO] Agent agent_1 initialized at home [20, 20].
+16:08:33 [INFO] Agent agent_2 initialized at home [20, 20].
+16:08:33 [INFO] Agent agent_3 initialized at home [20, 20].
+16:08:33 [INFO] Agent agent_4 initialized at home [20, 20].
+16:08:33 [INFO] Simulation initialized
+16:08:36 [INFO] Simulation resumed
+16:08:36 [INFO] Agent agent_0 recorded verified food at [22, 14]
+16:08:36 [INFO] Agent agent_1 recorded verified food at [22, 14]
+16:08:36 [INFO] Agent agent_2 recorded verified food at [22, 14]
+16:08:36 [INFO] Agent agent_3 recorded verified food at [22, 14]
+16:08:36 [INFO] Agent agent_4 recorded verified food at [22, 14]
+16:08:37 [INFO] Agent agent_0 recorded false food location at [20, 12]
+16:08:37 [INFO] Agent agent_1 recorded false food location at [20, 12]
+16:08:37 [INFO] Agent agent_2 recorded false food location at [20, 12]
+16:08:37 [INFO] Agent agent_3 recorded false food location at [20, 12]
+16:08:37 [INFO] Agent agent_4 recorded false food location at [20, 12]
+16:08:37 [INFO] Agent agent_0 using known food location at [22, 14]
+16:08:37 [INFO] Agent agent_1 using known food location at [22, 14]
+16:08:37 [INFO] Agent agent_2 using known food location at [22, 14]
+16:08:37 [INFO] Agent agent_3 using known food location at [22, 14]
+16:08:37 [INFO] Agent agent_4 using known food location at [22, 14]
+16:08:37 [INFO] Agent agent_0 using known food location at [22, 14]
+16:08:37 [INFO] Agent agent_1 using known food location at [22, 14]
+16:08:37 [INFO] Agent agent_2 using known food location at [22, 14]
+16:08:37 [INFO] Agent agent_3 using known food location at [22, 14]
+16:08:37 [INFO] Agent agent_4 using known food location at [22, 14]
+16:08:38 [INFO] Agent agent_0 using known food location at [22, 14]
+16:08:38 [INFO] Agent agent_1 using known food location at [22, 14]
+16:08:38 [INFO] Agent agent_2 using known food location at [22, 14]
+16:08:38 [INFO] Agent agent_3 using known food location at [22, 14]
+16:08:38 [INFO] Agent agent_4 using known food location at [22, 14]
+16:08:38 [INFO] Agent agent_0 using known food location at [22, 14]
+16:08:38 [INFO] Agent agent_1 using known food location at [22, 14]
+16:08:38 [INFO] Agent agent_2 using known food location at [22, 14]
+16:08:38 [INFO] Agent agent_3 using known food location at [22, 14]
+16:08:38 [INFO] Agent agent_4 using known food location at [22, 14]
+16:08:38 [INFO] Agent agent_0 using known food location at [22, 14]
+16:08:38 [INFO] Agent agent_1 using known food location at [22, 14]
+16:08:38 [INFO] Agent agent_2 using known food location at [22, 14]
+16:08:38 [INFO] Agent agent_3 using known food location at [22, 14]
+16:08:38 [INFO] Agent agent_4 using known food location at [22, 14]
+16:08:39 [INFO] Agent agent_0 using known food location at [22, 14]
+16:08:39 [INFO] Agent agent_1 using known food location at [22, 14]
+16:08:39 [INFO] Agent agent_2 using known food location at [22, 14]
+16:08:39 [INFO] Agent agent_3 using known food location at [22, 14]
+16:08:39 [INFO] Agent agent_4 using known food location at [22, 14]
+16:08:39 [INFO] Agent agent_0 using known food location at [22, 14]
+16:08:39 [INFO] Agent agent_1 using known food location at [22, 14]
+16:08:39 [INFO] Agent agent_2 using known food location at [22, 14]
+16:08:39 [INFO] Agent agent_3 using known food location at [22, 14]
+16:08:39 [INFO] Agent agent_4 using known food location at [22, 14]
+16:08:40 [INFO] Agent agent_0 using known food location at [22, 14]
+16:08:40 [INFO] Agent agent_1 using known food location at [22, 14]
+16:08:40 [INFO] Agent agent_2 using known food location at [22, 14]
+16:08:40 [INFO] Agent agent_3 using known food location at [22, 14]
+16:08:40 [INFO] Agent agent_4 using known food location at [22, 14]
+16:08:40 [INFO] Simulation paused
+16:11:12 [INFO] PyTorch found - communication features enabled
+16:11:12 [INFO] Loaded world from world.pkl
+16:11:12 [INFO] Agent agent_0 initialized at home [20, 20].
+16:11:12 [INFO] Agent agent_1 initialized at home [20, 20].
+16:11:12 [INFO] Agent agent_2 initialized at home [20, 20].
+16:11:12 [INFO] Agent agent_3 initialized at home [20, 20].
+16:11:12 [INFO] Agent agent_4 initialized at home [20, 20].
+16:11:12 [INFO] Simulation initialized
+16:11:13 [INFO] Simulation resumed
+16:11:13 [INFO] Agent agent_0 recorded verified food at [22, 14]
+16:13:58 [INFO] PyTorch found - communication features enabled
+16:13:58 [INFO] Loaded world from world.pkl
+16:13:58 [INFO] Agent agent_0 initialized at home [20, 20].
+16:13:58 [INFO] Agent agent_1 initialized at home [20, 20].
+16:13:58 [INFO] Agent agent_2 initialized at home [20, 20].
+16:13:58 [INFO] Agent agent_3 initialized at home [20, 20].
+16:13:58 [INFO] Agent agent_4 initialized at home [20, 20].
+16:13:59 [INFO] Simulation initialized
+16:13:59 [INFO] Simulation resumed
+16:13:59 [INFO] Agent agent_0 recorded verified food at [22, 14]
+16:13:59 [INFO] Agent agent_1 recorded verified food at [22, 14]
+16:14:00 [INFO] Agent agent_2 recorded verified food at [22, 14]
+16:14:00 [INFO] Agent agent_3 recorded verified food at [22, 14]
+16:14:00 [INFO] Agent agent_4 recorded verified food at [22, 14]
+16:14:08 [INFO] Simulation paused
+16:14:25 [INFO] PyTorch found - communication features enabled
+16:14:25 [INFO] Loaded world from world.pkl
+16:14:25 [INFO] Agent agent_0 initialized at home [20, 20].
+16:14:25 [INFO] Agent agent_1 initialized at home [20, 20].
+16:14:25 [INFO] Agent agent_2 initialized at home [20, 20].
+16:14:25 [INFO] Agent agent_3 initialized at home [20, 20].
+16:14:25 [INFO] Agent agent_4 initialized at home [20, 20].
+16:14:25 [INFO] Simulation initialized
+16:14:26 [INFO] Simulation resumed
+16:14:26 [INFO] Agent agent_0 recorded verified food at [22, 14]
+16:14:26 [INFO] Agent agent_1 recorded verified food at [22, 14]
+16:14:26 [INFO] Agent agent_2 recorded verified food at [22, 14]
+16:14:26 [INFO] Agent agent_3 recorded verified food at [22, 14]
+16:14:26 [INFO] Agent agent_4 recorded verified food at [22, 14]
+16:14:27 [INFO] Simulation paused
+16:20:01 [INFO] PyTorch found - communication features enabled
+16:20:01 [INFO] Loaded world from world.pkl
+16:20:01 [INFO] Agent agent_0 initialized at home [20, 20].
+16:20:01 [INFO] Agent agent_1 initialized at home [20, 20].
+16:20:01 [INFO] Agent agent_2 initialized at home [20, 20].
+16:20:01 [INFO] Agent agent_3 initialized at home [20, 20].
+16:20:01 [INFO] Agent agent_4 initialized at home [20, 20].
+16:20:01 [INFO] Simulation initialized
+16:20:03 [INFO] Simulation resumed
+16:20:03 [INFO] Agent agent_0 recorded verified food at [22, 14]
+16:20:03 [INFO] Agent agent_1 recorded verified food at [22, 14]
+16:20:03 [INFO] Agent agent_2 recorded verified food at [22, 14]
+16:20:03 [INFO] Agent agent_3 recorded verified food at [22, 14]
+16:20:03 [INFO] Agent agent_4 recorded verified food at [22, 14]
+16:20:04 [INFO] Agent agent_1 recorded false food location at [22, 14]
+16:20:04 [INFO] Agent agent_2 recorded false food location at [22, 14]
+16:20:04 [INFO] Agent agent_3 recorded false food location at [22, 14]
+16:20:04 [INFO] Agent agent_4 recorded false food location at [22, 14]
+16:20:04 [INFO] Agent agent_1 recorded verified food at [16, 12]
+16:21:08 [INFO] PyTorch found - communication features enabled
+16:21:09 [INFO] Loaded world from world.pkl
+16:21:09 [INFO] Agent agent_0 initialized at home [20, 20].
+16:21:09 [INFO] Agent agent_1 initialized at home [20, 20].
+16:21:09 [INFO] Agent agent_2 initialized at home [20, 20].
+16:21:09 [INFO] Agent agent_3 initialized at home [20, 20].
+16:21:09 [INFO] Agent agent_4 initialized at home [20, 20].
+16:21:09 [INFO] Simulation initialized
+16:21:09 [INFO] Simulation resumed
+16:21:10 [INFO] Agent agent_0 recorded verified food at [22, 14]
+16:21:10 [INFO] Agent agent_1 recorded verified food at [22, 14]
+16:21:10 [INFO] Agent agent_2 recorded verified food at [22, 14]
+16:21:10 [INFO] Agent agent_3 recorded verified food at [22, 14]
+16:21:10 [INFO] Agent agent_4 recorded verified food at [22, 14]
+16:21:10 [INFO] Agent agent_1 recorded false food location at [22, 14]
+16:21:10 [INFO] Agent agent_2 recorded false food location at [22, 14]
+16:21:10 [INFO] Agent agent_3 recorded false food location at [22, 14]
+16:21:10 [INFO] Agent agent_4 recorded false food location at [22, 14]
+16:21:11 [INFO] Agent agent_1 recorded verified food at [16, 12]
+16:21:11 [INFO] Agent agent_2 recorded verified food at [16, 12]
+16:21:11 [INFO] Agent agent_3 recorded verified food at [16, 12]
+16:21:11 [INFO] Agent agent_4 recorded verified food at [16, 12]
+16:21:11 [INFO] Agent agent_0 recorded false food location at [20, 20]
+16:22:22 [INFO] PyTorch found - communication features enabled
+16:22:23 [INFO] Loaded world from world.pkl
+16:22:23 [INFO] Agent agent_0 initialized at home [20, 20].
+16:22:23 [INFO] Agent agent_1 initialized at home [20, 20].
+16:22:23 [INFO] Agent agent_2 initialized at home [20, 20].
+16:22:23 [INFO] Agent agent_3 initialized at home [20, 20].
+16:22:23 [INFO] Agent agent_4 initialized at home [20, 20].
+16:22:23 [INFO] Simulation initialized
+16:22:24 [INFO] Simulation resumed
+16:22:24 [INFO] Agent agent_0 recorded verified food at [22, 14]
+16:22:24 [INFO] Agent agent_1 recorded verified food at [22, 14]
+16:22:24 [INFO] Agent agent_2 recorded verified food at [22, 14]
+16:22:24 [INFO] Agent agent_3 recorded verified food at [22, 14]
+16:22:24 [INFO] Agent agent_4 recorded verified food at [22, 14]
+16:22:25 [INFO] Agent agent_1 recorded false food location at [22, 14]
+16:22:25 [INFO] Agent agent_2 recorded false food location at [22, 14]
+16:22:25 [INFO] Agent agent_3 recorded false food location at [22, 14]
+16:22:25 [INFO] Agent agent_4 recorded false food location at [22, 14]
+16:22:25 [INFO] Agent agent_1 recorded verified food at [16, 12]
+16:22:25 [INFO] Agent agent_2 recorded verified food at [16, 12]
+16:22:25 [INFO] Agent agent_3 recorded verified food at [16, 12]
+16:22:25 [INFO] Agent agent_4 recorded verified food at [16, 12]
+16:22:26 [INFO] Agent agent_0 recorded false food location at [20, 20]
+16:22:30 [INFO] Simulation paused
+16:26:28 [INFO] PyTorch found - communication features enabled
+16:26:28 [INFO] Loaded world from world.pkl
+16:26:28 [INFO] Agent agent_0 initialized at home [20, 20].
+16:26:28 [INFO] Agent agent_1 initialized at home [20, 20].
+16:26:28 [INFO] Agent agent_2 initialized at home [20, 20].
+16:26:28 [INFO] Agent agent_3 initialized at home [20, 20].
+16:26:28 [INFO] Agent agent_4 initialized at home [20, 20].
+16:26:28 [INFO] Simulation initialized
+16:26:33 [INFO] Simulation resumed
+16:26:33 [INFO] Agent agent_0 recorded verified food at [22, 14]
+16:26:33 [INFO] Agent agent_1 recorded verified food at [22, 14]
+16:26:33 [INFO] Agent agent_2 recorded verified food at [22, 14]
+16:26:33 [INFO] Agent agent_3 recorded verified food at [22, 14]
+16:26:33 [INFO] Agent agent_4 recorded verified food at [22, 14]
+16:26:34 [INFO] Agent agent_1 recorded false food location at [22, 14]
+16:26:34 [INFO] Agent agent_2 recorded false food location at [22, 14]
+16:26:34 [INFO] Agent agent_3 recorded false food location at [22, 14]
+16:26:34 [INFO] Agent agent_4 recorded false food location at [22, 14]
+16:26:34 [INFO] Agent agent_1 recorded verified food at [16, 12]
+16:26:34 [INFO] Agent agent_2 recorded verified food at [16, 12]
+16:26:34 [INFO] Agent agent_3 recorded verified food at [16, 12]
+16:26:34 [INFO] Agent agent_4 recorded verified food at [16, 12]
+16:26:35 [INFO] Agent agent_0 recorded false food location at [20, 20]
+16:26:35 [INFO] Agent agent_0 recorded verified food at [16, 12]
+16:26:39 [INFO] Simulation paused
+16:30:40 [INFO] PyTorch found - communication features enabled
+16:30:41 [INFO] Loaded world from world.pkl
+16:30:41 [INFO] Agent agent_0 initialized at home [20, 20].
+16:30:41 [INFO] Agent agent_1 initialized at home [20, 20].
+16:30:41 [INFO] Agent agent_2 initialized at home [20, 20].
+16:30:41 [INFO] Agent agent_3 initialized at home [20, 20].
+16:30:41 [INFO] Agent agent_4 initialized at home [20, 20].
+16:30:41 [INFO] Simulation initialized
+16:30:41 [INFO] Simulation resumed
+16:30:41 [INFO] Agent agent_0 recorded verified food at [22, 14]
+16:30:41 [INFO] Agent agent_1 recorded verified food at [22, 14]
+16:30:41 [INFO] Agent agent_2 recorded verified food at [22, 14]
+16:30:42 [INFO] Agent agent_3 recorded verified food at [22, 14]
+16:30:42 [INFO] Agent agent_4 recorded verified food at [22, 14]
+16:30:42 [INFO] Agent agent_1 recorded false food location at [22, 14]
+16:30:42 [INFO] Agent agent_2 recorded false food location at [22, 14]
+16:30:42 [INFO] Agent agent_3 recorded false food location at [22, 14]
+16:30:42 [INFO] Agent agent_4 recorded false food location at [22, 14]
+16:30:43 [INFO] Agent agent_1 recorded verified food at [16, 12]
+16:30:43 [INFO] Agent agent_2 recorded verified food at [16, 12]
+16:30:43 [INFO] Agent agent_3 recorded verified food at [16, 12]
+16:30:43 [INFO] Agent agent_4 recorded verified food at [16, 12]
+16:30:43 [INFO] Agent agent_0 recorded false food location at [20, 20]
+16:30:43 [INFO] Agent agent_0 recorded verified food at [16, 12]
+16:30:43 [INFO] Agent agent_2 recorded false food location at [16, 12]
+16:30:43 [INFO] Agent agent_3 recorded false food location at [16, 12]
+16:30:43 [INFO] Agent agent_4 recorded false food location at [16, 12]
+16:30:44 [INFO] Agent agent_2 recorded verified food at [9, 7]
+16:30:44 [INFO] Agent agent_3 recorded verified food at [9, 7]
+16:30:44 [INFO] Agent agent_4 recorded verified food at [9, 7]
+16:30:45 [INFO] Agent agent_0 recorded false food location at [16, 12]
+16:30:45 [INFO] Agent agent_1 recorded false food location at [20, 20]
+16:30:45 [INFO] Agent agent_1 recorded verified food at [14, 32]
+16:30:45 [INFO] Agent agent_0 recorded verified food at [9, 7]
+16:30:49 [INFO] Simulation paused
+16:31:07 [INFO] Simulation resumed
+16:31:10 [INFO] Simulation paused
+16:33:04 [INFO] PyTorch found - communication features enabled
+16:33:04 [INFO] Loaded world from world.pkl
+16:33:04 [INFO] Agent agent_0 initialized at home [20, 20].
+16:33:04 [INFO] Agent agent_1 initialized at home [20, 20].
+16:33:04 [INFO] Agent agent_2 initialized at home [20, 20].
+16:33:04 [INFO] Agent agent_3 initialized at home [20, 20].
+16:33:04 [INFO] Agent agent_4 initialized at home [20, 20].
+16:33:04 [INFO] Simulation initialized
+16:33:06 [INFO] Simulation resumed
+16:33:06 [INFO] Agent agent_0 recorded verified food at [22, 14]
+16:33:06 [INFO] Agent agent_1 recorded verified food at [22, 14]
+16:33:06 [INFO] Agent agent_2 recorded verified food at [22, 14]
+16:33:06 [INFO] Agent agent_3 recorded verified food at [22, 14]
+16:33:06 [INFO] Agent agent_4 recorded verified food at [22, 14]
+16:33:07 [INFO] Agent agent_1 recorded false food location at [22, 14]
+16:33:07 [INFO] Agent agent_2 recorded false food location at [22, 14]
+16:33:07 [INFO] Agent agent_3 recorded false food location at [22, 14]
+16:33:07 [INFO] Agent agent_4 recorded false food location at [22, 14]
+16:33:07 [INFO] Agent agent_1 recorded verified food at [16, 12]
+16:33:07 [INFO] Agent agent_2 recorded verified food at [16, 12]
+16:33:07 [INFO] Agent agent_3 recorded verified food at [16, 12]
+16:33:08 [INFO] Agent agent_4 recorded verified food at [16, 12]
+16:33:08 [INFO] Agent agent_0 recorded false food location at [20, 20]
+16:33:08 [INFO] Agent agent_0 recorded verified food at [16, 12]
+16:33:08 [INFO] Agent agent_2 recorded false food location at [16, 12]
+16:33:08 [INFO] Agent agent_3 recorded false food location at [16, 12]
+16:33:08 [INFO] Agent agent_4 recorded false food location at [16, 12]
+16:33:08 [INFO] Agent agent_2 recorded verified food at [9, 7]
+16:33:08 [INFO] Agent agent_3 recorded verified food at [9, 7]
+16:33:09 [INFO] Agent agent_4 recorded verified food at [9, 7]
+16:33:10 [INFO] Agent agent_0 recorded false food location at [16, 12]
+16:33:10 [INFO] Agent agent_1 recorded false food location at [20, 20]
+16:33:10 [INFO] Agent agent_0 recorded verified food at [9, 7]
+16:33:10 [INFO] Agent agent_1 recorded verified food at [14, 32]
+16:33:19 [INFO] Simulation paused
+16:33:20 [INFO] Simulation resumed
+16:33:24 [INFO] Simulation paused
+16:35:36 [INFO] PyTorch found - communication features enabled
+16:35:36 [INFO] Loaded world from world.pkl
+16:35:36 [INFO] Agent agent_0 initialized at home [20, 20].
+16:35:36 [INFO] Agent agent_1 initialized at home [20, 20].
+16:35:37 [INFO] Agent agent_2 initialized at home [20, 20].
+16:35:37 [INFO] Agent agent_3 initialized at home [20, 20].
+16:35:37 [INFO] Agent agent_4 initialized at home [20, 20].
+16:35:37 [INFO] Simulation initialized
+16:35:37 [INFO] Simulation resumed
+16:35:37 [INFO] Agent agent_0 recorded verified food at [22, 14]
+16:35:37 [INFO] Agent agent_1 recorded verified food at [22, 14]
+16:35:37 [INFO] Agent agent_2 recorded verified food at [22, 14]
+16:35:38 [INFO] Agent agent_3 recorded verified food at [22, 14]
+16:35:38 [INFO] Agent agent_4 recorded verified food at [22, 14]
+16:35:38 [INFO] Agent agent_1 recorded false food location at [22, 14]
+16:35:38 [INFO] Agent agent_2 recorded false food location at [22, 14]
+16:35:38 [INFO] Agent agent_3 recorded false food location at [22, 14]
+16:35:38 [INFO] Agent agent_4 recorded false food location at [22, 14]
+16:35:39 [INFO] Agent agent_1 recorded verified food at [16, 12]
+16:35:39 [INFO] Agent agent_2 recorded verified food at [16, 12]
+16:35:39 [INFO] Agent agent_3 recorded verified food at [16, 12]
+16:35:39 [INFO] Agent agent_4 recorded verified food at [16, 12]
+16:35:39 [INFO] Agent agent_0 recorded false food location at [20, 20]
+16:35:39 [INFO] Agent agent_0 recorded verified food at [16, 12]
+16:35:40 [INFO] Agent agent_2 recorded false food location at [16, 12]
+16:35:40 [INFO] Agent agent_3 recorded false food location at [16, 12]
+16:35:40 [INFO] Agent agent_4 recorded false food location at [16, 12]
+16:35:40 [INFO] Agent agent_2 recorded verified food at [9, 7]
+16:35:40 [INFO] Agent agent_3 recorded verified food at [9, 7]
+16:35:40 [INFO] Agent agent_4 recorded verified food at [9, 7]
+16:35:41 [INFO] Agent agent_0 recorded false food location at [16, 12]
+16:35:41 [INFO] Agent agent_1 recorded false food location at [20, 20]
+16:35:41 [INFO] Agent agent_0 recorded verified food at [9, 7]
+16:35:42 [INFO] Agent agent_1 recorded verified food at [14, 32]
+16:35:44 [INFO] Agent agent_0 recorded verified food at [14, 32]
+16:35:45 [INFO] Agent agent_2 recorded false food location at [20, 20]
+16:35:45 [INFO] Agent agent_3 recorded false food location at [20, 20]
+16:35:45 [INFO] Agent agent_4 recorded false food location at [20, 20]
+16:35:46 [INFO] Agent agent_2 recorded verified food at [14, 32]
+16:35:46 [INFO] Agent agent_3 recorded verified food at [14, 32]
+16:35:46 [INFO] Agent agent_4 recorded verified food at [14, 32]
+16:35:57 [INFO] Simulation paused

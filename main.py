@@ -181,28 +181,28 @@ def create_goal_visualization(agent, width=350, height=200):
     
     # Draw current goal information
     y_pos = 40
-    if agent.current_goal:
-        goal_text = f"Current Goal: {agent.current_goal.goal_type}"
+    if agent.planning_system.current_goal:
+        goal_text = f"Current Goal: {agent.planning_system.current_goal.goal_type}"
         goal_surf = normal_font.render(goal_text, True, (220, 220, 220))
         surface.blit(goal_surf, (20, y_pos))
         y_pos += 20
         
         # Draw goal details
-        if agent.current_goal.target:
-            target_text = f"Target: {agent.current_goal.target}"
+        if agent.planning_system.current_goal.target:
+            target_text = f"Target: {agent.planning_system.current_goal.target}"
             target_surf = small_font.render(target_text, True, (200, 200, 200))
             surface.blit(target_surf, (30, y_pos))
             y_pos += 16
         
-        priority_text = f"Priority: {agent.current_goal.priority:.2f}"
+        priority_text = f"Priority: {agent.planning_system.current_goal.priority:.2f}"
         priority_surf = small_font.render(priority_text, True, (200, 200, 200))
         surface.blit(priority_surf, (30, y_pos))
         y_pos += 16
         
         # Draw plan progress bar
-        if agent.current_goal.plan:
-            plan_length = len(agent.current_goal.plan)
-            progress = agent.current_goal.plan_index
+        if agent.planning_system.current_goal.plan:
+            plan_length = len(agent.planning_system.current_goal.plan)
+            progress = agent.planning_system.current_goal.plan_index
             plan_text = f"Plan Progress: {progress}/{plan_length}"
             plan_surf = small_font.render(plan_text, True, (200, 200, 200))
             surface.blit(plan_surf, (30, y_pos))
@@ -229,7 +229,7 @@ def create_goal_visualization(agent, width=350, height=200):
                 y_pos += 16
                 
                 # Show up to 5 upcoming actions
-                upcoming_actions = agent.current_goal.plan[progress:progress + min(5, remaining)]
+                upcoming_actions = agent.planning_system.current_goal.plan[progress:progress + min(5, remaining)]
                 for i, action in enumerate(upcoming_actions):
                     action_text = f"{i+1}. {action}"
                     action_surf = small_font.render(action_text, True, (180, 180, 180))
@@ -248,7 +248,7 @@ def create_goal_visualization(agent, width=350, height=200):
     
     # List other goals
     if hasattr(agent, 'planning_system') and agent.planning_system:
-        other_goals = [g for g in agent.planning_system.goals if g != agent.current_goal]
+        other_goals = [g for g in agent.planning_system.goals if g != agent.planning_system.current_goal]
         if other_goals:
             for i, goal in enumerate(other_goals[:4]):  # Show up to 4 other goals
                 goal_text = f"- {goal.goal_type} (Priority: {goal.priority:.2f})"
@@ -267,12 +267,15 @@ def create_goal_visualization(agent, width=350, height=200):
 # Function to draw a visualization of the agent's planned path
 def draw_agent_path(screen, world, agent, cell_size, grid_size):
     """Draw a visualization of the agent's planned path on the grid"""
-    if not hasattr(agent, 'current_goal') or not agent.current_goal or not agent.current_goal.plan:
+    if not hasattr(agent, 'planning_system') or not agent.planning_system:
+        return
+        
+    if not agent.planning_system.current_goal or not agent.planning_system.current_goal.plan:
         return
     
     # Get current position and plan
     current_pos = agent.pos.copy()
-    plan = agent.current_goal.plan[agent.current_goal.plan_index:]
+    plan = agent.planning_system.current_goal.plan[agent.planning_system.current_goal.plan_index:]
     
     if not plan:
         return
@@ -282,7 +285,7 @@ def draw_agent_path(screen, world, agent, cell_size, grid_size):
     sim_pos = current_pos.copy()
     
     for action in plan:
-        if action == "REST":
+        if action == "REST" or action == "VERIFY_FOOD":
             continue
             
         dx, dy = agent.MOV[action]
@@ -1328,7 +1331,7 @@ class Simulation:
             content_height += line_height
         
         # Goals & Planning information
-        if hasattr(agent, 'current_goal') and agent.current_goal:
+        if hasattr(agent, 'planning_system') and agent.planning_system and agent.planning_system.current_goal:
             content_height += section_spacing
             goal_header = self.font_normal.render("Goals & Planning", True, COLOR_TEXT_HEADER)
             goal_header_rect = self.stats_area.get_content_rect(content_height)
@@ -1336,9 +1339,9 @@ class Simulation:
                 self.screen.blit(goal_header, goal_header_rect)
             content_height += line_height
             
-            goal_text = f"Current Goal: {agent.current_goal.goal_type}"
-            if agent.current_goal.target:
-                goal_text += f" (Target: {agent.current_goal.target})"
+            goal_text = f"Current Goal: {agent.planning_system.current_goal.goal_type}"
+            if agent.planning_system.current_goal.target:
+                goal_text += f" (Target: {agent.planning_system.current_goal.target})"
             
             goal_rect = self.stats_area.get_content_rect(content_height)
             if goal_rect.top > 0 and goal_rect.top < WINDOW_HEIGHT:
@@ -1347,7 +1350,7 @@ class Simulation:
             content_height += line_height
             
             # Goal priority
-            priority_text = f"Priority: {agent.current_goal.priority:.2f}"
+            priority_text = f"Priority: {agent.planning_system.current_goal.priority:.2f}"
             priority_rect = self.stats_area.get_content_rect(content_height)
             if priority_rect.top > 0 and priority_rect.top < WINDOW_HEIGHT:
                 priority_surf = self.font_normal.render(priority_text, True, COLOR_TEXT)
@@ -1355,9 +1358,9 @@ class Simulation:
             content_height += line_height
             
             # Plan information
-            if hasattr(agent.current_goal, 'plan') and agent.current_goal.plan:
-                plan_length = len(agent.current_goal.plan)
-                progress = agent.current_goal.plan_index
+            if agent.planning_system.current_goal.plan:
+                plan_length = len(agent.planning_system.current_goal.plan)
+                progress = agent.planning_system.current_goal.plan_index
                 remaining = max(0, plan_length - progress)
                 
                 plan_text = f"Plan Progress: {progress}/{plan_length} steps"
@@ -1370,7 +1373,7 @@ class Simulation:
                 # Show upcoming actions in plan
                 if remaining > 0:
                     upcoming_text = "Upcoming: "
-                    upcoming_actions = agent.current_goal.plan[agent.current_goal.plan_index:agent.current_goal.plan_index + min(5, remaining)]
+                    upcoming_actions = agent.planning_system.current_goal.plan[agent.planning_system.current_goal.plan_index:agent.planning_system.current_goal.plan_index + min(5, remaining)]
                     upcoming_text += ", ".join(upcoming_actions)
                     
                     upcoming_rect = self.stats_area.get_content_rect(content_height)
