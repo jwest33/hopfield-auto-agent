@@ -1329,3 +1329,70 @@
 10:43:17 [INFO] Simulation initialized
 10:43:19 [INFO] Simulation resumed
 10:43:47 [INFO] Simulation paused
+10:48:18 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+10:48:18 [INFO] NumExpr defaulting to 16 threads.
+10:48:20 [INFO] PyTorch found - communication features enabled
+10:48:20 [INFO] Loaded world from world.pkl
+10:48:20 [INFO] Agent initialized at home [20, 20].
+10:48:22 [INFO] Agent initialized at home [20, 20].
+10:48:22 [INFO] Agent initialized at home [20, 20].
+10:48:22 [INFO] Agent initialized at home [20, 20].
+10:48:22 [INFO] Agent initialized at home [20, 20].
+10:48:22 [INFO] Simulation initialized
+10:48:24 [INFO] Simulation resumed
+10:48:32 [INFO] Simulation paused
+10:48:35 [INFO] Simulation resumed
+10:48:46 [INFO] Simulation paused
+10:48:50 [INFO] Simulation resumed
+10:49:33 [INFO] Simulation paused
+12:26:26 [INFO] Note: NumExpr detected 20 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+12:26:26 [INFO] NumExpr defaulting to 16 threads.
+12:26:29 [INFO] PyTorch found - communication features enabled
+12:26:29 [INFO] Loaded world from world.pkl
+12:26:29 [INFO] Agent initialized at home [20, 20].
+12:26:31 [INFO] Agent initialized at home [20, 20].
+12:26:31 [INFO] Agent initialized at home [20, 20].
+12:26:31 [INFO] Agent initialized at home [20, 20].
+12:26:31 [INFO] Agent initialized at home [20, 20].
+12:26:31 [INFO] Simulation initialized
+12:26:32 [INFO] Simulation resumed
+12:26:47 [INFO] Agent agent_2 recorded verified food at [18, 18]
+12:26:58 [INFO] Agent agent_0 recorded verified food at [18, 18]
+12:27:04 [INFO] Agent agent_1 recorded verified food at [19, 30]
+12:27:14 [INFO] Agent agent_4 recorded verified food at [18, 18]
+12:27:14 [INFO] Agent agent_4 recorded false food location at [13, 21]
+12:27:14 [INFO] Agent agent_4 recorded false food location at [14, 21]
+12:27:14 [INFO] Agent agent_4 recorded false food location at [15, 21]
+12:27:14 [INFO] Agent agent_4 recorded false food location at [16, 21]
+12:27:14 [INFO] Agent agent_4 recorded false food location at [17, 21]
+12:27:14 [INFO] Agent agent_4 using known food location at [18, 18]
+12:27:15 [INFO] Agent agent_4 recorded false food location at [17, 20]
+12:27:15 [INFO] Agent agent_4 recorded false food location at [17, 19]
+12:27:15 [INFO] Agent agent_4 recorded false food location at [17, 18]
+12:27:15 [INFO] Agent agent_4 recorded false food location at [17, 17]
+12:27:15 [INFO] Agent agent_4 recorded false food location at [17, 16]
+12:27:16 [INFO] Agent agent_2 using known food location at [18, 18]
+12:27:17 [INFO] Agent agent_2 recorded false food location at [20, 19]
+12:27:17 [INFO] Agent agent_2 recorded false food location at [20, 18]
+12:27:17 [INFO] Agent agent_2 recorded false food location at [20, 17]
+12:27:17 [INFO] Agent agent_2 recorded false food location at [20, 16]
+12:27:22 [INFO] Agent agent_4 using known food location at [18, 18]
+12:27:23 [INFO] Agent agent_4 using known food location at [18, 18]
+12:27:23 [INFO] Agent agent_0 using known food location at [18, 18]
+12:27:23 [INFO] Agent agent_0 recorded false food location at [20, 19]
+12:27:23 [INFO] Agent agent_0 recorded false food location at [20, 18]
+12:27:23 [INFO] Agent agent_0 using known food location at [18, 18]
+12:27:23 [INFO] Agent agent_0 recorded false food location at [19, 18]
+12:27:25 [INFO] Agent agent_2 using known food location at [18, 18]
+12:27:26 [INFO] Agent agent_2 using known food location at [18, 18]
+12:27:26 [INFO] Agent agent_2 recorded false food location at [19, 17]
+12:27:26 [INFO] Agent agent_2 using known food location at [18, 18]
+12:27:27 [INFO] Agent agent_3 recorded verified food at [18, 18]
+12:27:27 [INFO] Agent agent_3 recorded false food location at [20, 19]
+12:27:27 [INFO] Agent agent_3 recorded false food location at [20, 18]
+12:27:27 [INFO] Agent agent_3 recorded false food location at [20, 17]
+12:27:27 [INFO] Agent agent_3 recorded false food location at [20, 16]
+12:27:30 [INFO] Agent agent_3 using known food location at [18, 18]
+12:27:30 [INFO] Agent agent_3 using known food location at [18, 18]
+12:27:30 [INFO] Agent agent_3 recorded false food location at [19, 17]
+12:27:30 [INFO] Agent agent_3 using known food location at [18, 18]

@@ -844,6 +844,7 @@ class Agent:
     def step(self, comm_system=None, agents=None):
         """Process one time step for the agent."""
         # Increment tick counter
+        self.check_critical_states()
         self.tick_count += 1
         
         # Check food at current location
@@ -981,7 +982,72 @@ class Agent:
         
         # Return the action taken
         return action
-
+    
+    def check_critical_states(self):
+        """Check if agent is in a critical state requiring immediate action"""
+        # Calculate critical state signals (exponential increase near limits)
+        critical_hunger = False
+        critical_energy = False
+        critical_pain = False
+        
+        # Exponential signals that grow rapidly as we approach limits
+        hunger_ratio = self.hunger / MAX_H
+        if hunger_ratio > 0.8:
+            # Exponential hunger signal (grows very fast above 80%)
+            hunger_signal = 2.0 * (np.exp(3 * (hunger_ratio - 0.8)) - 1)
+            if hunger_signal > 1.5:
+                critical_hunger = True
+        
+        energy_ratio = self.energy / MAX_E
+        if energy_ratio < 0.2:
+            # Exponential energy depletion signal
+            energy_signal = 2.0 * (np.exp(3 * (0.2 - energy_ratio)) - 1)
+            if energy_signal > 1.5:
+                critical_energy = True
+        
+        pain_ratio = self.pain / MAX_P
+        if pain_ratio > 0.7:
+            # Exponential pain signal
+            pain_signal = 2.0 * (np.exp(3 * (pain_ratio - 0.7)) - 1)
+            if pain_signal > 1.5:
+                critical_pain = True
+        
+        # If in critical state, potentially abandon current plan
+        if critical_hunger or critical_energy or critical_pain:
+            if hasattr(self, 'planning_system') and self.planning_system and self.current_goal:
+                # Force planning system to reconsider goals
+                # If hunger is critical, prioritize food
+                if critical_hunger and not self.carrying:
+                    # Force a food finding goal with very high priority
+                    food_goal = Goal("find_food", priority=3.0)
+                    self.planning_system.goals = [g for g in self.planning_system.goals if g.goal_type != "find_food"]
+                    self.planning_system.add_goal(food_goal)
+                    self.planning_system.current_goal = None  # Force goal reevaluation
+                
+                # If carrying food with critical hunger, prioritize eating it
+                elif critical_hunger and self.carrying:
+                    # Create high priority goal to store/eat the food
+                    store_goal = Goal("store_food", priority=3.0)
+                    self.planning_system.goals = [g for g in self.planning_system.goals if g.goal_type != "store_food"]
+                    self.planning_system.add_goal(store_goal)
+                    self.planning_system.current_goal = None  # Force goal reevaluation
+                
+                # If energy is critical, prioritize returning home
+                elif critical_energy:
+                    # Force a return home goal with very high priority
+                    home_goal = Goal("return_home", priority=3.0)
+                    self.planning_system.goals = [g for g in self.planning_system.goals if g.goal_type != "return_home"]
+                    self.planning_system.add_goal(home_goal)
+                    self.planning_system.current_goal = None  # Force goal reevaluation
+                
+                # If pain is critical, prioritize rest to recover
+                elif critical_pain:
+                    # Force a rest goal with very high priority
+                    rest_goal = Goal("rest", priority=3.0)
+                    self.planning_system.goals = [g for g in self.planning_system.goals if g.goal_type != "rest"]
+                    self.planning_system.add_goal(rest_goal)
+                    self.planning_system.current_goal = None  # Force goal reevaluation
+                
     def compute_reward(self, next_pos, action):
         """Compute reward for taking an action."""
         reward = 0.0

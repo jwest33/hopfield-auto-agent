@@ -99,65 +99,163 @@ class PlanningSystem:
             self.goals = self.goals[:self.max_goals]
     
     def update_goal_priorities(self):
-        """Update goals' priorities based on agent state"""
+        """Update goals' priorities based on agent state with exponential urgency"""
         agent = self.agent
         
+        # Calculate exponential urgency signals
+        hunger_ratio = agent.hunger / MAX_H
+        hunger_urgency = 1.0
+        if hunger_ratio > 0.7:
+            # Exponential increase for high hunger
+            hunger_urgency = 1.0 + 2.0 * (np.exp(2 * (hunger_ratio - 0.7)) - 1)
+        
+        energy_ratio = agent.energy / MAX_E
+        energy_urgency = 1.0
+        if energy_ratio < 0.3:
+            # Exponential increase for low energy
+            energy_urgency = 1.0 + 2.0 * (np.exp(2 * (0.3 - energy_ratio)) - 1)
+        
+        pain_ratio = agent.pain / MAX_P
+        pain_urgency = 1.0
+        if pain_ratio > 0.6:
+            # Exponential increase for high pain
+            pain_urgency = 1.0 + 2.0 * (np.exp(2 * (pain_ratio - 0.6)) - 1)
+        
         for goal in self.goals:
-            # Increase food finding priority when hungry
+            # Increase food finding priority when hungry - now with exponential urgency
             if goal.goal_type == "find_food":
-                hunger_factor = agent.hunger / MAX_H
-                goal.priority = max(goal.priority, hunger_factor * 2.0)
+                goal.priority = max(goal.priority, hunger_ratio * 2.0 * hunger_urgency)
+                
+                # Extra priority boost if extremely hungry (survival instinct)
+                if hunger_ratio > 0.9:
+                    goal.priority = max(goal.priority, 4.0)
             
-            # Increase return home priority when carrying food or low energy
+            # Increase return home priority with exponential urgency for low energy
             elif goal.goal_type == "return_home":
                 if agent.carrying:
-                    goal.priority = max(goal.priority, 1.5)
+                    goal.priority = max(goal.priority, 1.5 * hunger_urgency)
                 
-                energy_factor = 1.0 - (agent.energy / MAX_E)
-                if energy_factor > 0.7:  # Very low energy
-                    goal.priority = max(goal.priority, 2.0)
-                elif energy_factor > 0.5:  # Moderately low energy
-                    goal.priority = max(goal.priority, 1.0)
+                goal.priority = max(goal.priority, (1.0 - energy_ratio) * 2.0 * energy_urgency)
+                
+                # Extra priority boost if energy critically low
+                if energy_ratio < 0.1:
+                    goal.priority = max(goal.priority, 4.0)
             
-            # Increase resting priority when in pain or very low energy
+            # Increase resting priority when in pain - with exponential urgency
             elif goal.goal_type == "rest":
-                pain_factor = agent.pain / MAX_P
-                energy_factor = 1.0 - (agent.energy / MAX_E)
+                goal.priority = max(goal.priority, pain_ratio * 2.0 * pain_urgency)
                 
-                if pain_factor > 0.5 or energy_factor > 0.8:
-                    goal.priority = max(goal.priority, 1.8)
+                # Extra boost for critical pain
+                if pain_ratio > 0.8:
+                    goal.priority = max(goal.priority, 3.5)
             
-            # Exploration always gets a small priority boost over time
+            # Exploration priority decreases when urgent needs exist
             elif goal.goal_type == "explore":
-                # Exploration becomes more appealing if we haven't changed goals in a while
-                if self.tick_since_goal_change > 30:
-                    goal.priority += 0.01
+                # Reduce exploration priority when urgent needs exist
+                urgency_factor = max(hunger_urgency, energy_urgency, pain_urgency)
+                if urgency_factor > 1.5:
+                    goal.priority = max(0.05, goal.priority / urgency_factor)
+                else:
+                    # Exploration becomes more appealing if we haven't changed goals in a while
+                    if self.tick_since_goal_change > 30:
+                        goal.priority += 0.01
         
         # Reorder goals by updated priorities
         self.goals.sort(key=lambda g: g.priority, reverse=True)
-    
+        
     def should_change_goal(self):
-        """Determine if the agent should change its current goal"""
+        """Determine if the agent should change its current goal based on observations, needs and priors"""
         if not self.current_goal:
             return True
         
-        # Don't switch too frequently, goals should have persistence
-        if self.tick_since_goal_change < self.goal_persistence:
-            return False
+        agent = self.agent
         
-        # Check if current goal is not the highest priority anymore
-        if self.goals and self.goals[0] != self.current_goal and self.goals[0].priority > self.current_goal.priority * 1.3:
-            return True
+        # Calculate utility scores for different goal types based on agent state
+        goal_utilities = {
+            "find_food": 0.0,
+            "return_home": 0.0,
+            "store_food": 0.0,
+            "rest": 0.0,
+            "explore": 0.0
+        }
         
-        # Check if goal is expired
-        if self.current_goal.is_expired(self.agent.tick_count):
-            return True
+        # Hunger increases utility of food-related goals with sigmoid curve
+        hunger_ratio = agent.hunger / MAX_H
+        food_utility = 1.0 / (1.0 + np.exp(-10 * (hunger_ratio - 0.6)))  # Sigmoid centered at 60% hunger
+        goal_utilities["find_food"] = food_utility * 2.0
         
-        # Check if we're stuck or making no progress
+        # Energy depletion increases return home utility
+        energy_ratio = agent.energy / MAX_E
+        home_utility = 1.0 / (1.0 + np.exp(-10 * (0.4 - energy_ratio)))  # Sigmoid centered at 40% energy
+        goal_utilities["return_home"] = home_utility * 2.0
+        
+        # Pain increases rest utility
+        pain_ratio = agent.pain / MAX_P
+        rest_utility = 1.0 / (1.0 + np.exp(-10 * (pain_ratio - 0.5)))  # Sigmoid centered at 50% pain
+        goal_utilities["rest"] = rest_utility * 1.5
+        
+        # Carrying food increases store_food utility
+        if agent.carrying:
+            goal_utilities["store_food"] = 1.5
+        
+        # Base exploration utility
+        goal_utilities["explore"] = 0.2
+        
+        # Add time-based utility - more exploration if we've had the same goal for a while
+        if self.tick_since_goal_change > 30:
+            goal_utilities["explore"] += 0.1 * (self.tick_since_goal_change - 30) / 10
+        
+        # Adjust utilities based on environment observations
+        current_cell = agent.w.cell(tuple(agent.pos))
+        
+        # If we're at home, slightly reduce the utility of returning home
+        if current_cell.material == "home" or "home" in current_cell.tags:
+            goal_utilities["return_home"] = 0
+            # Being at home increases rest utility slightly
+            goal_utilities["rest"] += 0.2
+        
+        # If food is visible, increase find_food utility
+        if agent.check_nearby_food():
+            goal_utilities["find_food"] += 0.5
+        
+        # If agent is in dangerous terrain, increase return_home utility
+        if current_cell.local_risk > 0.3:
+            goal_utilities["return_home"] += 0.3
+        
+        # Adjust based on weather conditions
+        if agent.w.weather == "storm":
+            goal_utilities["return_home"] += 0.3
+            goal_utilities["explore"] -= 0.1
+        
+        # Check if current goal is still the best option
+        current_goal_utility = goal_utilities.get(self.current_goal.goal_type, 0)
+        
+        # Factor in goal persistence - add bonus to current goal to prevent thrashing
+        persistence_bonus = 0.3 * max(0, (self.goal_persistence - self.tick_since_goal_change)) / self.goal_persistence
+        current_goal_utility += persistence_bonus
+        
+        # Find best alternative goal
+        best_alternative_type = max(goal_utilities.items(), key=lambda x: x[1])[0]
+        best_alternative_utility = goal_utilities[best_alternative_type]
+        
+        # Check if the goal has failed too many times
         if self.current_goal.failed_attempts > 5:
             return True
         
-        return False
+        # Check if goal is expired
+        if self.current_goal.is_expired(agent.tick_count):
+            return True
+        
+        # Decide based on utility difference
+        # Require a significant utility difference to switch goals (helps with stability)
+        utility_difference = best_alternative_utility - current_goal_utility
+        utility_threshold = 0.3  # Minimum difference to switch
+        
+        # Important: More likely to switch if in critical state
+        if hunger_ratio > 0.9 or energy_ratio < 0.1 or pain_ratio > 0.8:
+            utility_threshold = 0.1  # Lower threshold for critical states
+        
+        return utility_difference > utility_threshold
     
     def select_best_goal(self):
         """Select the highest priority goal or default to exploration"""
