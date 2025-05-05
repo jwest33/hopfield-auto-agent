@@ -659,8 +659,8 @@ class Simulation:
         # Set up simulation clock
         self.clock = pygame.time.Clock()
         
-        # Show minimap by default
-        self.show_minimap = True
+        # Show minimap by default - CHANGE TO FALSE
+        self.show_minimap = False
         
         logging.info("Simulation initialized")
         
@@ -1005,49 +1005,6 @@ class Simulation:
         # Flip the display
         pygame.display.flip()
         
-    def render_terrain_legend(self, panel_left, y_pos, width):
-        """Render a legend showing terrain risk levels"""
-        # Create a header for the legend
-        legend_header = self.font_normal.render("Terrain Pain Risk", True, COLOR_TEXT_HEADER)
-        header_rect = legend_header.get_rect(topleft=(panel_left, y_pos))
-        self.screen.blit(legend_header, header_rect)
-        y_pos += 25
-        
-        # Terrain types to show in legend
-        terrain_types = ["dirt", "stone", "rock", "water", "wood", "home"]
-        risk_levels = [0.1, 0.3, 0.6, 0.5, 0.4, 0.0]  # Example risk levels
-        
-        # Draw each terrain type with its risk level
-        box_size = 15
-        for i, (terrain, risk) in enumerate(zip(terrain_types, risk_levels)):
-            # Create mock cell for getting color
-            mock_cell = TerrainCell(material=terrain, local_risk=risk)
-            color = get_terrain_color(mock_cell)
-            
-            # Draw color box
-            box_rect = pygame.Rect(panel_left, y_pos, box_size, box_size)
-            pygame.draw.rect(self.screen, color, box_rect)
-            pygame.draw.rect(self.screen, (180, 180, 180), box_rect, 1)
-            
-            # Add risk indicator lines if applicable
-            if risk > 0.1:
-                risk_lines = int(risk * 5) + 1
-                line_spacing = box_size // (risk_lines + 1)
-                for line in range(1, risk_lines + 1):
-                    start_pos = (box_rect.left, box_rect.top + line * line_spacing)
-                    end_pos = (box_rect.left + line * line_spacing, box_rect.top)
-                    pygame.draw.line(self.screen, (200, 0, 0), start_pos, end_pos, 1)
-            
-            # Draw terrain name and risk level
-            text = f"{terrain.capitalize()}: {risk * 100:.0f}% pain"
-            text_surf = self.font_small.render(text, True, COLOR_TEXT)
-            text_rect = text_surf.get_rect(midleft=(panel_left + box_size + 5, box_rect.centery))
-            self.screen.blit(text_surf, text_rect)
-            
-            y_pos += 20
-        
-        return y_pos + 10  # Return updated y position
-
     def render_world(self):
         """Render the world grid with risk visualization"""
         # Draw grid background
@@ -1212,21 +1169,21 @@ class Simulation:
             info_surf = self.font_normal.render(info, True, COLOR_TEXT)
             info_rect = info_surf.get_rect(topleft=(panel_rect.left + 20, world_info_y + 10 + i * 20))
             self.screen.blit(info_surf, info_rect)
-            
-        # Add terrain legend below world info
-        legend_y = world_info_y + world_info_height + 15
-        legend_y = self.render_terrain_legend(panel_rect.left + 10, legend_y, panel_rect.width - 20)
 
         # Adjust tab position based on world info position
         self.tabs.rect.top = world_info_y + world_info_height + 15
         self.tabs.rect.height = WINDOW_HEIGHT - self.tabs.rect.top - 10
-        self.tabs.rect.top = legend_y + 10
-        
+
         # Draw tabs
         content_rect = self.tabs.draw(self.screen, self.font_normal)
         
         # Update stats area rectangle to match tab content
         self.stats_area.rect = content_rect
+
+        # Create a clipping rectangle for the tab content area
+        # This ensures that content doesn't draw outside the tab area
+        original_clip = self.screen.get_clip()
+        self.screen.set_clip(content_rect)
         
         # Draw content based on active tab
         if self.tabs.active_tab == 0:  # Agent tab
@@ -1247,8 +1204,7 @@ class Simulation:
                     )
                     
                     # Render the visualization
-                    if goal_viz_rect.top > 0 and goal_viz_rect.top < WINDOW_HEIGHT:
-                        self.screen.blit(self.visualization_cache["goal_visualization"], goal_viz_rect)
+                    self.screen.blit(self.visualization_cache["goal_visualization"], goal_viz_rect)
                     
                     # Update content height for scrolling
                     self.stats_area.content_height = goal_viz_rect.height + 50
@@ -1260,6 +1216,9 @@ class Simulation:
             self.render_population_stats()
         else:  # Interactions tab
             self.render_interaction_stats()
+        
+        # Restore original clipping rectangle
+        self.screen.set_clip(original_clip)
         
         # Draw scrollbar if needed
         self.stats_area.draw_scrollbar(self.screen)
@@ -1335,8 +1294,7 @@ class Simulation:
         # Agent header with proper positioning
         agent_header = self.font_large.render(f"Agent {agent_id_num}", True, COLOR_TEXT_HEADER)
         header_rect = self.stats_area.get_content_rect(content_height)
-        if header_rect.top > 0 and header_rect.top < WINDOW_HEIGHT:
-            self.screen.blit(agent_header, header_rect)
+        self.screen.blit(agent_header, header_rect)
         content_height += line_height * 2  # Increased spacing after header
         
         # Agent vitals
@@ -1354,15 +1312,14 @@ class Simulation:
                 progress_height
             )
             
-            if progress_rect.top > 0 and progress_rect.top < WINDOW_HEIGHT:
-                progress_bar = ProgressBar(
-                    progress_rect,
-                    vital["value"],
-                    vital["max"],
-                    vital["name"],
-                    vital["color"]
-                )
-                progress_bar.draw(self.screen, self.font_small)
+            progress_bar = ProgressBar(
+                progress_rect,
+                vital["value"],
+                vital["max"],
+                vital["name"],
+                vital["color"]
+            )
+            progress_bar.draw(self.screen, self.font_small)
             
             content_height += progress_height + 15
         
@@ -1375,17 +1332,15 @@ class Simulation:
         content_height += section_spacing
         for info in food_info:
             info_rect = self.stats_area.get_content_rect(content_height)
-            if info_rect.top > 0 and info_rect.top < WINDOW_HEIGHT:
-                info_surf = self.font_normal.render(info, True, COLOR_TEXT)
-                self.screen.blit(info_surf, info_rect)
+            info_surf = self.font_normal.render(info, True, COLOR_TEXT)
+            self.screen.blit(info_surf, info_rect)
             content_height += line_height
         
         # Environment information
         content_height += section_spacing
         env_header = self.font_normal.render("Environment", True, COLOR_TEXT_HEADER)
         env_header_rect = self.stats_area.get_content_rect(content_height)
-        if env_header_rect.top > 0 and env_header_rect.top < WINDOW_HEIGHT:
-            self.screen.blit(env_header, env_header_rect)
+        self.screen.blit(env_header, env_header_rect)
         content_height += line_height
         
         current_cell = self.world.cell(tuple(agent.pos))
@@ -1399,17 +1354,15 @@ class Simulation:
         
         for info in env_info:
             info_rect = self.stats_area.get_content_rect(content_height)
-            if info_rect.top > 0 and info_rect.top < WINDOW_HEIGHT:
-                info_surf = self.font_normal.render(info, True, COLOR_TEXT)
-                self.screen.blit(info_surf, info_rect)
+            info_surf = self.font_normal.render(info, True, COLOR_TEXT)
+            self.screen.blit(info_surf, info_rect)
             content_height += line_height
         
         # Action information
         content_height += section_spacing
         action_header = self.font_normal.render("Actions", True, COLOR_TEXT_HEADER)
         action_header_rect = self.stats_area.get_content_rect(content_height)
-        if action_header_rect.top > 0 and action_header_rect.top < WINDOW_HEIGHT:
-            self.screen.blit(action_header, action_header_rect)
+        self.screen.blit(action_header, action_header_rect)
         content_height += line_height
         
         action_info = [
@@ -1420,9 +1373,8 @@ class Simulation:
         
         for info in action_info:
             info_rect = self.stats_area.get_content_rect(content_height)
-            if info_rect.top > 0 and info_rect.top < WINDOW_HEIGHT:
-                info_surf = self.font_normal.render(info, True, COLOR_TEXT)
-                self.screen.blit(info_surf, info_rect)
+            info_surf = self.font_normal.render(info, True, COLOR_TEXT)
+            self.screen.blit(info_surf, info_rect)
             content_height += line_height
         
         # Goals & Planning information
@@ -1430,8 +1382,7 @@ class Simulation:
             content_height += section_spacing
             goal_header = self.font_normal.render("Goals & Planning", True, COLOR_TEXT_HEADER)
             goal_header_rect = self.stats_area.get_content_rect(content_height)
-            if goal_header_rect.top > 0 and goal_header_rect.top < WINDOW_HEIGHT:
-                self.screen.blit(goal_header, goal_header_rect)
+            self.screen.blit(goal_header, goal_header_rect)
             content_height += line_height
             
             goal_text = f"Current Goal: {agent.planning_system.current_goal.goal_type}"
@@ -1439,17 +1390,15 @@ class Simulation:
                 goal_text += f" (Target: {agent.planning_system.current_goal.target})"
             
             goal_rect = self.stats_area.get_content_rect(content_height)
-            if goal_rect.top > 0 and goal_rect.top < WINDOW_HEIGHT:
-                goal_surf = self.font_normal.render(goal_text, True, COLOR_TEXT)
-                self.screen.blit(goal_surf, goal_rect)
+            goal_surf = self.font_normal.render(goal_text, True, COLOR_TEXT)
+            self.screen.blit(goal_surf, goal_rect)
             content_height += line_height
             
             # Goal priority
             priority_text = f"Priority: {agent.planning_system.current_goal.priority:.2f}"
             priority_rect = self.stats_area.get_content_rect(content_height)
-            if priority_rect.top > 0 and priority_rect.top < WINDOW_HEIGHT:
-                priority_surf = self.font_normal.render(priority_text, True, COLOR_TEXT)
-                self.screen.blit(priority_surf, priority_rect)
+            priority_surf = self.font_normal.render(priority_text, True, COLOR_TEXT)
+            self.screen.blit(priority_surf, priority_rect)
             content_height += line_height
             
             # Plan information
@@ -1460,9 +1409,8 @@ class Simulation:
                 
                 plan_text = f"Plan Progress: {progress}/{plan_length} steps"
                 plan_rect = self.stats_area.get_content_rect(content_height)
-                if plan_rect.top > 0 and plan_rect.top < WINDOW_HEIGHT:
-                    plan_surf = self.font_normal.render(plan_text, True, COLOR_TEXT)
-                    self.screen.blit(plan_surf, plan_rect)
+                plan_surf = self.font_normal.render(plan_text, True, COLOR_TEXT)
+                self.screen.blit(plan_surf, plan_rect)
                 content_height += line_height
                 
                 # Show upcoming actions in plan
@@ -1472,9 +1420,8 @@ class Simulation:
                     upcoming_text += ", ".join(upcoming_actions)
                     
                     upcoming_rect = self.stats_area.get_content_rect(content_height)
-                    if upcoming_rect.top > 0 and upcoming_rect.top < WINDOW_HEIGHT:
-                        upcoming_surf = self.font_normal.render(upcoming_text, True, COLOR_TEXT)
-                        self.screen.blit(upcoming_surf, upcoming_rect)
+                    upcoming_surf = self.font_normal.render(upcoming_text, True, COLOR_TEXT)
+                    self.screen.blit(upcoming_surf, upcoming_rect)
                     content_height += line_height
         
         # Communication information (if PyTorch available)
@@ -1482,8 +1429,7 @@ class Simulation:
             content_height += section_spacing
             comm_header = self.font_normal.render("Communication", True, COLOR_TEXT_HEADER)
             comm_header_rect = self.stats_area.get_content_rect(content_height)
-            if comm_header_rect.top > 0 and comm_header_rect.top < WINDOW_HEIGHT:
-                self.screen.blit(comm_header, comm_header_rect)
+            self.screen.blit(comm_header, comm_header_rect)
             content_height += line_height
             
             comm_info = [
@@ -1493,9 +1439,8 @@ class Simulation:
             
             for info in comm_info:
                 info_rect = self.stats_area.get_content_rect(content_height)
-                if info_rect.top > 0 and info_rect.top < WINDOW_HEIGHT:
-                    info_surf = self.font_normal.render(info, True, COLOR_TEXT)
-                    self.screen.blit(info_surf, info_rect)
+                info_surf = self.font_normal.render(info, True, COLOR_TEXT)
+                self.screen.blit(info_surf, info_rect)
                 content_height += line_height
         
         # Agent history graph
@@ -1506,124 +1451,9 @@ class Simulation:
                         self.stats_area.rect.top + content_height - self.stats_area.scroll_y)
             )
             
-            if graph_rect.top + 20 > 0 and graph_rect.top < WINDOW_HEIGHT:
-                self.screen.blit(self.visualization_cache["agent_graph"], graph_rect)
+            self.screen.blit(self.visualization_cache["agent_graph"], graph_rect)
             
             content_height += graph_rect.height + section_spacing
-        
-        # Update content height for scrolling
-        self.stats_area.content_height = content_height + 20
-    
-    def render_population_stats(self):
-        """Render population statistics"""
-        # Set up variables for positioning
-        content_height = 0
-        line_height = 20
-        section_spacing = 15
-        
-        # Population header
-        pop_header = self.font_large.render("Population Statistics", True, COLOR_TEXT_HEADER)
-        header_rect = self.stats_area.get_content_rect(content_height)
-        if header_rect.top > 0 and header_rect.top < WINDOW_HEIGHT:
-            self.screen.blit(pop_header, header_rect)
-        content_height += line_height * 1.5
-        
-        # Basic population info
-        pop_info = [
-            f"Active Agents: {len(self.population.agents)}",
-            f"Food Carried: {sum(1 for agent in self.population.agents.values() if agent.carrying)}",
-            f"Total Food Stored: {sum(agent.store for agent in self.population.agents.values())}",
-            f"Total Interactions: {len(self.population.interactions)}"
-        ]
-        
-        for info in pop_info:
-            info_rect = self.stats_area.get_content_rect(content_height)
-            if info_rect.top > 0 and info_rect.top < WINDOW_HEIGHT:
-                info_surf = self.font_normal.render(info, True, COLOR_TEXT)
-                self.screen.blit(info_surf, info_rect)
-            content_height += line_height
-        
-        # Population distribution visualization
-        content_height += section_spacing * 2
-        if self.visualization_cache["population_stats"] is not None:
-            pop_rect = self.visualization_cache["population_stats"].get_rect(
-                topleft=(self.stats_area.rect.left, 
-                        self.stats_area.rect.top + content_height - self.stats_area.scroll_y)
-            )
-            
-            if pop_rect.top + 20 > 0 and pop_rect.top < WINDOW_HEIGHT:
-                self.screen.blit(self.visualization_cache["population_stats"], pop_rect)
-            
-            content_height += pop_rect.height + section_spacing
-        
-        # Agent list
-        content_height += section_spacing
-        agent_list_header = self.font_normal.render("Agent List", True, COLOR_TEXT_HEADER)
-        agent_list_rect = self.stats_area.get_content_rect(content_height)
-        if agent_list_rect.top > 0 and agent_list_rect.top < WINDOW_HEIGHT:
-            self.screen.blit(agent_list_header, agent_list_rect)
-        content_height += line_height * 1.5
-        
-        # Column headers
-        col_headers = ["ID", "Energy", "Hunger", "Pain", "Food"]
-        header_widths = [40, 60, 60, 60, 40]
-        header_x = self.stats_area.rect.left
-        
-        for i, header in enumerate(col_headers):
-            header_rect = pygame.Rect(
-                header_x, 
-                self.stats_area.rect.top + content_height - self.stats_area.scroll_y,
-                header_widths[i], 
-                line_height
-            )
-            
-            if header_rect.top > 0 and header_rect.top < WINDOW_HEIGHT:
-                header_surf = self.font_small.render(header, True, COLOR_TEXT)
-                self.screen.blit(header_surf, header_surf.get_rect(midleft=header_rect.midleft))
-            
-            header_x += header_widths[i]
-        
-        content_height += line_height
-        
-        # Agent rows
-        for agent_id, agent in self.population.agents.items():
-            agent_num = agent_id.split('_')[1]
-            row_data = [
-                agent_num,
-                f"{agent.energy:.0f}",
-                f"{agent.hunger:.0f}",
-                f"{agent.pain:.0f}",
-                f"{agent.store}"
-            ]
-            
-            row_x = self.stats_area.rect.left
-            row_rect = pygame.Rect(
-                row_x,
-                self.stats_area.rect.top + content_height - self.stats_area.scroll_y,
-                self.stats_area.rect.width,
-                line_height
-            )
-            
-            # Highlight selected agent
-            if agent_id == self.selected_agent_id and row_rect.top > 0 and row_rect.top < WINDOW_HEIGHT:
-                pygame.draw.rect(self.screen, (80, 100, 120), row_rect)
-            
-            # Draw row data
-            for i, data in enumerate(row_data):
-                cell_rect = pygame.Rect(
-                    row_x,
-                    row_rect.top,
-                    header_widths[i],
-                    line_height
-                )
-                
-                if cell_rect.top > 0 and cell_rect.top < WINDOW_HEIGHT:
-                    cell_surf = self.font_small.render(data, True, COLOR_TEXT)
-                    self.screen.blit(cell_surf, cell_surf.get_rect(midleft=cell_rect.midleft))
-                
-                row_x += header_widths[i]
-            
-            content_height += line_height
         
         # Update content height for scrolling
         self.stats_area.content_height = content_height + 20

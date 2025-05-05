@@ -108,3 +108,175 @@
 06:04:38 [INFO] Agent agent_4 reduced hunger by 3.2 and increased energy by 20
 06:04:38 [INFO] Agent agent_4 recorded false food location at [34, 1]
 06:04:38 [INFO] Agent agent_4 recorded verified food at [35, 3]
+06:05:35 [INFO] PyTorch found - communication features enabled
+06:05:35 [INFO] Loaded world from world.pkl
+06:05:35 [INFO] Agent agent_0 initialized at home [20, 20].
+06:05:35 [INFO] Agent agent_1 initialized at home [20, 20].
+06:05:35 [INFO] Agent agent_2 initialized at home [20, 20].
+06:05:35 [INFO] Agent agent_3 initialized at home [20, 20].
+06:05:35 [INFO] Agent agent_4 initialized at home [20, 20].
+06:05:35 [INFO] Simulation initialized
+06:12:42 [INFO] PyTorch found - communication features enabled
+06:12:43 [INFO] Loaded world from world.pkl
+06:12:43 [INFO] Agent agent_0 initialized at home [20, 20].
+06:12:43 [INFO] Agent agent_1 initialized at home [20, 20].
+06:12:43 [INFO] Agent agent_2 initialized at home [20, 20].
+06:12:43 [INFO] Agent agent_3 initialized at home [20, 20].
+06:12:43 [INFO] Agent agent_4 initialized at home [20, 20].
+06:12:43 [INFO] Simulation initialized
+06:12:44 [INFO] Simulation resumed
+06:12:44 [INFO] Agent agent_0 recorded verified food at [22, 14]
+06:12:44 [INFO] Agent agent_1 recorded verified food at [22, 14]
+06:12:44 [INFO] Agent agent_2 recorded verified food at [22, 14]
+06:12:44 [INFO] Agent agent_3 recorded verified food at [22, 14]
+06:12:44 [INFO] Agent agent_4 recorded verified food at [22, 14]
+06:12:45 [INFO] Agent agent_1 recorded false food location at [22, 14]
+06:12:45 [INFO] Agent agent_2 recorded false food location at [22, 14]
+06:12:45 [INFO] Agent agent_3 recorded false food location at [22, 14]
+06:12:45 [INFO] Agent agent_4 recorded false food location at [22, 14]
+06:12:45 [INFO] Agent agent_1 recorded verified food at [16, 12]
+06:12:45 [INFO] Agent agent_2 recorded verified food at [16, 12]
+06:12:45 [INFO] Agent agent_3 recorded verified food at [16, 12]
+06:12:45 [INFO] Agent agent_4 recorded verified food at [16, 12]
+06:12:46 [INFO] Agent agent_0 recorded false food location at [20, 20]
+06:12:46 [INFO] Agent agent_0 recorded verified food at [16, 12]
+06:12:46 [INFO] Agent agent_2 recorded false food location at [16, 12]
+06:12:46 [INFO] Agent agent_2 recorded verified food at [9, 7]
+06:12:46 [INFO] Agent agent_3 recorded false food location at [16, 12]
+06:12:46 [INFO] Agent agent_3 recorded verified food at [9, 7]
+06:12:46 [INFO] Agent agent_4 recorded false food location at [16, 12]
+06:12:46 [INFO] Agent agent_4 recorded verified food at [9, 7]
+06:12:47 [INFO] Agent agent_3 recorded false food location at [9, 7]
+06:12:48 [INFO] Agent agent_3 recorded verified food at [7, 9]
+06:12:48 [INFO] Agent agent_4 recorded false food location at [9, 7]
+06:12:48 [INFO] Agent agent_4 recorded verified food at [7, 9]
+06:12:48 [INFO] Agent agent_0 recorded false food location at [16, 12]
+06:12:48 [INFO] Agent agent_1 recorded false food location at [20, 20]
+06:12:48 [INFO] Agent agent_1 recorded verified food at [14, 32]
+06:12:48 [INFO] Agent agent_0 recorded verified food at [7, 9]
+06:12:48 [INFO] Agent agent_4 recorded false food location at [7, 9]
+06:12:48 [INFO] Agent agent_4 recorded verified food at [4, 6]
+06:12:49 [INFO] Agent agent_0 recorded false food location at [7, 9]
+06:12:49 [INFO] Agent agent_0 recorded verified food at [4, 6]
+06:12:49 [INFO] Agent agent_2 recorded verified food at [20, 2]
+06:12:50 [INFO] Agent agent_3 recorded verified food at [20, 2]
+06:12:52 [INFO] Agent agent_0 recorded verified food at [20, 2]
+06:12:52 [INFO] Agent agent_4 recorded false food location at [20, 20]
+06:12:54 [INFO] Simulation paused
+06:13:32 [INFO] PyTorch found - communication features enabled
+06:13:32 [INFO] Loaded world from world.pkl
+06:13:32 [INFO] Agent agent_0 initialized at home [20, 20].
+06:13:32 [INFO] Agent agent_1 initialized at home [20, 20].
+06:13:32 [INFO] Agent agent_2 initialized at home [20, 20].
+06:13:32 [INFO] Agent agent_3 initialized at home [20, 20].
+06:13:32 [INFO] Agent agent_4 initialized at home [20, 20].
+06:13:32 [INFO] Simulation initialized
+06:14:26 [INFO] PyTorch found - communication features enabled
+06:14:27 [INFO] Loaded world from world.pkl
+06:14:27 [INFO] Agent agent_0 initialized at home [20, 20].
+06:14:27 [INFO] Agent agent_1 initialized at home [20, 20].
+06:14:27 [INFO] Agent agent_2 initialized at home [20, 20].
+06:14:27 [INFO] Agent agent_3 initialized at home [20, 20].
+06:14:27 [INFO] Agent agent_4 initialized at home [20, 20].
+06:14:27 [INFO] Simulation initialized
+06:14:31 [INFO] Simulation resumed
+06:14:32 [INFO] Agent agent_0 recorded verified food at [22, 14]
+06:14:32 [INFO] Agent agent_1 recorded verified food at [22, 14]
+06:14:32 [INFO] Agent agent_2 recorded verified food at [22, 14]
+06:14:32 [INFO] Agent agent_3 recorded verified food at [22, 14]
+06:14:32 [INFO] Agent agent_4 recorded verified food at [22, 14]
+06:14:32 [INFO] Agent agent_1 recorded false food location at [22, 14]
+06:14:32 [INFO] Agent agent_2 recorded false food location at [22, 14]
+06:14:32 [INFO] Agent agent_3 recorded false food location at [22, 14]
+06:14:32 [INFO] Agent agent_4 recorded false food location at [22, 14]
+06:14:33 [INFO] Agent agent_1 recorded verified food at [16, 12]
+06:14:33 [INFO] Agent agent_2 recorded verified food at [16, 12]
+06:14:33 [INFO] Agent agent_3 recorded verified food at [16, 12]
+06:14:33 [INFO] Agent agent_4 recorded verified food at [16, 12]
+06:14:33 [INFO] Agent agent_0 recorded false food location at [20, 20]
+06:14:33 [INFO] Agent agent_0 recorded verified food at [16, 12]
+06:14:33 [INFO] Agent agent_2 recorded false food location at [16, 12]
+06:14:34 [INFO] Agent agent_2 recorded verified food at [9, 7]
+06:14:34 [INFO] Agent agent_3 recorded false food location at [16, 12]
+06:14:34 [INFO] Agent agent_3 recorded verified food at [9, 7]
+06:14:34 [INFO] Agent agent_4 recorded false food location at [16, 12]
+06:14:34 [INFO] Agent agent_4 recorded verified food at [9, 7]
+06:14:35 [INFO] Agent agent_3 recorded false food location at [9, 7]
+06:14:35 [INFO] Agent agent_3 recorded verified food at [7, 9]
+06:14:35 [INFO] Agent agent_4 recorded false food location at [9, 7]
+06:14:35 [INFO] Agent agent_4 recorded verified food at [7, 9]
+06:14:35 [INFO] Agent agent_0 recorded false food location at [16, 12]
+06:14:35 [INFO] Agent agent_1 recorded false food location at [20, 20]
+06:14:35 [INFO] Agent agent_1 recorded verified food at [14, 32]
+06:14:35 [INFO] Agent agent_0 recorded verified food at [7, 9]
+06:14:35 [INFO] Agent agent_4 recorded false food location at [7, 9]
+06:14:35 [INFO] Agent agent_4 recorded verified food at [4, 6]
+06:14:36 [INFO] Agent agent_0 recorded false food location at [7, 9]
+06:14:37 [INFO] Agent agent_0 recorded verified food at [4, 6]
+06:14:38 [INFO] Agent agent_2 recorded false food location at [20, 20]
+06:15:25 [INFO] PyTorch found - communication features enabled
+06:15:25 [ERROR] Error loading world: No module named 'module_new_world'
+06:15:25 [INFO] Created new world with grid size 40
+06:15:25 [INFO] Agent agent_0 initialized at home [20, 20].
+06:15:25 [INFO] Agent agent_1 initialized at home [20, 20].
+06:15:25 [INFO] Agent agent_2 initialized at home [20, 20].
+06:15:25 [INFO] Agent agent_3 initialized at home [20, 20].
+06:15:25 [INFO] Agent agent_4 initialized at home [20, 20].
+06:15:25 [INFO] Added food sources. Total in world: 20
+06:15:25 [INFO] Simulation initialized
+06:15:53 [INFO] PyTorch found - communication features enabled
+06:15:54 [INFO] Loaded world from world.pkl
+06:15:54 [INFO] Agent agent_0 initialized at home [20, 20].
+06:15:54 [INFO] Agent agent_1 initialized at home [20, 20].
+06:15:54 [INFO] Agent agent_2 initialized at home [20, 20].
+06:15:54 [INFO] Agent agent_3 initialized at home [20, 20].
+06:15:54 [INFO] Agent agent_4 initialized at home [20, 20].
+06:15:54 [INFO] Simulation initialized
+06:17:09 [INFO] PyTorch found - communication features enabled
+06:17:10 [INFO] Loaded world from world.pkl
+06:17:10 [INFO] Agent agent_0 initialized at home [20, 20].
+06:17:10 [INFO] Agent agent_1 initialized at home [20, 20].
+06:17:10 [INFO] Agent agent_2 initialized at home [20, 20].
+06:17:10 [INFO] Agent agent_3 initialized at home [20, 20].
+06:17:10 [INFO] Agent agent_4 initialized at home [20, 20].
+06:17:10 [INFO] Simulation initialized
+06:17:11 [INFO] Simulation resumed
+06:17:11 [INFO] Agent agent_0 recorded verified food at [22, 14]
+06:17:11 [INFO] Agent agent_1 recorded verified food at [22, 14]
+06:17:11 [INFO] Agent agent_2 recorded verified food at [22, 14]
+06:17:11 [INFO] Agent agent_3 recorded verified food at [22, 14]
+06:17:11 [INFO] Agent agent_4 recorded verified food at [22, 14]
+06:17:12 [INFO] Agent agent_1 recorded false food location at [22, 14]
+06:17:12 [INFO] Agent agent_2 recorded false food location at [22, 14]
+06:17:12 [INFO] Agent agent_3 recorded false food location at [22, 14]
+06:17:12 [INFO] Agent agent_4 recorded false food location at [22, 14]
+06:17:12 [INFO] Agent agent_1 recorded verified food at [16, 12]
+06:17:12 [INFO] Agent agent_2 recorded verified food at [16, 12]
+06:17:12 [INFO] Agent agent_3 recorded verified food at [16, 12]
+06:17:12 [INFO] Agent agent_4 recorded verified food at [16, 12]
+06:17:13 [INFO] Agent agent_0 recorded false food location at [20, 20]
+06:17:13 [INFO] Agent agent_0 recorded verified food at [16, 12]
+06:17:13 [INFO] Agent agent_2 recorded false food location at [16, 12]
+06:17:13 [INFO] Agent agent_2 recorded verified food at [9, 7]
+06:17:13 [INFO] Agent agent_3 recorded false food location at [16, 12]
+06:17:13 [INFO] Agent agent_3 recorded verified food at [9, 7]
+06:17:13 [INFO] Agent agent_4 recorded false food location at [16, 12]
+06:17:13 [INFO] Agent agent_4 recorded verified food at [9, 7]
+06:17:15 [INFO] Agent agent_3 recorded false food location at [9, 7]
+06:17:15 [INFO] Agent agent_3 recorded verified food at [7, 9]
+06:17:15 [INFO] Agent agent_4 recorded false food location at [9, 7]
+06:17:15 [INFO] Agent agent_4 recorded verified food at [7, 9]
+06:17:15 [INFO] Agent agent_0 recorded false food location at [16, 12]
+06:17:15 [INFO] Agent agent_1 recorded false food location at [20, 20]
+06:17:15 [INFO] Agent agent_1 recorded verified food at [14, 32]
+06:17:15 [INFO] Agent agent_0 recorded verified food at [7, 9]
+06:17:15 [INFO] Agent agent_4 recorded false food location at [7, 9]
+06:17:15 [INFO] Agent agent_4 recorded verified food at [4, 6]
+06:17:16 [INFO] Agent agent_0 recorded false food location at [7, 9]
+06:17:16 [INFO] Agent agent_0 recorded verified food at [4, 6]
+06:17:17 [INFO] Agent agent_2 recorded false food location at [20, 20]
+06:17:18 [INFO] Agent agent_3 recorded false food location at [20, 20]
+06:17:18 [INFO] Agent agent_1 recorded verified food at [12, 34]
+06:17:19 [INFO] Agent agent_4 recorded false food location at [20, 20]
+06:17:19 [INFO] Simulation paused
+06:17:46 [INFO] Simulation terminated
