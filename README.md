@@ -1,4 +1,4 @@
-# Multi-Agent Emergence Simulation
+# Hop to it: Autonomous Agents with Modern Hopfield Memory
 
 This simulation demonstrates emergent behavior and communication patterns between multiple autonomous agents in a complex environment. Agents learn and adapt over time, developing their own strategies for survival and cooperation without hard-coded behaviors.
 
@@ -12,10 +12,10 @@ This project implements a multi-agent simulation where intelligent agents naviga
 
 - **Terrain-Based World**: Agents navigate a world with various terrain types (dirt, water, stone, etc.) each with unique properties like friction, temperature, and risk factors.
 - **Adaptive Agent Behavior**: Agents learn from their environment using Q-learning and Hopfield networks, developing individual strategies for survival.
-- **Goal-Based Planning System**: Agents use a sophisticated planning system to set and pursue goals such as finding food, returning home, or resting.
+- **Goal-Based Planning System**: Agents set and pursue goals such as finding food, returning home, or resting.
 - **Neural Communication**: Agents can communicate with each other by broadcasting signals that are learned and interpreted through neural networks.
-- **Emergent Social Behavior**: Agents may develop emergent social patterns like food sharing and communication about resources without being explicitly programmed to do so.
-- **Dynamic Environment**: Weather systems and day/night cycles affect agent behavior and terrain properties.
+- **Emergent Social Behavior**: Agents may develop emergent social patterns like food sharing and communication.
+- **Dynamic Environment**: Weather systems and day/night cycles affect agent behavior and terrain properties. (TODO)
 - **Interactive Visualization**: Real-time visualization of the simulation with detailed agent statistics, world information, and interactive controls.
 - **Data Analysis Tools**: Integrated tools for analyzing agent states, learning patterns, and behavior trends.
 
