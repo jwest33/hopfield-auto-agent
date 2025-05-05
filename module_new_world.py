@@ -27,7 +27,7 @@ class TerrainCell:
     temperature:        float           = 20.0  # current cell temp (°C)
 
     # Traversal flags & extras
-    passable:           bool            = True
+    passable:           bool            = True  # All terrain is now passable by default
     material:           str             = "dirt"
     local_risk:         float           = 0.0   # passive damage per entry
     tags:               Set[str]        = field(default_factory=set)
@@ -84,8 +84,9 @@ class World:
         return self.grid[x % self.grid_size, y % self.grid_size]
 
     def is_passable(self, pos: Tuple[int, int]) -> bool:
-        return self.cell(pos).passable
-
+        #return self.cell(pos).passable
+        return True
+    
     def traversal_cost(
         self,
         pos: Tuple[int, int],
@@ -178,7 +179,7 @@ class World:
         length: int,
         direction: Tuple[int, int]
     ):
-        """Create an impassable cliff/ridge."""
+        """Create a ridge/cliff with high pain when traversed."""
         x, y = start
         dx, dy = direction
         for _ in range(length):
@@ -188,7 +189,7 @@ class World:
                     height_vector=slope,
                     normal_vector=(-dy, dx),
                     material="rock",
-                    passable=False,
+                    passable=True,  # Now passable
                     hardness=9.0,
                     strength=10.0,
                     density=2.7,
@@ -196,6 +197,7 @@ class World:
                     elasticity=0.0,
                     thermal_conductivity=0.2,
                     temperature=self.ambient_temperature,
+                    local_risk=0.8,  # High pain risk when traversed
                     tags={"cliff", "ridge"},
                 )
             x += dx
@@ -231,7 +233,7 @@ class World:
             y += dy
 
     def add_forest(self, center: Tuple[int, int], radius: int):
-        """Cluster of impassable trees with tangled vectors."""
+        """Cluster of dense forest that causes moderate pain when traversed."""
         cx, cy = center
         for dx in range(-radius, radius + 1):
             for dy in range(-radius, radius + 1):
@@ -244,7 +246,7 @@ class World:
                         height_vector=vec,
                         normal_vector=(-vec[1], vec[0]),
                         material="wood",
-                        passable=False,
+                        passable=True,  # Now passable
                         hardness=2.0,
                         strength=4.0,
                         density=0.9,
@@ -252,6 +254,7 @@ class World:
                         elasticity=0.0,
                         thermal_conductivity=0.25,
                         temperature=self.ambient_temperature,
+                        local_risk=0.4,  # Moderate pain risk when traversed
                         tags={"forest", "tree"},
                     )
 

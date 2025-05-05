@@ -23,9 +23,8 @@ except ImportError:
     MOVE_COST, CARRY_COST = 1, 1
     FOOD_E, FOOD_S = 40, 40
     PAIN_HIT, PAIN_DECAY = 25, 1
-    HOME_ENERGY_RECOVERY = 5  # Energy recovery at home
-    HOME_HUNGER_RECOVERY = 5  # Hunger reduction at home
-    
+    REST_ENERGY_RECOVERY = 10
+    HOME_ENERGY_RECOVERY = 20  # Energy recovery at home
     BETA = 2.0
     SURPRISE_SCALE = 10
     HUNGER_W, PAIN_W = 1.5, 2.0
@@ -127,6 +126,10 @@ class Agent:
         # Position history for detecting when agent is stuck
         self.position_history = []
         self.last_blocked_pos = None
+        
+        self.energy_efficiency = 1.0  # Full efficiency by default
+        self.forced_rest = False      # Tracks if agent is forced to rest due to pain
+        self.pain_resistance = random.uniform(0.8, 1.2)
         
         # Initialize planning system
         self.planning_system = PlanningSystem(self)
@@ -699,24 +702,26 @@ class Agent:
             observation = observation[:OBS_DIM]
         
         return observation
-        
+
     def find_nearest_food_direction(self) -> Tuple[bool, Optional[str], int, Optional[List[int]]]:
         """
         Find direction to the nearest food by leveraging both direct observation
-        and food memory.
+        and food memory, with proper handling of world wrapping.
         
         Returns:
             Tuple[bool, Optional[str], int, Optional[List[int]]]: (found_food, best_direction, distance, coordinates)
         """
+        grid_size = GRID  # World size
+        
         # First check immediate surroundings (direct observation)
         for act, (dx, dy) in self.MOV.items():
             if act == "REST":
                 continue
-            nx, ny = (self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID
+            nx, ny = (self.pos[0] + dx) % grid_size, (self.pos[1] + dy) % grid_size
             if is_food_cell(self.w.cell((nx, ny))):
                 # Record this food sighting
                 self.record_food_location([nx, ny])
-                print(f"Agent {self.id}: Found adjacent food at coordinates [{nx}, {ny}]")
+                #print(f"Agent {self.id}: Found adjacent food at coordinates [{nx}, {ny}]")
                 return True, act, 1, [nx, ny]
         
         # Check if we have any known food locations
@@ -732,8 +737,18 @@ class Agent:
                     for f in self.false_food_locations):
                     continue  # Skip this location, it's been verified as false
                 
-                # Calculate distance
-                distance = abs(loc['position'][0] - self.pos[0]) + abs(loc['position'][1] - self.pos[1])
+                # Calculate distances considering world wrapping
+                dx = abs(loc['position'][0] - self.pos[0])
+                dy = abs(loc['position'][1] - self.pos[1])
+                
+                # Adjust for world wrapping
+                if dx > grid_size // 2:
+                    dx = grid_size - dx
+                if dy > grid_size // 2:
+                    dy = grid_size - dy
+                
+                # Calculate wrapped Manhattan distance
+                distance = dx + dy
                 
                 # Check if this is closer than current nearest
                 if distance < nearest_distance:
@@ -741,24 +756,32 @@ class Agent:
                     nearest_location = loc
             
             # If we found a nearby known food location, navigate to it
-            if nearest_location and nearest_distance < GRID//2:  # Only consider if reasonably close
-                # Determine direction to the location
-                dx = nearest_location['position'][0] - self.pos[0]
-                dy = nearest_location['position'][1] - self.pos[1]
+            if nearest_location and nearest_distance < grid_size//2:  # Only consider if reasonably close
+                # Get the unwrapped coordinates
+                target_x, target_y = nearest_location['position']
+                current_x, current_y = self.pos
                 
-                # Determine primary direction (N, S, E, W)
-                # CRITICAL FIX: Directions should be properly matched to changes on each axis
-                # N/S: Change in x-axis, E/W: Change in y-axis
+                # Calculate raw directional differences
+                dx = target_x - current_x
+                dy = target_y - current_y
+                
+                # Adjust for world wrapping
+                if abs(dx) > grid_size // 2:
+                    dx = (grid_size - abs(dx)) * (-1 if dx > 0 else 1)
+                if abs(dy) > grid_size // 2:
+                    dy = (grid_size - abs(dy)) * (-1 if dy > 0 else 1)
+                
+                # Determine primary direction (N/S, E/W)
                 if abs(dx) > abs(dy):
                     direction = "S" if dx > 0 else "N"
                 else:
                     direction = "E" if dy > 0 else "W"
                 
-                print(f"Agent {self.id}: Using known food location at {nearest_location['position']}, distance {nearest_distance}, direction {direction}")
+                #print(f"Agent {self.id}: Using known food location at {nearest_location['position']}, distance {nearest_distance}, direction {direction}")
                 return True, direction, nearest_distance, nearest_location['position']
         
-        # If no known food locations, perform a distance search
-        max_vision = min(20, GRID // 2)
+        # If no known food locations, perform a distance search with proper wrapping
+        max_vision = min(20, grid_size // 2)
         closest_food = None
         min_distance = float('inf')
         
@@ -767,7 +790,8 @@ class Agent:
             for dx in range(-radius, radius + 1):
                 for dy in range(-radius, radius + 1):
                     if abs(dx) == radius or abs(dy) == radius:  # only check perimeter
-                        nx, ny = (self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID
+                        # Calculate position with proper wrapping
+                        nx, ny = (self.pos[0] + dx) % grid_size, (self.pos[1] + dy) % grid_size
                         
                         # Skip locations known to be false
                         if any(f['position'][0] == nx and f['position'][1] == ny 
@@ -777,21 +801,33 @@ class Agent:
                         cell = self.w.cell((nx, ny))
                         
                         if is_food_cell(cell):
-                            # Calculate Manhattan distance
-                            distance = abs(dx) + abs(dy)
+                            # Calculate Manhattan distance considering wrapping
+                            wrapped_dx = abs(dx)
+                            wrapped_dy = abs(dy)
+                            
+                            # If going around the world is shorter, use that distance
+                            if wrapped_dx > grid_size // 2:
+                                wrapped_dx = grid_size - wrapped_dx
+                            if wrapped_dy > grid_size // 2:
+                                wrapped_dy = grid_size - wrapped_dy
+                            
+                            distance = wrapped_dx + wrapped_dy
+                            
                             if distance < min_distance:
                                 min_distance = distance
-                                # Determine primary direction (N, S, E, W)
+                                
+                                # Determine primary direction (N/S, E/W)
                                 if abs(dx) > abs(dy):
                                     direction = "S" if dx > 0 else "N"
                                 else:
                                     direction = "E" if dy > 0 else "W"
+                                    
                                 closest_food = (direction, distance, [nx, ny])
         
         if closest_food:
             # Record this food sighting
             self.record_food_location(closest_food[2])
-            print(f"Agent {self.id}: Found distant food at {closest_food[2]}, direction {closest_food[0]}, distance {closest_food[1]}")
+            #print(f"Agent {self.id}: Found distant food at {closest_food[2]}, direction {closest_food[0]}, distance {closest_food[1]}")
             return True, closest_food[0], closest_food[1], closest_food[2]
         
         # As a last resort, try to recall food from Hopfield memory
@@ -823,11 +859,112 @@ class Agent:
                     # Only use recalled food location if confidence is high enough
                     if confidence > 0.7:
                         # We don't have exact coordinates for recalled food
-                        print(f"Agent {self.id}: Using recalled food memory, direction {recalled_dir}, distance {recalled_dist}")
+                        #print(f"Agent {self.id}: Using recalled food memory, direction {recalled_dir}, distance {recalled_dist}")
                         return True, recalled_dir, int(recalled_dist), None
         
         return False, None, max_vision, None
 
+    def consume_food(self):
+        """
+        Consume food to reduce hunger and increase energy.
+        
+        The agent can consume food it's carrying or from its store.
+        
+        Returns:
+            bool: True if food was consumed, False otherwise
+        """
+        # Define food consumption benefits
+        hunger_reduction = 40  # Amount hunger is reduced
+        energy_increase = 20   # Amount energy is increased
+        
+        # Check if we have food to consume
+        if self.carrying:
+            # Consume the food being carried
+            self.carrying = False
+            consumed = True
+            logging.info(f"Agent {self.id} consumed carried food")
+        elif self.store > 0:
+            # Consume food from storage
+            self.store -= 1
+            consumed = True
+            logging.info(f"Agent {self.id} consumed food from storage, remaining: {self.store}")
+        else:
+            # No food available
+            consumed = False
+            logging.info(f"Agent {self.id} tried to consume food but none available")
+        
+        # Apply effects if food was consumed
+        if consumed:
+            # Reduce hunger
+            old_hunger = self.hunger
+            self.hunger = max(0, self.hunger - hunger_reduction)
+            actual_reduction = old_hunger - self.hunger
+            
+            # Increase energy
+            old_energy = self.energy
+            self.energy = min(MAX_E, self.energy + energy_increase)
+            actual_increase = self.energy - old_energy
+            
+            logging.info(f"Agent {self.id} reduced hunger by {actual_reduction} and increased energy by {actual_increase}")
+        
+        return consumed
+    
+    def reduce_pain(self):
+        """
+        Reduce the agent's pain level naturally over time.
+        The rate of recovery depends on current activity and location.
+        """
+        # Determine pain recovery rate based on state
+        current_cell = self.w.cell(tuple(self.pos))
+        at_home = current_cell.material == "home" or "home" in current_cell.tags
+        resting = self.last_action == "REST"
+        
+        # Base recovery rate
+        base_recovery = 0.5  # Very slow passive recovery
+        
+        # Enhanced recovery when resting
+        if resting:
+            recovery_bonus = 2.0  # Bonus for resting
+        else:
+            recovery_bonus = 0
+        
+        # Enhanced recovery at home
+        if at_home:
+            home_bonus = 3.0  # Bonus for being at home
+        else:
+            home_bonus = 0
+        
+        # Calculate total recovery rate
+        pain_recovery = base_recovery + recovery_bonus + home_bonus
+        
+        # Apply recovery (capped at pain level)
+        actual_recovery = min(self.pain, pain_recovery)
+        self.pain = max(0, self.pain - actual_recovery)
+        
+        return actual_recovery
+    
+    def apply_pain_effects(self):
+        """
+        Apply the effects of pain on agent performance.
+        High pain reduces energy efficiency and may cause involuntary resting.
+        """
+        # No effects if pain is low
+        if self.pain < MAX_P * 0.3:
+            return
+        
+        # Moderate pain (30-60%) reduces energy efficiency
+        if self.pain >= MAX_P * 0.3 and self.pain < MAX_P * 0.6:
+            # Energy efficiency reduction - next action will cost more
+            self.energy_efficiency = 0.8  # 80% efficiency
+            
+        # High pain (60-90%) severely impairs movement 
+        elif self.pain >= MAX_P * 0.6 and self.pain < MAX_P * 0.9:
+            self.energy_efficiency = 0.5  # 50% efficiency
+                
+        # Critical pain (90%+) forces rest and may cause energy loss
+        elif self.pain >= MAX_P * 0.9:
+            self.energy_efficiency = 0.3  # 30% efficiency
+                
     # ───────────── Planning and Decision Making ─────────────
     def plan(self):
         """
@@ -837,11 +974,9 @@ class Agent:
             str: The selected action
         """
         # Check if we're stuck (same position for multiple steps)
-        stuck = False
         if len(self.position_history) > 3:
             pos_set = set(tuple(pos) for pos in self.position_history[-3:])
             if len(pos_set) == 1 and self.last_action != "REST":
-                stuck = True
                 # If we're stuck, increment the consecutive failures counter
                 self.planning_system.consecutive_failures += 1
         
@@ -850,64 +985,7 @@ class Agent:
         
         # Pre-validate the action - check if it would lead to impassable terrain
         dx, dy = self.MOV[action]
-        nx, ny = (self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID
-        next_cell = self.w.cell((nx, ny))
-        
-        # If the next cell is impassable and it's a movement action, find alternate
-        if action != "REST" and not next_cell.passable:
-            # Record blocked position to avoid it in future
-            self.last_blocked_pos = (nx, ny)
-            
-            # Increment the consecutive failures counter, but don't immediately repair
-            # - we want some persistence before abandoning the plan
-            self.planning_system.consecutive_failures += 1
-            
-            # Only repair the plan if we've hit the failure threshold
-            if self.planning_system.consecutive_failures >= 3:
-                self.planning_system.repair_plan()
-                # Get new action after repair
-                action = self.planning_system.update()
-            else:
-                # Find an alternative direction just for this step
-                valid_dirs = []
-                for alt_act, (alt_dx, alt_dy) in self.MOV.items():
-                    if alt_act == "REST":
-                        continue
-                        
-                    alt_nx, alt_ny = (self.pos[0] + alt_dx) % GRID, (self.pos[1] + alt_dy) % GRID
-                    alt_cell = self.w.cell((alt_nx, alt_ny))
-                    
-                    if alt_cell.passable and (alt_nx, alt_ny) != self.last_blocked_pos:
-                        valid_dirs.append(alt_act)
-                
-                if valid_dirs:
-                    # Choose a valid direction, prioritizing ones closest to original direction
-                    if self.planning_system.current_target:
-                        target_x, target_y = self.planning_system.current_target
-                        best_dir = None
-                        best_score = float('inf')
-                        
-                        for vdir in valid_dirs:
-                            vdx, vdy = self.MOV[vdir]
-                            vnx, vny = (self.pos[0] + vdx) % GRID, (self.pos[1] + vdy) % GRID
-                            score = abs(vnx - target_x) + abs(vny - target_y)  # Manhattan distance
-                            
-                            if score < best_score:
-                                best_score = score
-                                best_dir = vdir
-                        
-                        if best_dir:
-                            action = best_dir
-                        else:
-                            # No good direction toward target, pick a random valid one
-                            action = random.choice(valid_dirs)
-                    else:
-                        # No specific target, pick a random valid direction
-                        action = random.choice(valid_dirs)
-                else:
-                    # No valid directions, just rest for this tick
-                    action = "REST"
-        
+
         # Update position history
         self.position_history.append(self.pos.copy())
         if len(self.position_history) > 10:
@@ -1082,10 +1160,42 @@ class Agent:
         Args:
             cell: Current TerrainCell
         """
-        # Apply risk effects (pain)
+        # Apply risk effects (pain) - use terrain-specific multipliers
         if cell.local_risk > 0:
-            pain_increase = cell.local_risk * 10
+            # Scale pain increase based on terrain type
+            terrain_pain_multipliers = {
+                "dirt": 0.0,
+                "stone": 1.0,
+                "rock": 1.0,
+                "water": 1.0,
+                "wood": 1.0,
+                "food": 0.0,
+                "home": 0.0
+            }
+            
+            # Get the multiplier for this terrain type (default to 1.0 if unknown)
+            multiplier = terrain_pain_multipliers.get(cell.material, 1.0)
+            
+            # Calculate base pain increase
+            base_pain = cell.local_risk * 10 * multiplier
+            
+            # Apply agent's pain resistance (lower value means more resistant)
+            pain_increase = base_pain / self.pain_resistance
+            
+            # Apply final pain increase
+            old_pain = self.pain
             self.pain = min(MAX_P, self.pain + pain_increase)
+            actual_increase = self.pain - old_pain
+            
+            # Apply energy cost for difficult terrain
+            if cell.material in ["rock", "water", "stone"]:
+                # Difficult terrain increases energy cost
+                energy_cost = cell.local_risk * 2
+                self.energy = max(0, self.energy - energy_cost)
+                
+            # Log significant pain events
+            if actual_increase > 5:
+                logging.info(f"Agent {self.id} suffered {actual_increase:.1f} pain traversing {cell.material}")
         
         # Store temperature information
         self.last_temperature = cell.temperature
@@ -1298,34 +1408,67 @@ class Agent:
         # Plan next action based on signals
         action = self.plan()
         
+        # Check current cell for special handling
+        current_cell = self.w.cell(tuple(self.pos))
+        
+        if self.carrying and self.hunger > MAX_H * 0.7:
+            consumed = self.consume_food()
+            if consumed:
+                #print(f"Agent {self.id}: Very hungry and carrying food - consumed it immediately!")
+                return "REST"  # Return REST action since we consumed food
+            
         # CRITICAL: Check if we're at a food cell and we're not carrying food
         # If so, pick up the food if the action is REST
-        current_cell = self.w.cell(tuple(self.pos))
-        if is_food_cell(current_cell) and not self.carrying and action == "REST":
-            print(f"Agent {self.id}: Picking up food at {self.pos}!")
+        if is_food_cell(current_cell) and action == "REST":
+            #print(f"Agent {self.id}: Picking up food at {self.pos}!")
             self.carrying = True
             # Record successful food pickup
             self.record_food_location(self.pos)
             
-            # ADDED: Modify the world grid to remove the food
-            # Create a regular dirt cell to replace the food
-            new_cell = TerrainCell(
-                height_vector=current_cell.height_vector,
-                normal_vector=current_cell.normal_vector,
-                material="dirt",  # Change material from food to dirt
-                passable=True,
-                hardness=current_cell.hardness,
-                strength=current_cell.strength,
-                density=current_cell.density,
-                friction=current_cell.friction,
-                elasticity=current_cell.elasticity,
-                thermal_conductivity=current_cell.thermal_conductivity,
-                temperature=current_cell.temperature,
-                local_risk=current_cell.local_risk,
-                tags=set()  # Remove any food tags
-            )
-            # Update the world grid at this position
-            self.w.grid[self.pos[0], self.pos[1]] = new_cell
+            # ADDED: Check if very hungry - consume food immediately
+            if self.hunger > MAX_H * 0.7:
+                self.consume_food()
+                #print(f"Agent {self.id}: Very hungry, consuming food immediately!")
+                
+                # Only modify the world if we didn't consume the food (we picked it up)
+                if not self.carrying:
+                    # ADDED: Modify the world grid to remove the food
+                    new_cell = TerrainCell(
+                        height_vector=current_cell.height_vector,
+                        normal_vector=current_cell.normal_vector,
+                        material="dirt",  # Change material from food to dirt
+                        passable=True,
+                        hardness=current_cell.hardness,
+                        strength=current_cell.strength,
+                        density=current_cell.density,
+                        friction=current_cell.friction,
+                        elasticity=current_cell.elasticity,
+                        thermal_conductivity=current_cell.thermal_conductivity,
+                        temperature=current_cell.temperature,
+                        local_risk=current_cell.local_risk,
+                        tags=set()  # Remove any food tags
+                    )
+                    # Update the world grid at this position
+                    self.w.grid[self.pos[0], self.pos[1]] = new_cell
+            else:
+                # ADDED: Modify the world grid to remove the food
+                new_cell = TerrainCell(
+                    height_vector=current_cell.height_vector,
+                    normal_vector=current_cell.normal_vector,
+                    material="dirt",  # Change material from food to dirt
+                    passable=True,
+                    hardness=current_cell.hardness,
+                    strength=current_cell.strength,
+                    density=current_cell.density,
+                    friction=current_cell.friction,
+                    elasticity=current_cell.elasticity,
+                    thermal_conductivity=current_cell.thermal_conductivity,
+                    temperature=current_cell.temperature,
+                    local_risk=current_cell.local_risk,
+                    tags=set()  # Remove any food tags
+                )
+                # Update the world grid at this position
+                self.w.grid[self.pos[0], self.pos[1]] = new_cell
             
             # Update planning system
             if hasattr(self, 'planning_system'):
@@ -1358,7 +1501,7 @@ class Agent:
             energy_cost = 0  # No energy cost when resting
             
             # Slow energy recovery when resting
-            energy_recovery = 0.2  # Small amount of energy recovery when resting
+            energy_recovery = REST_ENERGY_RECOVERY
             
             # Hunger increases at a slower rate when resting
             hunger_increase = 0.2
@@ -1386,28 +1529,9 @@ class Agent:
         
         # Update agent state
         self.energy = max(0, self.energy - energy_cost)
-        self.hunger = min(MAX_H, self.hunger + hunger_increase)
-        self.pain = max(0, self.pain - PAIN_DECAY)  # Natural pain decay
         
-        # Check if new position is valid before moving
-        next_cell = self.w.cell(tuple(nxt))
-        
-        if next_cell.passable:
-            # Move to new position if passable
-            self.pos = nxt
-        else:
-            # Can't move there, stay in place
-            reward -= 1.0  # Penalty for trying to move to impassable terrain
-            
-            # Increment failures counter on the planning system but don't immediately repair
-            # - we want some persistence before abandoning the plan
-            if hasattr(self, 'planning_system'):
-                self.planning_system.consecutive_failures += 1
-                
-                # Only repair if we've failed multiple times
-                if self.planning_system.consecutive_failures >= 3:
-                    self.planning_system.repair_plan()
-        
+        self.pos = nxt
+
         # Get new state key for learning
         next_state = self.get_state_key(self.pos)
         
@@ -1431,11 +1555,23 @@ class Agent:
                 self.carrying = False
                 self.store += 1
                 reward += 5  # Bonus for storing food
-                print(f"Agent {self.id}: Successfully stored food at home!")
+                #print(f"Agent {self.id}: Successfully stored food at home!")
                 
                 # Mark storage goal as successful
                 if hasattr(self, 'planning_system'):
                     self.planning_system.plan_success()
+                    
+            # ADDED: Consume food if hungry and have stored food
+            elif self.hunger > MAX_H * 0.7 and self.store > 0:
+                # Consume food from storage
+                consumed = self.consume_food()
+                if consumed:
+                    reward += 3  # Bonus for reducing hunger
+                    #print(f"Agent {self.id}: Consumed food at home to reduce hunger!")
+                    
+                    # Mark consumption as successful
+                    if hasattr(self, 'planning_system'):
+                        self.planning_system.plan_success()
         
         # Handle sequence memory - save every few steps
         if self.tick_count % 5 == 0 and len(self.trace) == SEQ_LEN:

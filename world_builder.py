@@ -54,7 +54,7 @@ def create_cell(tool, world):
     elif tool == "ridge":
         return TerrainCell(
             height_vector=(0,0), normal_vector=(0,0),
-            material="rock", passable=False,
+            material="rock", passable=True,
             hardness=9.0, strength=10.0, density=2.7,
             friction=1.0, elasticity=0.0,
             thermal_conductivity=0.2,
@@ -76,7 +76,7 @@ def create_cell(tool, world):
     elif tool == "forest":
         return TerrainCell(
             height_vector=(0,0), normal_vector=(0,0),
-            material="wood", passable=False,
+            material="wood", passable=True,
             hardness=2.0, strength=4.0, density=0.9,
             friction=1.5, elasticity=0.0,
             thermal_conductivity=0.25,

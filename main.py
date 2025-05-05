@@ -119,6 +119,38 @@ def is_food_cell(cell: TerrainCell) -> bool:
     """Check if a cell contains food"""
     return (cell.material == "food" or "food" in cell.tags)
 
+def get_terrain_color(cell):
+    """Get cell color, adjusting for risk level"""
+    base_colors = {
+        "dirt": (210, 180, 140),
+        "stone": (169, 169, 169),
+        "rock": (128, 128, 128),
+        "water": (30, 144, 255),
+        "wood": (34, 139, 34),
+        "food": (220, 20, 60),
+        "home": (255, 215, 0),
+        "empty": (230, 230, 230),
+    }
+    
+    # Get base color for the material
+    base_color = base_colors.get(cell.material, (200, 200, 200))
+    
+    # Add red tint based on risk level
+    risk_level = cell.local_risk
+    if risk_level > 0:
+        # Blend with red proportional to risk level
+        red_intensity = int(min(255, risk_level * 255))
+        red_tint = (255, 0, 0)
+        
+        # Blend base color with red tint based on risk level
+        blended_r = int(base_color[0] * (1 - risk_level) + red_tint[0] * risk_level)
+        blended_g = int(base_color[1] * (1 - risk_level) + red_tint[1] * risk_level)
+        blended_b = int(base_color[2] * (1 - risk_level) + red_tint[2] * risk_level)
+        
+        return (blended_r, blended_g, blended_b)
+    
+    return base_color
+    
 def save_simulation(world, population, filename=None):
     """Save the current simulation state"""
     # Create save directory if it doesn't exist
@@ -972,18 +1004,63 @@ class Simulation:
         
         # Flip the display
         pygame.display.flip()
-    
+        
+    def render_terrain_legend(self, panel_left, y_pos, width):
+        """Render a legend showing terrain risk levels"""
+        # Create a header for the legend
+        legend_header = self.font_normal.render("Terrain Pain Risk", True, COLOR_TEXT_HEADER)
+        header_rect = legend_header.get_rect(topleft=(panel_left, y_pos))
+        self.screen.blit(legend_header, header_rect)
+        y_pos += 25
+        
+        # Terrain types to show in legend
+        terrain_types = ["dirt", "stone", "rock", "water", "wood", "home"]
+        risk_levels = [0.1, 0.3, 0.6, 0.5, 0.4, 0.0]  # Example risk levels
+        
+        # Draw each terrain type with its risk level
+        box_size = 15
+        for i, (terrain, risk) in enumerate(zip(terrain_types, risk_levels)):
+            # Create mock cell for getting color
+            mock_cell = TerrainCell(material=terrain, local_risk=risk)
+            color = get_terrain_color(mock_cell)
+            
+            # Draw color box
+            box_rect = pygame.Rect(panel_left, y_pos, box_size, box_size)
+            pygame.draw.rect(self.screen, color, box_rect)
+            pygame.draw.rect(self.screen, (180, 180, 180), box_rect, 1)
+            
+            # Add risk indicator lines if applicable
+            if risk > 0.1:
+                risk_lines = int(risk * 5) + 1
+                line_spacing = box_size // (risk_lines + 1)
+                for line in range(1, risk_lines + 1):
+                    start_pos = (box_rect.left, box_rect.top + line * line_spacing)
+                    end_pos = (box_rect.left + line * line_spacing, box_rect.top)
+                    pygame.draw.line(self.screen, (200, 0, 0), start_pos, end_pos, 1)
+            
+            # Draw terrain name and risk level
+            text = f"{terrain.capitalize()}: {risk * 100:.0f}% pain"
+            text_surf = self.font_small.render(text, True, COLOR_TEXT)
+            text_rect = text_surf.get_rect(midleft=(panel_left + box_size + 5, box_rect.centery))
+            self.screen.blit(text_surf, text_rect)
+            
+            y_pos += 20
+        
+        return y_pos + 10  # Return updated y position
+
     def render_world(self):
-        """Render the world grid"""
+        """Render the world grid with risk visualization"""
         # Draw grid background
         grid_rect = pygame.Rect(0, 0, GRID * CELL_SIZE, GRID * CELL_SIZE)
         pygame.draw.rect(self.screen, (230, 230, 230), grid_rect)
         
-        # Draw cell types
+        # Draw cell types with risk visualization
         for i in range(GRID):
             for j in range(GRID):
                 cell = self.world.cell((i, j))
-                color = MATERIAL_COLORS.get(cell.material, (200, 200, 200))
+                
+                # Get color based on cell material and risk
+                color = get_terrain_color(cell)
                 
                 # Special case for food cells
                 if is_food_cell(cell):
@@ -999,12 +1076,25 @@ class Simulation:
                         CELL_SIZE//3
                     )
                     continue  # Skip normal cell drawing since we drew a custom design
+                
                 # Special case for home cells
                 elif cell.material == "home" or "home" in cell.tags:
                     color = MATERIAL_COLORS["home"]
                 
                 rect = pygame.Rect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE)
                 pygame.draw.rect(self.screen, color, rect)
+                
+                # Add risk indicator if terrain has significant risk
+                if cell.local_risk > 0.1:
+                    # Draw diagonal lines to indicate risk
+                    risk_lines = int(cell.local_risk * 5) + 1  # 1-6 lines based on risk
+                    line_spacing = CELL_SIZE // (risk_lines + 1)
+                    
+                    for line in range(1, risk_lines + 1):
+                        start_pos = (rect.left, rect.top + line * line_spacing)
+                        end_pos = (rect.left + line * line_spacing, rect.top)
+                        pygame.draw.line(self.screen, (200, 0, 0), start_pos, end_pos, 1)
+                
                 pygame.draw.rect(self.screen, (180, 180, 180), rect, 1)
         
         # Draw home marker
@@ -1017,7 +1107,7 @@ class Simulation:
         if self.selected_agent_id in self.population.agents:
             agent = self.population.agents[self.selected_agent_id]
             draw_agent_path(self.screen, self.world, agent, CELL_SIZE, GRID)
-        
+            
         # Draw agents
         agent_icons = ["1", "2", "3", "4", "5", "6"]
         for i, (agent_id, agent) in enumerate(self.population.agents.items()):
@@ -1122,10 +1212,15 @@ class Simulation:
             info_surf = self.font_normal.render(info, True, COLOR_TEXT)
             info_rect = info_surf.get_rect(topleft=(panel_rect.left + 20, world_info_y + 10 + i * 20))
             self.screen.blit(info_surf, info_rect)
-        
+            
+        # Add terrain legend below world info
+        legend_y = world_info_y + world_info_height + 15
+        legend_y = self.render_terrain_legend(panel_rect.left + 10, legend_y, panel_rect.width - 20)
+
         # Adjust tab position based on world info position
         self.tabs.rect.top = world_info_y + world_info_height + 15
         self.tabs.rect.height = WINDOW_HEIGHT - self.tabs.rect.top - 10
+        self.tabs.rect.top = legend_y + 10
         
         # Draw tabs
         content_rect = self.tabs.draw(self.screen, self.font_normal)

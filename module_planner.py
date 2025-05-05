@@ -205,19 +205,22 @@ class PlanningSystem:
         
         return self.goals[0]
     
-    def validate_path(self, start_pos, actions):
+    def validate_path(self, start_pos, actions, risk_tolerance=0.5):
         """
         Validate a sequence of actions against obstacles and return valid portion.
+        Now considers risk tolerance for technically passable but risky terrain.
         
         Args:
             start_pos: Starting position [x, y]
             actions: List of actions ("N", "S", "E", "W", "REST")
+            risk_tolerance: Maximum risk level to consider terrain passable
             
         Returns:
             List of valid actions (stopping at first obstacle)
         """
         agent = self.agent
         world = agent.w
+        grid_size = GRID  # World grid size
         valid_actions = []
         
         # Simulate movement along the path
@@ -229,19 +232,191 @@ class PlanningSystem:
                 
             # Get direction vector for this action
             dx, dy = agent.MOV[action]
-            next_pos = [(current_pos[0] + dx) % GRID, (current_pos[1] + dy) % GRID]
-            
-            # Check if next position is passable
-            next_cell = world.cell(tuple(next_pos))
-            if next_cell.passable:
-                valid_actions.append(action)
-                current_pos = next_pos
-            else:
-                # Stop at first obstacle
-                break
-        
+            next_pos = [(current_pos[0] + dx) % grid_size, (current_pos[1] + dy) % grid_size]
+
+            valid_actions.append(action)
+            current_pos = next_pos
+
         return valid_actions
+
+    def find_alternative_path(self, start_pos, target_pos):
+        """
+        Find an alternative path when the direct path is blocked by obstacles.
+        Uses a simple 'wall following' approach to navigate around obstacles.
+        
+        Args:
+            start_pos: Starting position [x, y]
+            target_pos: Target position [x, y]
+            
+        Returns:
+            List of actions ("N", "S", "E", "W")
+        """
+        agent = self.agent
+        world = agent.w
+        grid_size = GRID
+        
+        # Try to find a path using each of the four starting directions
+        directions = ["N", "E", "S", "W"]
+        best_path = []
+        best_distance = float('inf')
+        
+        for start_dir in directions:
+            # Try wall following in this direction
+            path = []
+            current = start_pos.copy()
+            visited = set()  # Track visited positions to avoid loops
+            visited.add(tuple(current))
+            
+            # Add the starting direction
+            dx, dy = agent.MOV[start_dir]
+            next_pos = [(current[0] + dx) % grid_size, (current[1] + dy) % grid_size]
+            
+            # Only continue if the first step is valid
+            if world.cell(tuple(next_pos)).passable:
+                path.append(start_dir)
+                current = next_pos
+                visited.add(tuple(current))
+                
+                # Continue wall following for up to 30 steps
+                for _ in range(30):
+                    # Check if we've reached the target
+                    if current[0] == target_pos[0] and current[1] == target_pos[1]:
+                        break
+                    
+                    # Calculate Manhattan distance to target (considering wrapping)
+                    dx = abs(current[0] - target_pos[0])
+                    dy = abs(current[1] - target_pos[1])
+                    # Adjust for wrapping
+                    dx = min(dx, grid_size - dx)
+                    dy = min(dy, grid_size - dy)
+                    current_distance = dx + dy
+                    
+                    # If this is the best path so far, remember it
+                    if current_distance < best_distance:
+                        best_distance = current_distance
+                        best_path = path.copy()
+                    
+                    # Try to move in the direction closest to the target
+                    tried_dirs = []
+                    found_move = False
+                    
+                    # Compute wrapped distances in all directions
+                    direction_preferences = []
+                    for dir_name, (dir_dx, dir_dy) in agent.MOV.items():
+                        if dir_name == "REST":
+                            continue
+                            
+                        # Calculate position after moving in this direction
+                        nx, ny = (current[0] + dir_dx) % grid_size, (current[1] + dir_dy) % grid_size
+                        
+                        # Skip if we've already visited this position
+                        if tuple([nx, ny]) in visited:
+                            continue
+                        
+                        # Calculate Manhattan distance to target after this move
+                        tx_dist = abs(nx - target_pos[0])
+                        ty_dist = abs(ny - target_pos[1])
+                        # Adjust for wrapping
+                        tx_dist = min(tx_dist, grid_size - tx_dist)
+                        ty_dist = min(ty_dist, grid_size - ty_dist)
+                        new_distance = tx_dist + ty_dist
+                        
+                        # Check if this position is passable
+                        if world.cell((nx, ny)).passable:
+                            direction_preferences.append((dir_name, new_distance))
+                    
+                    # Sort directions by distance to target
+                    direction_preferences.sort(key=lambda x: x[1])
+                    
+                    # Try directions in order of preference
+                    if direction_preferences:
+                        best_dir = direction_preferences[0][0]
+                        dx, dy = agent.MOV[best_dir]
+                        next_pos = [(current[0] + dx) % grid_size, (current[1] + dy) % grid_size]
+                        
+                        path.append(best_dir)
+                        current = next_pos
+                        visited.add(tuple(current))
+                        found_move = True
+                    
+                    # If we couldn't find a good move, end this attempt
+                    if not found_move:
+                        break
+        
+        # Return the best path found, or an empty list if none worked
+        return best_path
     
+    def repair_path_around_obstacle(self, start_pos, target_pos, original_path):
+        """
+        Attempt to repair a path around obstacles between start and target positions.
+        
+        Args:
+            start_pos: Starting position [x, y]
+            target_pos: Target position [x, y]
+            original_path: The original plan that was blocked
+            
+        Returns:
+            List of valid actions, potentially with a detour around obstacles
+        """
+        agent = self.agent
+        world = agent.w
+        grid_size = GRID
+        
+        # First attempt: try a different order of horizontal/vertical movement
+        # If original path did X then Y, try Y then X
+        direct_path = self.calculate_wrapped_path(start_pos, target_pos)
+        
+        # Count how many of each direction we have
+        dir_counts = {'N': 0, 'S': 0, 'E': 0, 'W': 0}
+        for action in direct_path:
+            if action in dir_counts:
+                dir_counts[action] += 1
+        
+        # Create alternate path by swapping the order (Y first, then X)
+        alt_path = []
+        # First add East/West moves
+        if dir_counts['E'] > 0:
+            alt_path.extend(['E'] * dir_counts['E'])
+        if dir_counts['W'] > 0:
+            alt_path.extend(['W'] * dir_counts['W'])
+        # Then add North/South moves
+        if dir_counts['N'] > 0:
+            alt_path.extend(['N'] * dir_counts['N'])
+        if dir_counts['S'] > 0:
+            alt_path.extend(['S'] * dir_counts['S'])
+        
+        # Validate the alternate path
+        valid_alt_path = self.validate_path(start_pos, alt_path)
+        
+        # If the alternate path reaches closer to the target, use it
+        if len(valid_alt_path) == len(alt_path):
+            return valid_alt_path
+        
+        # Second attempt: try a true alternative pathfinding approach
+        alternative_path = self.find_alternative_path(start_pos, target_pos)
+        
+        # If we found a good alternative path, use it
+        if alternative_path:
+            return alternative_path
+        
+        # Last resort: use a random exploration for a few steps then try direct path again
+        directions = list(agent.MOV.keys())
+        directions.remove("REST")
+        
+        # Try several random directions and validate them
+        exploration_path = []
+        for _ in range(5):  # Try 5 random steps
+            exploration_path.append(random.choice(directions))
+        
+        valid_exploration = self.validate_path(start_pos, exploration_path)
+        
+        # If we have a valid exploration path, use it
+        if valid_exploration:
+            return valid_exploration
+        
+        # If all else fails, return whatever valid portion we have from the original path
+        return self.validate_path(start_pos, original_path)
+
     def consider_path(self, path_segment):
         """
         Consider a path segment provided by another agent for potential navigation.
@@ -299,68 +474,103 @@ class PlanningSystem:
                 return True
         
         return False
-        
+
     def repair_plan(self):
         """Attempt to repair the current plan if it's not working"""
         if not self.current_goal:
             return False
         
+        # Get reference to the agent at the beginning
+        agent = self.agent
+        
         # Increment failed attempts
         self.current_goal.failed_attempts += 1
         
         # Check if we can pass obstacles
-        if self.current_goal.goal_type in ["find_food", "return_home", "store_food"]:
-            agent = self.agent
-            
+        if self.current_goal.goal_type in ["find_food", "find_food_to_eat", "find_food_to_store", "return_home", "store_food"]:
             # Need to recalculate directions
-            if self.current_goal.goal_type == "find_food":
+            if self.current_goal.goal_type in ["find_food", "find_food_to_eat", "find_food_to_store"]:
                 # Find food again - note that find_nearest_food_direction now returns 4 values
                 found, direction, distance, coordinates = agent.find_nearest_food_direction()
-                if found and direction:
-                    # New food direction found, update plan
-                    raw_plan = [direction] * min(distance, 15)
-                    valid_plan = self.validate_path(agent.pos, raw_plan)
-                    self.current_goal.plan = valid_plan
-                    self.current_goal.plan_index = 0
-                    self.current_goal.failed_attempts = 0
-                    return True
+                if found:
+                    if coordinates:
+                        # We have exact coordinates - create a new plan with wrapping handling
+                        self.current_goal.target = coordinates
+                        self.current_target = coordinates
+                        
+                        # Generate a new path considering potential obstacles
+                        if self.current_goal.failed_attempts > 3:
+                            # After multiple failures, try alternative pathfinding
+                            new_plan = self.repair_path_around_obstacle(agent.pos, coordinates, [])
+                        else:
+                            # Otherwise just recalculate the direct path
+                            raw_plan = self.calculate_wrapped_path(agent.pos, coordinates)
+                            new_plan = self.validate_path(agent.pos, raw_plan)
+                        
+                        # Add verification or rest actions as needed
+                        if self.current_goal.goal_type in ["find_food", "find_food_to_eat"]:
+                            new_plan.append("REST")  # REST to pick up and potentially consume food
+                        
+                        if new_plan:
+                            self.current_goal.plan = new_plan
+                            self.current_goal.plan_index = 0
+                            self.current_goal.failed_attempts = 0
+                            return True
+                    elif direction:
+                        # Just have a direction - create a simpler plan
+                        raw_plan = [direction] * min(distance, 15)
+                        valid_plan = self.validate_path(agent.pos, raw_plan)
+                        
+                        # Add verification or rest
+                        if valid_plan:
+                            if self.current_goal.goal_type in ["find_food", "find_food_to_eat"]:
+                                valid_plan.append("REST")
+                            
+                            self.current_goal.plan = valid_plan
+                            self.current_goal.plan_index = 0
+                            self.current_goal.failed_attempts = 0
+                            return True
             
             elif self.current_goal.goal_type in ["return_home", "store_food"]:
                 # Recalculate path home
                 home_x, home_y = agent.w.home
-                curr_x, curr_y = agent.pos
+                self.current_goal.target = [home_x, home_y]
+                self.current_target = self.current_goal.target
                 
-                # Try an alternate path - if we were going X then Y, now go Y then X
-                dx = home_x - curr_x
-                dy = home_y - curr_y
+                # Use alternative pathfinding if we've failed multiple times
+                if self.current_goal.failed_attempts > 3:
+                    # Try finding a path around obstacles
+                    new_plan = self.repair_path_around_obstacle(agent.pos, self.current_goal.target, [])
+                else:
+                    # Regular path calculation with wraparound handling
+                    raw_plan = self.calculate_wrapped_path(agent.pos, self.current_goal.target)
+                    new_plan = self.validate_path(agent.pos, raw_plan)
                 
-                # Build the opposite of the previous plan
-                raw_plan = []
+                # Add REST action for store_food goal
+                if self.current_goal.goal_type == "store_food" and new_plan:
+                    new_plan.append("REST")
                 
-                # Horizontal first, then vertical
-                if dy > 0:
-                    raw_plan.extend(["E"] * abs(dy))
-                elif dy < 0:
-                    raw_plan.extend(["W"] * abs(dy))
-                    
-                if dx > 0:
-                    raw_plan.extend(["S"] * abs(dx))
-                elif dx < 0:
-                    raw_plan.extend(["N"] * abs(dx))
+                if new_plan:
+                    self.current_goal.plan = new_plan
+                    self.current_goal.plan_index = 0
+                    self.current_goal.failed_attempts = 0
+                    return True
+        
+        # If we couldn't repair the plan in a targeted way, try random exploration
+        if self.current_goal.failed_attempts > 5:
+            print(f"Agent {agent.id}: Too many failures, switching to random exploration")
+            
+            # Create a simple random exploration plan
+            directions = list(agent.MOV.keys())
+            directions.remove("REST")  # Don't include REST in exploration
+            
+            random_plan = []
+            for _ in range(5):  # Explore for 5 steps
+                random_plan.append(random.choice(directions))
                 
-                if not raw_plan:
-                    raw_plan = ["REST"]
-                elif self.current_goal.goal_type == "store_food":
-                    # Add REST at the end for storing food
-                    raw_plan.append("REST")
-                
-                # Validate the path against obstacles
-                valid_plan = self.validate_path(agent.pos, raw_plan)
-                
-                self.current_goal.plan = valid_plan
-                self.current_goal.plan_index = 0
-                self.current_goal.failed_attempts = 0
-                return True
+            self.current_goal.plan = random_plan
+            self.current_goal.plan_index = 0
+            return True
         
         # Simpler goals like rest can just reset their plan
         self.current_goal.reset_plan()
@@ -376,28 +586,51 @@ class PlanningSystem:
         
         # Update priorities based on current state
         self.update_goal_priorities()
-        
+            
         # Get current agent state and check for food
         agent = self.agent
         current_cell = agent.w.cell(tuple(agent.pos))
         at_food_cell = is_food_cell(current_cell)
+        at_home = current_cell.material == "home" or "home" in current_cell.tags
+        
+        # ADDED: Handle consume_food goal - rest to consume food
+        if self.current_goal and self.current_goal.goal_type == "consume_food":
+            if agent.carrying or (at_home and agent.store > 0):
+                #print(f"Agent {agent.id}: Resting to consume food.")
+                return "REST"
         
         # IMPORTANT: If the agent is at a food cell and not carrying food,
         # return REST to pick up the food (this forces an immediate pickup)
-        if at_food_cell and not agent.carrying and self.current_goal and self.current_goal.goal_type == "find_food":
-            print(f"Agent {agent.id}: At food cell! Resting to pick up food.")
-            # This REST action will cause the agent's step function to pick up the food
+        if at_food_cell and not agent.carrying and self.current_goal:
+            if self.current_goal.goal_type in ["find_food", "find_food_to_eat", "find_food_to_store"]:
+                #print(f"Agent {agent.id}: At food cell! Resting to pick up food.")
+                # This REST action will cause the agent's step function to pick up the food
+                return "REST"
+        
+        # ADDED: If agent is very hungry, carrying food, and has a consume_food goal, REST to eat immediately
+        if agent.carrying and agent.hunger > MAX_H * 0.7:
+            #print(f"Agent {agent.id}: Very hungry and carrying food! Planning to consume immediately.")
+            self.current_goal = Goal("consume_food", priority=3.0)
+            self.current_goal.plan = ["REST"]
+            self.current_goal.plan_index = 0
             return "REST"
         
+        # ADDED: Handle consume_food goal - rest to consume food
+        if self.current_goal and self.current_goal.goal_type == "consume_food":
+            if agent.carrying or (at_home and agent.store > 0):
+                #print(f"Agent {agent.id}: Resting to consume food.")
+                return "REST"
+            
         # CRITICAL: If agent is carrying food and at home, REST to store it
-        if agent.carrying and (current_cell.material == "home" or "home" in current_cell.tags):
-            print(f"Agent {agent.id}: At home with food! Resting to store it.")
-            return "REST"
+        if agent.carrying and at_home:
+            if self.current_goal and self.current_goal.goal_type == "store_food":
+                #print(f"Agent {agent.id}: At home with food! Resting to store it.")
+                return "REST"
         
         # Check if the agent just picked up food (transitioned from not carrying to carrying)
         if agent.carrying and self.current_goal and self.current_goal.goal_type == "find_food":
             # Successfully picked up food, now switch to store_food goal
-            print(f"Agent {agent.id}: Successfully picked up food! Switching to store_food goal.")
+            #print(f"Agent {agent.id}: Successfully picked up food! Switching to store_food goal.")
             
             # Create and set a store_food goal
             store_goal = Goal("store_food", priority=2.0)
@@ -407,7 +640,7 @@ class PlanningSystem:
             # IMPORTANT: Actually create a plan for this goal
             success = self.create_plan_for_goal(self.current_goal)
             if not success:
-                print(f"Agent {agent.id}: Failed to create store_food plan! Creating fallback plan.")
+                #print(f"Agent {agent.id}: Failed to create store_food plan! Creating fallback plan.")
                 
                 # Create fallback plan
                 home_x, home_y = agent.w.home
@@ -439,7 +672,7 @@ class PlanningSystem:
             
             # Get first action of the new goal
             if self.current_goal.plan and self.current_goal.plan_index < len(self.current_goal.plan):
-                print(f"Agent {agent.id}: First action in store_food plan: {self.current_goal.plan[self.current_goal.plan_index]}")
+                #print(f"Agent {agent.id}: First action in store_food plan: {self.current_goal.plan[self.current_goal.plan_index]}")
                 return self.current_goal.plan[self.current_goal.plan_index]
             
             # Default action if plan creation failed
@@ -449,7 +682,7 @@ class PlanningSystem:
         if self.current_goal and self.current_goal.plan and self.current_goal.plan_index >= len(self.current_goal.plan):
             # Current plan is complete - immediately create a new plan or select a new goal
             # Print debug message
-            print(f"Agent {agent.id}: Goal '{self.current_goal.goal_type}' plan completed. Evaluating completion.")
+            #print(f"Agent {agent.id}: Goal '{self.current_goal.goal_type}' plan completed. Evaluating completion.")
             
             # Check if the goal is actually complete
             goal_truly_complete = False
@@ -469,7 +702,7 @@ class PlanningSystem:
             
             if goal_truly_complete:
                 # Goal is truly complete - trigger success handling
-                print(f"Agent {agent.id}: Goal '{self.current_goal.goal_type}' truly complete! Triggering success handler.")
+                #print(f"Agent {agent.id}: Goal '{self.current_goal.goal_type}' truly complete! Triggering success handler.")
                 self.plan_success()
             else:
                 # The plan is complete but the goal isn't achieved
@@ -509,7 +742,7 @@ class PlanningSystem:
                 # Check if we're at a food cell
                 if at_food_cell:
                     # Found food! Return REST to pick it up
-                    print(f"Agent {agent.id}: Found food during verification! Resting to pick it up.")
+                    #print(f"Agent {agent.id}: Found food during verification! Resting to pick it up.")
                     return "REST"
                 else:
                     # No food found - recreate the plan with latest information
@@ -580,18 +813,37 @@ class PlanningSystem:
         
         # Check current goal type to determine next appropriate action
         if current_goal_type == "find_food_to_eat":
-            # Successfully found food to eat - consume it immediately
-            print(f"Agent {agent.id}: Found food to eat! Consuming immediately")
-            
-            # Create a rest plan to consume food
-            eat_goal = Goal("rest", priority=2.0)
-            eat_goal.plan = ["REST"]
-            eat_goal.plan_index = 0
-            
-            # The agent will consume food during the REST action
-            self.add_goal(eat_goal)
-            self.current_goal = eat_goal
-            self.tick_since_goal_change = 0
+            # Successfully found food to eat
+            if agent.carrying:
+                # Already carrying food - consume it immediately
+                consumed = agent.consume_food()
+                if consumed:
+                    #print(f"Agent {agent.id}: Consumed carried food immediately!")
+                    
+                    # Create a rest goal to recover after eating
+                    rest_goal = Goal("rest", priority=1.5)
+                    rest_goal.plan = ["REST"]
+                    rest_goal.plan_index = 0
+                    self.add_goal(rest_goal)
+                    self.current_goal = rest_goal
+                    self.tick_since_goal_change = 0
+            else:
+                # Not carrying food yet - create appropriate goal
+                current_cell = agent.w.cell(tuple(agent.pos))
+                at_food_cell = is_food_cell(current_cell)
+                
+                if at_food_cell:
+                    # At food cell but not carrying - create REST action to pick up
+                    pickup_goal = Goal("find_food_to_eat", priority=2.0)
+                    pickup_goal.plan = ["REST"]
+                    pickup_goal.plan_index = 0
+                    self.add_goal(pickup_goal)
+                    self.current_goal = pickup_goal
+                    self.tick_since_goal_change = 0
+                    #print(f"Agent {agent.id}: At food! Creating plan to pick up and eat.")
+                else:
+                    # Not at food yet - keep the find_food_to_eat goal
+                    pass
             
         elif current_goal_type == "find_food_to_store":
             # Successfully found food - pick it up and take it home
@@ -600,7 +852,7 @@ class PlanningSystem:
             
             if at_food_cell and not agent.carrying:
                 # We're at food but haven't picked it up yet
-                print(f"Agent {agent.id}: Found food to store! Picking up to take home")
+                #print(f"Agent {agent.id}: Found food to store! Picking up to take home")
                 
                 # The agent should automatically pick up food when at food cell
                 # But we need to create a plan to return home
@@ -611,7 +863,7 @@ class PlanningSystem:
             
             elif agent.carrying:
                 # We've already picked up food, now go store it
-                print(f"Agent {agent.id}: Successfully picked up food! Now returning home")
+                #print(f"Agent {agent.id}: Successfully picked up food! Now returning home")
                 
                 # Create a high-priority store_food goal and make it active
                 store_goal = Goal("store_food", priority=2.0)
@@ -620,7 +872,7 @@ class PlanningSystem:
                 # IMPORTANT: Actually create a plan to return home!
                 success = self.create_plan_for_goal(self.current_goal)
                 if not success:
-                    print(f"Agent {agent.id}: ERROR - Failed to create plan to return home!")
+                    #print(f"Agent {agent.id}: ERROR - Failed to create plan to return home!")
                     # Fallback - direct path to home
                     home_x, home_y = agent.w.home
                     dx = home_x - agent.pos[0]
@@ -642,18 +894,18 @@ class PlanningSystem:
                     self.current_goal.plan = plan
                     self.current_goal.plan_index = 0
                     
-                print(f"Agent {agent.id}: Created store_food plan: {self.current_goal.plan}")
+                #print(f"Agent {agent.id}: Created store_food plan: {self.current_goal.plan}")
             
             # Reset tick counter
             self.tick_since_goal_change = 0
             
         elif current_goal_type == "store_food":
             # Successfully stored food, now should find more food or rest based on needs
-            print(f"Agent {agent.id}: Food storage successful! Determining next urgent need")
+            #print(f"Agent {agent.id}: Food storage successful! Determining next urgent need")
             
             # CRITICAL: Verify that food was actually stored - check if still carrying
             if agent.carrying:
-                print(f"Agent {agent.id}: ERROR - Agent still carrying food! Staying with store_food goal.")
+                #print(f"Agent {agent.id}: ERROR - Agent still carrying food! Staying with store_food goal.")
                 # Create a new plan to ensure food is stored
                 store_goal = Goal("store_food", priority=2.0)
                 store_goal.plan = ["REST"]  # Just rest to store the food
@@ -669,14 +921,14 @@ class PlanningSystem:
             # IMPORTANT: Create a new goal only if the food was actually stored
             if hunger_ratio > 0.7:
                 # Very hungry - find food to eat
-                print(f"Agent {agent.id}: Very hungry ({hunger_ratio:.2f}), finding food to eat")
+                #print(f"Agent {agent.id}: Very hungry ({hunger_ratio:.2f}), finding food to eat")
                 eat_goal = Goal("find_food_to_eat", priority=2.0)
                 self.add_goal(eat_goal)
                 self.current_goal = eat_goal
                 self.create_plan_for_goal(self.current_goal)
             elif energy_ratio < 0.3:
                 # Energy low, prioritize resting
-                print(f"Agent {agent.id}: Energy low ({energy_ratio:.2f}), switching to rest goal")
+                #print(f"Agent {agent.id}: Energy low ({energy_ratio:.2f}), switching to rest goal")
                 rest_goal = Goal("rest", priority=1.8)
                 rest_goal.plan = ["REST"] * 3  # Rest for a few ticks
                 rest_goal.plan_index = 0
@@ -684,7 +936,7 @@ class PlanningSystem:
                 self.current_goal = rest_goal
             else:
                 # Energy OK and not very hungry, find more food to store
-                print(f"Agent {agent.id}: Energy sufficient, finding more food to store")
+                #print(f"Agent {agent.id}: Energy sufficient, finding more food to store")
                 food_goal = Goal("find_food_to_store", priority=1.5)
                 self.add_goal(food_goal)
                 self.current_goal = food_goal
@@ -699,7 +951,7 @@ class PlanningSystem:
             
             if hunger_ratio > 0.7:
                 # Very hungry - prioritize finding food to eat
-                print(f"Agent {agent.id}: After rest, hunger high ({hunger_ratio:.2f}), finding food to eat")
+                #print(f"Agent {agent.id}: After rest, hunger high ({hunger_ratio:.2f}), finding food to eat")
                 eat_goal = Goal("find_food_to_eat", priority=2.0)
                 self.add_goal(eat_goal)
                 self.current_goal = eat_goal
@@ -727,55 +979,28 @@ class PlanningSystem:
             if found and direction:
                 if coordinates:
                     # We have exact coordinates, create a direct path to them
-                    print(f"Agent {agent.id}: Planning path to food to eat at {coordinates}")
+                    #print(f"Agent {agent.id}: Planning path to food to eat at {coordinates}")
                     goal.target = coordinates
                     self.current_target = coordinates
                     
-                    # Calculate simple path to the target (direct x-y movements)
-                    path = []
-                    current = agent.pos.copy()
-                    
-                    # First, handle x coordinate (using N/S)
-                    dx = coordinates[0] - current[0]
-                    if dx != 0:
-                        # Handle wraparound
-                        if abs(dx) > GRID // 2:
-                            dx = -1 * (GRID - abs(dx)) * (1 if dx > 0 else -1)
-                        
-                        # Add N/S movements
-                        if dx > 0:
-                            path.extend(["S"] * abs(dx))
-                        else:
-                            path.extend(["N"] * abs(dx))
-                    
-                    # Now handle y coordinate (using E/W)
-                    current[0] = coordinates[0]  # Update x to target
-                    dy = coordinates[1] - current[1]
-                    if dy != 0:
-                        # Handle wraparound
-                        if abs(dy) > GRID // 2:
-                            dy = -1 * (GRID - abs(dy)) * (1 if dy > 0 else -1)
-                        
-                        # Add E/W movements
-                        if dy > 0:
-                            path.extend(["E"] * abs(dy))
-                        else:
-                            path.extend(["W"] * abs(dy))
+                    # Calculate path considering wraparound
+                    path = self.calculate_wrapped_path(agent.pos, coordinates)
                     
                     # Validate the path against obstacles
                     valid_path = self.validate_path(agent.pos, path)
                     
                     # Add REST to consume food
-                    goal.plan = valid_path + ["REST"]
+                    valid_path.append("REST")
+                    goal.plan = valid_path
                     goal.plan_index = 0
                     
-                    print(f"Agent {agent.id}: Created plan to food to eat: {goal.plan}")
+                    #print(f"Agent {agent.id}: Created plan to food to eat: {goal.plan}")
                     return True
                 else:
                     # No exact coordinates, but we have a direction and distance
                     # Handle adjacent food specially (distance = 1)
                     if distance == 1:
-                        print(f"Agent {agent.id}: Food to eat is adjacent! Direct step in direction {direction}")
+                        #print(f"Agent {agent.id}: Food to eat is adjacent! Direct step in direction {direction}")
                         goal.plan = [direction, "REST"]
                         goal.plan_index = 0
                         
@@ -788,20 +1013,21 @@ class PlanningSystem:
                         return True
                         
                     # For further food, create directional plan
-                    print(f"Agent {agent.id}: Creating directional plan to food to eat: {direction} x {distance}")
+                    #print(f"Agent {agent.id}: Creating directional plan to food to eat: {direction} x {distance}")
                     raw_plan = [direction] * min(distance, 15)  # Limit plan length
                     
                     # Validate path against obstacles
                     valid_plan = self.validate_path(agent.pos, raw_plan)
                     
                     # Add REST at the end to consume food
-                    goal.plan = valid_plan + ["REST"]
+                    valid_plan.append("REST")
+                    goal.plan = valid_plan
                     goal.plan_index = 0
                     
                     # Calculate the end position to set as target
                     target_pos = agent.pos.copy()
                     for act in valid_plan:
-                        if act in agent.MOV:
+                        if act in agent.MOV and act != "REST":
                             dx, dy = agent.MOV[act]
                             target_pos[0] = (target_pos[0] + dx) % GRID
                             target_pos[1] = (target_pos[1] + dy) % GRID
@@ -809,11 +1035,11 @@ class PlanningSystem:
                     goal.target = target_pos.copy()
                     self.current_target = goal.target
                     
-                    print(f"Agent {agent.id}: Created food to eat plan: {goal.plan} to target {goal.target}")
+                    #print(f"Agent {agent.id}: Created food to eat plan: {goal.plan} to target {goal.target}")
                     return True
             
             # No food found, create random search pattern
-            print(f"Agent {agent.id}: No food to eat found, creating search pattern")
+            #print(f"Agent {agent.id}: No food to eat found, creating search pattern")
             directions = list(agent.MOV.keys())
             directions.remove("REST")  # Don't include REST in exploration
             
@@ -842,142 +1068,37 @@ class PlanningSystem:
                                 other_pos[1] == coordinates[1] and 
                                 other_agent.carrying):
                                 skip_location = True
-                                print(f"Agent {agent.id}: Skipping food at {coordinates} as another agent is carrying it")
+                                #print(f"Agent {agent.id}: Skipping food at {coordinates} as another agent is carrying it")
                                 break
                 
                 # Skip food at home
                 home_x, home_y = agent.w.home
                 if coordinates[0] == home_x and coordinates[1] == home_y:
                     skip_location = True
-                    print(f"Agent {agent.id}: Skipping food at home location")
+                    #print(f"Agent {agent.id}: Skipping food at home location")
                 
-                if skip_location:
-                    # Try to find another food location
-                    # Simple approach: remove this food from consideration and search around agent
-                    found = False
-                    for radius in range(1, min(20, GRID // 2)):
-                        for dx in range(-radius, radius + 1):
-                            for dy in range(-radius, radius + 1):
-                                if abs(dx) == radius or abs(dy) == radius:  # only check perimeter
-                                    nx, ny = (agent.pos[0] + dx) % GRID, (agent.pos[1] + dy) % GRID
-                                    # Skip the location we're avoiding
-                                    if nx == coordinates[0] and ny == coordinates[1]:
-                                        continue
-                                        
-                                    # Skip home location
-                                    if nx == home_x and ny == home_y:
-                                        continue
-                                        
-                                    # Skip locations where other agents with food
-                                    skip_this = False
-                                    if hasattr(agent, 'w') and hasattr(agent.w, 'positions'):
-                                        for other_agent, pos in agent.w.positions.items():
-                                            if other_agent != agent and hasattr(other_agent, 'carrying'):
-                                                other_pos = list(pos) if isinstance(pos, tuple) else pos
-                                                if (other_pos[0] == nx and 
-                                                    other_pos[1] == ny and 
-                                                    other_agent.carrying):
-                                                    skip_this = True
-                                                    break
-                                    
-                                    if skip_this:
-                                        continue
-                                    
-                                    # Check for food at this location
-                                    cell = agent.w.cell((nx, ny))
-                                    if is_food_cell(cell):
-                                        found = True
-                                        coordinates = [nx, ny]
-                                        # Calculate new direction and distance
-                                        distance = abs(dx) + abs(dy)
-                                        if abs(dx) > abs(dy):
-                                            direction = "S" if dx > 0 else "N"
-                                        else:
-                                            direction = "E" if dy > 0 else "W"
-                                        break
-                            if found:
-                                break
-                        if found:
-                            break
-            
-            if found and direction:
-                if coordinates:
-                    # We have exact coordinates, create a direct path to them
-                    print(f"Agent {agent.id}: Planning path to food to store at {coordinates}")
+                if not skip_location:
+                    # We have valid coordinates, create a direct path to them
+                    #print(f"Agent {agent.id}: Planning path to food to store at {coordinates}")
                     goal.target = coordinates
                     self.current_target = coordinates
                     
-                    # Calculate path as before
-                    path = []
-                    current = agent.pos.copy()
-                    
-                    # DEBUG: Print current position and target position
-                    print(f"Agent {agent.id}: Current position: {current}, target: {coordinates}")
-                    
-                    # Calculate distance to verify it's not 0
-                    real_distance = abs(coordinates[0] - current[0]) + abs(coordinates[1] - current[1])
-                    print(f"Agent {agent.id}: Manhattan distance to target: {real_distance}")
-                    
-                    # CRITICAL: Check if we're already at the target location
-                    if current[0] == coordinates[0] and current[1] == coordinates[1]:
-                        print(f"Agent {agent.id}: Already at target location! Adding REST action")
-                        goal.plan = ["REST"]
-                        goal.plan_index = 0
-                        return True
-                    
-                    # First, handle x coordinate (using N/S)
-                    dx = coordinates[0] - current[0]
-                    if dx != 0:
-                        # Handle wraparound
-                        if abs(dx) > GRID // 2:
-                            dx = -1 * (GRID - abs(dx)) * (1 if dx > 0 else -1)
-                        
-                        # Add N/S movements
-                        if dx > 0:
-                            path.extend(["S"] * abs(dx))
-                        else:
-                            path.extend(["N"] * abs(dx))
-                    
-                    # Now handle y coordinate (using E/W)
-                    current[0] = coordinates[0]  # Update x to target
-                    dy = coordinates[1] - current[1]
-                    if dy != 0:
-                        # Handle wraparound
-                        if abs(dy) > GRID // 2:
-                            dy = -1 * (GRID - abs(dy)) * (1 if dy > 0 else -1)
-                        
-                        # Add E/W movements
-                        if dy > 0:
-                            path.extend(["E"] * abs(dy))
-                        else:
-                            path.extend(["W"] * abs(dy))
-                    
-                    # CRITICAL: Verify we actually created a path with movements
-                    if not path:
-                        print(f"Agent {agent.id}: WARNING - Empty path generated to target {coordinates}!")
-                        # Try an alternative approach - add one step in each direction
-                        # This helps break out of stuck situations
-                        possible_dirs = ["N", "S", "E", "W"]
-                        path = [random.choice(possible_dirs), random.choice(possible_dirs)]
+                    # Calculate path considering wraparound
+                    path = self.calculate_wrapped_path(agent.pos, coordinates)
                     
                     # Validate the path against obstacles
                     valid_path = self.validate_path(agent.pos, path)
                     
-                    # CRITICAL: Verify valid path is not empty
-                    if not valid_path:
-                        print(f"Agent {agent.id}: WARNING - Valid path is empty! Adding random movement")
-                        possible_dirs = ["N", "S", "E", "W"]
-                        valid_path = [random.choice(possible_dirs)]
-                    
                     # Add REST to pick up food
-                    goal.plan = valid_path + ["REST"]
+                    valid_path.append("REST")
+                    goal.plan = valid_path
                     goal.plan_index = 0
                     
-                    print(f"Agent {agent.id}: Created plan to food to store: {goal.plan}")
+                    #print(f"Agent {agent.id}: Created plan to food to store: {goal.plan}")
                     return True
                         
             # No suitable food found, create random search pattern
-            print(f"Agent {agent.id}: No suitable food to store found, creating search pattern")
+            #print(f"Agent {agent.id}: No suitable food to store found, creating search pattern")
             directions = list(agent.MOV.keys())
             directions.remove("REST")  # Don't include REST
             
@@ -996,33 +1117,8 @@ class PlanningSystem:
             goal.target = [home_x, home_y]
             self.current_target = goal.target
             
-            # Calculate path to home
-            path = []
-            current = agent.pos.copy()
-            
-            # Calculate distances considering wraparound
-            dx = home_x - current[0]
-            dy = home_y - current[1]
-            
-            # Handle wraparound for x coordinate
-            if abs(dx) > GRID // 2:
-                dx = -1 * (GRID - abs(dx)) * (1 if dx > 0 else -1)
-                
-            # Handle wraparound for y coordinate
-            if abs(dy) > GRID // 2:
-                dy = -1 * (GRID - abs(dy)) * (1 if dy > 0 else -1)
-            
-            # Create path - move in x direction first (N/S)
-            if dx > 0:
-                path.extend(["S"] * abs(dx))
-            elif dx < 0:
-                path.extend(["N"] * abs(dx))
-            
-            # Then move in y direction (E/W)
-            if dy > 0:
-                path.extend(["E"] * abs(dy))
-            elif dy < 0:
-                path.extend(["W"] * abs(dy))
+            # Calculate path considering wraparound
+            path = self.calculate_wrapped_path(agent.pos, goal.target)
             
             # If already at home, just add a REST
             if not path:
@@ -1038,7 +1134,7 @@ class PlanningSystem:
             goal.plan = valid_path
             goal.plan_index = 0
             
-            print(f"Agent {agent.id}: Created plan to return home: {goal.plan}")
+            #print(f"Agent {agent.id}: Created plan to return home: {goal.plan}")
             return True
         
         elif goal.goal_type == "rest":
@@ -1047,8 +1143,98 @@ class PlanningSystem:
             goal.plan_index = 0
             return True
         
+        # Handle consume_food goal - create a simple REST plan
+        elif goal.goal_type == "consume_food":
+            # Simple consume plan - just rest in place if carrying food
+            if agent.carrying:
+                goal.plan = ["REST"]
+                goal.plan_index = 0
+                return True
+            
+            # If at home with stored food, also just rest
+            current_cell = agent.w.cell(tuple(agent.pos))
+            at_home = current_cell.material == "home" or "home" in current_cell.tags
+            if at_home and agent.store > 0:
+                goal.plan = ["REST"]
+                goal.plan_index = 0
+                return True
+            
+            # Otherwise, need to find food or go home to consume stored food
+            if agent.store > 0:
+                # Go home to consume stored food
+                home_goal = Goal("return_home", priority=2.0)
+                self.add_goal(home_goal)
+                self.current_goal = home_goal
+                return self.create_plan_for_goal(home_goal)
+            else:
+                # Find food to consume
+                find_food_goal = Goal("find_food_to_eat", priority=2.0)
+                self.add_goal(find_food_goal)
+                self.current_goal = find_food_goal
+                return self.create_plan_for_goal(find_food_goal)
+        
         # Failed to create a plan
         return False
+
+
+    # Add this new method to calculate paths that properly handle world wrapping
+    def calculate_wrapped_path(self, start_pos, target_pos):
+        """
+        Calculate a path between two positions with proper handling of world wrapping.
+        
+        Args:
+            start_pos: Starting position [x, y]
+            target_pos: Target position [x, y]
+            
+        Returns:
+            List of actions ("N", "S", "E", "W")
+        """
+        agent = self.agent
+        grid_size = GRID  # World grid size
+        
+        # Make copies to avoid modifying the originals
+        current = start_pos.copy()
+        target = target_pos.copy()
+        
+        # Calculate direct distances
+        dx = target[0] - current[0]
+        dy = target[1] - current[1]
+        
+        # Calculate wrapped distances
+        wrapped_dx = 0
+        if abs(dx) > grid_size // 2:
+            # It's shorter to go the other way around
+            wrapped_dx = (grid_size - abs(dx)) * (-1 if dx > 0 else 1)
+        else:
+            wrapped_dx = dx
+            
+        wrapped_dy = 0
+        if abs(dy) > grid_size // 2:
+            # It's shorter to go the other way around
+            wrapped_dy = (grid_size - abs(dy)) * (-1 if dy > 0 else 1)
+        else:
+            wrapped_dy = dy
+        
+        # Build the path based on wrapped distances
+        path = []
+        
+        # Handle X movement (North/South)
+        if wrapped_dx > 0:
+            # Need to move South
+            path.extend(["S"] * abs(wrapped_dx))
+        elif wrapped_dx < 0:
+            # Need to move North
+            path.extend(["N"] * abs(wrapped_dx))
+        
+        # Handle Y movement (East/West)
+        if wrapped_dy > 0:
+            # Need to move East
+            path.extend(["E"] * abs(wrapped_dy))
+        elif wrapped_dy < 0:
+            # Need to move West
+            path.extend(["W"] * abs(wrapped_dy))
+        
+        return path
 
     def update_goal_priorities(self):
         """Update goals' priorities based on agent state with exponential urgency"""
@@ -1137,6 +1323,7 @@ class PlanningSystem:
         
         # Find food to eat if very hungry
         if agent.hunger > MAX_H * 0.7 and not agent.carrying:
+            # High priority goal to find food to eat when very hungry
             self.add_goal(Goal("find_food_to_eat", priority=agent.hunger / MAX_H * 2.5))
         
         # Find food to store if not very hungry and not carrying
@@ -1145,7 +1332,15 @@ class PlanningSystem:
         
         # Go home if carrying food
         if agent.carrying:
-            self.add_goal(Goal("store_food", priority=2.0))
+            if agent.hunger > MAX_H * 0.8:
+                # If very hungry and carrying food, consume it immediately
+                eat_goal = Goal("consume_food", priority=2.5)
+                eat_goal.plan = ["REST"]  # Rest to consume food
+                eat_goal.plan_index = 0
+                self.add_goal(eat_goal)
+            else:
+                # Otherwise store it at home
+                self.add_goal(Goal("store_food", priority=2.0))
         
         # Return home if energy is low
         energy_deficit = 1.0 - (agent.energy / MAX_E)
@@ -1155,3 +1350,12 @@ class PlanningSystem:
         # Rest if in pain or very low energy
         if agent.pain > MAX_P * 0.4 or agent.energy < MAX_E * 0.2:
             self.add_goal(Goal("rest", priority=1.5))
+        
+        # Consume stored food if at home and very hungry
+        current_cell = agent.w.cell(tuple(agent.pos))
+        at_home = current_cell.material == "home" or "home" in current_cell.tags
+        if at_home and agent.store > 0 and agent.hunger > MAX_H * 0.7:
+            consume_goal = Goal("consume_food", priority=2.2)
+            consume_goal.plan = ["REST"]  # Rest to consume food
+            consume_goal.plan_index = 0
+            self.add_goal(consume_goal)
