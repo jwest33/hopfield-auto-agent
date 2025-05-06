@@ -91,10 +91,9 @@ st.markdown("<p class='subheader'>An exploratory agent that learns from experien
 
 # Initialize state
 if "world" not in st.session_state:
-    # initialise world & agent (try loading state on agent)
     st.session_state.world = World(grid_size = GRID)
-    st.session_state.agent = Agent(st.session_state.world)
-    st.session_state.agent.load_state()  # harmless if file absent
+    st.session_state.agent = Agent(st.session_state.world, agent_id="agent_1")
+    st.session_state.agent.load_state()
     st.session_state.running = False
     st.session_state.speed = 0.15  # Default speed
     logging.info("Session initialised.")
@@ -124,12 +123,11 @@ with st.sidebar:
     )
     
     if st.button("🔄 Reset Simulation", use_container_width=True):
-        # remove saved state and rebuild everything
         if os.path.exists(STATE_FILE):
             os.remove(STATE_FILE)
             logging.info("🗑️ Saved state cleared.")
         st.session_state.world = World(grid_size = GRID)
-        st.session_state.agent = Agent(st.session_state.world)
+        st.session_state.agent = Agent(st.session_state.world, agent_id="agent_1")
         st.session_state.running = False
         st.rerun()
     
@@ -154,6 +152,21 @@ with st.sidebar:
     st.markdown(f"**Tick Count:** {agent.tick_count}")
     st.markdown(f"**Last Action:** {agent.last_action}")
     st.markdown(f"**Last Reward:** {agent.last_reward:.2f}")
+
+    # New: Memory & Communication
+    st.markdown("## Memory & Communication")
+    # Memory usage
+    mem0_used = agent.mem0.M.shape[0]
+    mem1_used = agent.mem1.M.shape[0]
+    st.metric("Hopfield Mem0 Usage", f"{mem0_used}/{CAP_L0}")
+    st.metric("Hopfield Mem1 Usage", f"{mem1_used}/{CAP_L1}")
+    # Surprise
+    st.metric("Last Surprise", f"{agent.last_surprise:.2f}")
+
+    # Symbol counts
+    st.markdown("### Communication Symbol Counts")
+    df_syms = pd.DataFrame.from_dict(agent.symbol_counts, orient='index', columns=["Count"] )
+    st.bar_chart(df_syms)
 
 # Main content area
 main_col1, main_col2 = st.columns([2, 1])
