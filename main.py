@@ -90,16 +90,26 @@ st.markdown("<h1 class='header'>Adaptive Hopfield Agent</h1>", unsafe_allow_html
 st.markdown("<p class='subheader'>An exploratory agent that learns from experience using Hopfield networks</p>", unsafe_allow_html=True)
 
 # Initialize state
-if "world" not in st.session_state:
-    st.session_state.world = World(grid_size = GRID)
-    st.session_state.agent = Agent(st.session_state.world, agent_id="agent_1")
-    st.session_state.agent.load_state()
-    st.session_state.running = False
-    st.session_state.speed = 0.15  # Default speed
-    logging.info("Session initialised.")
+if "world" not in st.session_state or "agents" not in st.session_state:
+    # create/reset the world
+    st.session_state.world = World(grid_size=GRID)
 
-world: World = st.session_state.world
-agent: Agent = st.session_state.agent
+    # create your agents
+    st.session_state.agents = [
+        Agent(st.session_state.world, agent_id="agent_1"),
+        Agent(st.session_state.world, agent_id="agent_2"),
+    ]
+
+    # load each from its own file so they don't collide
+    for agent in st.session_state.agents:
+        agent.load_state(path=f"{agent.agent_id}_state.npz")
+
+    st.session_state.running = False
+    st.session_state.speed = 0.15
+
+# now grab them locally
+world = st.session_state.world
+agents = st.session_state.agents
 
 # --- sidebar controls ---
 with st.sidebar:
@@ -123,50 +133,61 @@ with st.sidebar:
     )
     
     if st.button("🔄 Reset Simulation", use_container_width=True):
-        if os.path.exists(STATE_FILE):
-            os.remove(STATE_FILE)
-            logging.info("🗑️ Saved state cleared.")
-        st.session_state.world = World(grid_size = GRID)
-        st.session_state.agent = Agent(st.session_state.world, agent_id="agent_1")
+        # delete each agent's state file
+        for agent in st.session_state.agents:
+            fn = f"{agent.agent_id}_state.npz"
+            if os.path.exists(fn):
+                os.remove(fn)
+
+        # re-init exactly the same way as above
+        st.session_state.world = World(grid_size=GRID)
+        st.session_state.agents = [
+            Agent(st.session_state.world, agent_id="agent_1"),
+            Agent(st.session_state.world, agent_id="agent_2"),
+        ]
+        for agent in st.session_state.agents:
+            agent.load_state(path=f"{agent.agent_id}_state.npz")
+
         st.session_state.running = False
         st.rerun()
-    
-    # Display cell type experiences
-    st.markdown("## Cell Type Learning")
-    exp_data = []
-    for cell_type, data in agent.cell_experience.items():
-        exp_data.append({
-            "Type": cell_type.capitalize(),
-            "Reward": f"{data['reward']:.2f}",
-            "Visits": data['visits']
-        })
-    
-    st.dataframe(
-        pd.DataFrame(exp_data),
-        hide_index=True,
-        use_container_width=True
-    )
-    
-    # Show agent stats
-    st.markdown("## Agent Stats")
-    st.markdown(f"**Tick Count:** {agent.tick_count}")
-    st.markdown(f"**Last Action:** {agent.last_action}")
-    st.markdown(f"**Last Reward:** {agent.last_reward:.2f}")
+    for agent in st.session_state.agents:
+        st.markdown(f"### 📊 Stats for {agent.agent_id}")
+        # Display cell type experiences
+        st.markdown("## Cell Type Learning")
+        exp_data = []
+        for cell_type, data in agent.cell_experience.items():
+            exp_data.append({
+                "Type": cell_type.capitalize(),
+                "Reward": f"{data['reward']:.2f}",
+                "Visits": data['visits']
+            })
+        
+        st.dataframe(
+            pd.DataFrame(exp_data),
+            hide_index=True,
+            use_container_width=True
+        )
+        
+        # Show agent stats
+        st.markdown("## Agent Stats")
+        st.markdown(f"**Tick Count:** {agent.tick_count}")
+        st.markdown(f"**Last Action:** {agent.last_action}")
+        st.markdown(f"**Last Reward:** {agent.last_reward:.2f}")
 
-    # New: Memory & Communication
-    st.markdown("## Memory & Communication")
-    # Memory usage
-    mem0_used = agent.mem0.M.shape[0]
-    mem1_used = agent.mem1.M.shape[0]
-    st.metric("Hopfield Mem0 Usage", f"{mem0_used}/{CAP_L0}")
-    st.metric("Hopfield Mem1 Usage", f"{mem1_used}/{CAP_L1}")
-    # Surprise
-    st.metric("Last Surprise", f"{agent.last_surprise:.2f}")
+        # New: Memory & Communication
+        st.markdown("## Agent Memory")
+        # Memory usage
+        mem0_used = agent.mem0.M.shape[0]
+        mem1_used = agent.mem1.M.shape[0]
+        st.metric("Hopfield Mem0 Usage", f"{mem0_used}/{CAP_L0}")
+        st.metric("Hopfield Mem1 Usage", f"{mem1_used}/{CAP_L1}")
+        # Surprise
+        st.metric("Last Surprise", f"{agent.last_surprise:.2f}")
 
-    # Symbol counts
-    st.markdown("### Communication Symbol Counts")
-    df_syms = pd.DataFrame.from_dict(agent.symbol_counts, orient='index', columns=["Count"] )
-    st.bar_chart(df_syms)
+        # Symbol counts
+        #st.markdown("### Communication Symbol Counts")
+        #df_syms = pd.DataFrame.from_dict(agent.symbol_counts, orient='index', columns=["Count"] )
+        #st.bar_chart(df_syms)
 
 # Main content area
 main_col1, main_col2 = st.columns([2, 1])
@@ -208,41 +229,46 @@ with main_col1:
         font=dict(size=16)
     )
     
-    # Add agent marker
-    fig.add_annotation(
-        x=ay, 
-        y=ax,
-        text="🤖" if not agent.carrying else "🧠",
-        showarrow=False,
-        font=dict(size=16)
-    )
+    colors = [
+        [0, 0.4, 0.9],   # agent_1 color
+        [0.8, 0, 0.8],   # agent_2 color
+    ]
+    for idx, agent in enumerate(st.session_state.agents):
+        x, y = agent.pos
+        rgb[x, y] = colors[idx % len(colors)]
+        fig.add_annotation(
+            x=y, y=x,
+            text="🤖",
+            showarrow=False,
+            font=dict(size=16)
+        )
     
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
 with main_col2:
+    
+    for agent in st.session_state.agents:
     # --- metrics with better visuals ---
-    st.markdown("<div class='metric-card'>", unsafe_allow_html=True)
-    
-    # Energy bar
-    energy_color = "green" if agent.energy > MAX_E * 0.5 else "orange" if agent.energy > MAX_E * 0.2 else "red"
-    st.markdown(f"### Energy: {agent.energy:.0f}/{MAX_E}")
-    st.progress(max(0.0, min(1.0, agent.energy / MAX_E)))
-    
-    # Hunger bar
-    hunger_color = "green" if agent.hunger < MAX_H * 0.3 else "orange" if agent.hunger < MAX_H * 0.7 else "red"
-    st.markdown(f"### Hunger: {agent.hunger}/{MAX_H}")
-    st.progress(max(0.0, min(1.0, agent.hunger / MAX_H)))
-    
-    # Pain bar
-    pain_color = "green" if agent.pain < MAX_P * 0.3 else "orange" if agent.pain < MAX_P * 0.7 else "red"
-    st.markdown(f"### Pain: {agent.pain}/{MAX_P}")
-    st.progress(max(0.0, min(1.0, agent.pain / MAX_P)))
-    
-    # Food stats
-    st.markdown(f"### Food Stored: {agent.store}")
-    st.markdown(f"### Carrying Food: {'Yes' if agent.carrying else 'No'}")
-    
-    st.markdown("</div>", unsafe_allow_html=True)
+        # Energy bar
+        st.markdown(f"### {agent.agent_id.capitalize()}:")
+        st.markdown(f"### Energy: {agent.energy:.0f}/{MAX_E}")
+        st.progress(max(0.0, min(1.0, agent.energy / MAX_E)))
+        
+        # Hunger bar
+        hunger_color = "green" if agent.hunger < MAX_H * 0.3 else "orange" if agent.hunger < MAX_H * 0.7 else "red"
+        st.markdown(f"### Hunger: {agent.hunger}/{MAX_H}")
+        st.progress(max(0.0, min(1.0, agent.hunger / MAX_H)))
+        
+        # Pain bar
+        pain_color = "green" if agent.pain < MAX_P * 0.3 else "orange" if agent.pain < MAX_P * 0.7 else "red"
+        st.markdown(f"### Pain: {agent.pain}/{MAX_P}")
+        st.progress(max(0.0, min(1.0, agent.pain / MAX_P)))
+        
+        # Food stats
+        st.markdown(f"### Food Stored: {agent.store}")
+        st.markdown(f"### Carrying Food: {'Yes' if agent.carrying else 'No'}")
+        
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # History charts
 if agent.tick_count > 10:
@@ -337,6 +363,7 @@ if agent.tick_count > 10:
 
 # --- autoplay tick ---
 if st.session_state.running:
-    agent.step()              # take one action & persist
-    time.sleep(st.session_state.speed)  # wait based on speed setting
+    for agent in st.session_state.agents:
+        agent.step()  # each agent takes its turn
+    time.sleep(st.session_state.speed)
     st.rerun()

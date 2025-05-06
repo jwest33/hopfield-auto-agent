@@ -120,9 +120,7 @@ class Agent:
             store=self.store,
             tick_count=self.tick_count,
             mem0_M=self.mem0.M,
-            mem0_t=np.asarray(self.mem0.t, dtype=float),
             mem1_M=self.mem1.M,
-            mem1_t=np.asarray(self.mem1.t, dtype=float),
             cell_experience=np.array([self.cell_experience], dtype=object),
             q_values=np.array([self.q_values], dtype=object),
             history=np.array([self.history], dtype=object)
@@ -144,15 +142,13 @@ class Agent:
             if "tick_count" in data:
                 self.tick_count = int(data["tick_count"])
             self.mem0.M = data["mem0_M"]
-            self.mem0.t = data["mem0_t"].tolist()
             self.mem1.M = data["mem1_M"]
-            self.mem1.t = data["mem1_t"].tolist()
             if "cell_experience" in data:
-                self.cell_experience = data["cell_experience"][0].item()
+                self.cell_experience = data["cell_experience"].item()
             if "q_values" in data:
-                self.q_values = data["q_values"][0].item()
+                self.q_values = data["q_values"].item()
             if "history" in data:
-                self.history = data["history"][0].item()
+                self.history = data["history"].item()
             logging.info("Agent state loaded from %s", path)
         except Exception as e:
             logging.error(f"Error loading state: {e}")
@@ -338,7 +334,7 @@ class Agent:
         self.history["actions"].append(act)
         self.history["rewards"].append(reward)
         self.history["surprise"].append(self.last_surprise)
-        self.save_state()
+        self.save_state(path=f"{self.agent_id}_state.npz")
 
         logging.debug(f"Tick {self.tick_count} – pos {self.pos}, energy {self.energy:.1f}, hunger {self.hunger}, pain {self.pain}, reward {reward}")
         
