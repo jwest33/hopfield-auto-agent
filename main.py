@@ -1,1573 +1,329 @@
-import pygame
-import sys
-import os
-import pickle
-import random
-import time
+from __future__ import annotations
+import itertools, time, logging, os, sys
 import numpy as np
-import logging
-from datetime import datetime
-from typing import Dict, List, Tuple, Optional
-import argparse
-import threading
+import streamlit as st
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import pandas as pd
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%H:%M:%S",
-    handlers=[
-        logging.FileHandler("simulation.log"),
-        logging.StreamHandler(sys.stdout)
-    ]
-)
+from module_agent import Agent
+from module_world import World
 
-# Import visualization utilities
-from visualization_utils import (
-    create_graph_surface, 
-    create_population_stats_surface, 
-    draw_minimap, 
-    create_interaction_graph
-)
+# ───────────────────── configuration ─────────────────────
+GRID = 25
+OBS_DIM = GRID * GRID * 4
+SEQ_LEN, SEQ_DIM = 5, OBS_DIM * 5
+CAP_L0, CAP_L1 = 800, 1200
 
-# Import our modules
-from module_new_world import World, TerrainCell
-from module_agent import Agent, AgentPopulation
-from module_hopfield import Hopfield
+MAX_E, MAX_H, MAX_P = 100, 100, 100
+MOVE_COST, CARRY_COST = 1, 1
+FOOD_E, FOOD_S = 60, 50  # Increased energy and satiety from food
+PAIN_HIT, PAIN_DECAY = 10, 1  # Reduced pain from hazards
+HOME_ENERGY_RECOVERY = 5  # Additional energy recovery at home when resting
+HOME_HUNGER_RECOVERY = 5  # Additional hunger reduction at home when resting
 
-# Try to import PyTorch-related modules - handle gracefully if not available
-try:
-    import torch
-    import torch.nn as nn
-    import torch.optim as optim
-    import torch.nn.functional as F
-    HAS_TORCH = True
-    from module_coms import NeuralCommunicationSystem
-    logging.info("PyTorch found - communication features enabled")
-except ImportError:
-    HAS_TORCH = False
-    logging.warning("PyTorch not found - communication features disabled")
-    
-    # Create a minimal communication system substitute
-    class DummyCommSystem:
-        def __init__(self):
-            self.active_signals = []
-        def clean_old_signals(self):
-            pass
-        def initialize_agent(self, agent_id):
-            pass
+BETA = 2.0
+SURPRISE_SCALE = 10
+HUNGER_W, PAIN_W = 1.5, 2.0
+CARRY_HOME_W = 3.0
+HOME_DIST_W = 2.0
+ENERGY_LOW_FRAC = 0.3
+EXPLORATION_BONUS = 5.0
+REST_PENALTY = 0.2
+TICK_SEC = 0.15
+LEARNING_RATE = 0.1
+DISCOUNT_FACTOR = 0.9
+EXPERIENCE_DECAY = 0.999
 
-# ───────────────────── Constants ─────────────────────
-# Simulation parameters
-GRID = 40
-FPS = 30
-CELL_SIZE = 18
-PANEL_WIDTH = 500  # Increased panel width
-WINDOW_WIDTH = GRID * CELL_SIZE + PANEL_WIDTH
-WINDOW_HEIGHT = 800  # Increased window height
-CLOCK_SPEED = 10  # Simulation ticks per second at normal speed
-
-# File paths
 STATE_FILE = "agent_state.npz"
-WORLD_FILE = "world.pkl"
-SAVE_DIR = "saves"
 
-# Material colors
-MATERIAL_COLORS = {
-    "dirt": (210, 180, 140),
-    "stone": (169, 169, 169),
-    "rock": (128, 128, 128),
-    "water": (30, 144, 255),
-    "wood": (34, 139, 34),
-    "food": (220, 20, 60),
-    "home": (255, 215, 0),
-    "empty": (230, 230, 230),
-}
+logging.basicConfig(level=logging.INFO,
+                    format="%(asctime)s %(levelname)s | %(message)s",
+                    datefmt="%H:%M:%S",
+                    stream=sys.stdout)
 
-# UI colors
-COLOR_BG = (30, 30, 30)
-COLOR_PANEL = (50, 50, 50)
-COLOR_TEXT = (240, 240, 240)
-COLOR_TEXT_HEADER = (255, 255, 255)
-COLOR_BUTTON = (80, 80, 80)
-COLOR_BUTTON_HOVER = (100, 100, 100)
-COLOR_BUTTON_ACTIVE = (120, 120, 120)
+# ───────────────────── Streamlit app ─────────────────────
+st.set_page_config(
+    page_title="Adaptive Hopfield Agent", 
+    page_icon="🧠",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# Button states
-BUTTON_NORMAL = 0
-BUTTON_HOVER = 1
-BUTTON_PRESSED = 2
-
-# ───────────────────── Helper Functions ─────────────────────
-def load_or_create_world(grid_size=GRID):
-    """Load an existing world or create a new one"""
-    if os.path.exists(WORLD_FILE):
-        try:
-            with open(WORLD_FILE, "rb") as f:
-                world = pickle.load(f)
-                logging.info(f"Loaded world from {WORLD_FILE}")
-                return world
-        except Exception as e:
-            logging.error(f"Error loading world: {e}")
-    
-    # If no file exists or loading failed, create a new world
-    world = World(grid_size)
-    logging.info(f"Created new world with grid size {grid_size}")
-    return world
-
-def is_food_cell(cell: TerrainCell) -> bool:
-    """Check if a cell contains food"""
-    return (cell.material == "food" or "food" in cell.tags)
-
-def get_terrain_color(cell):
-    """Get cell color, adjusting for risk level"""
-    base_colors = {
-        "dirt": (210, 180, 140),
-        "stone": (169, 169, 169),
-        "rock": (128, 128, 128),
-        "water": (30, 144, 255),
-        "wood": (34, 139, 34),
-        "food": (220, 20, 60),
-        "home": (255, 215, 0),
-        "empty": (230, 230, 230),
+# Custom CSS for better UI
+st.markdown("""
+<style>
+    .main {
+        background-color: #f5f5f5;
     }
-    
-    # Get base color for the material
-    base_color = base_colors.get(cell.material, (200, 200, 200))
-    
-    # Add red tint based on risk level
-    risk_level = cell.local_risk
-    if risk_level > 0:
-        # Blend with red proportional to risk level
-        red_intensity = int(min(255, risk_level * 255))
-        red_tint = (255, 0, 0)
-        
-        # Blend base color with red tint based on risk level
-        blended_r = int(base_color[0] * (1 - risk_level) + red_tint[0] * risk_level)
-        blended_g = int(base_color[1] * (1 - risk_level) + red_tint[1] * risk_level)
-        blended_b = int(base_color[2] * (1 - risk_level) + red_tint[2] * risk_level)
-        
-        return (blended_r, blended_g, blended_b)
-    
-    return base_color
-    
-def save_simulation(world, population, filename=None):
-    """Save the current simulation state"""
-    # Create save directory if it doesn't exist
-    if not os.path.exists(SAVE_DIR):
-        os.makedirs(SAVE_DIR)
-    
-    # Generate filename if not provided
-    if filename is None:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"sim_{timestamp}.pkl"
-    
-    filepath = os.path.join(SAVE_DIR, filename)
-    
-    # Save the simulation state
-    try:
-        with open(filepath, "wb") as f:
-            pickle.dump({"world": world, "population": population}, f)
-        logging.info(f"Simulation saved to {filepath}")
-        return True
-    except Exception as e:
-        logging.error(f"Error saving simulation: {e}")
-        return False
+    .stApp {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .cell-grid {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .metric-card {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        margin-bottom: 10px;
+    }
+    .header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .subheader {
+        color: #555;
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-def load_simulation(filepath):
-    """Load a saved simulation state"""
-    try:
-        with open(filepath, "rb") as f:
-            data = pickle.load(f)
-            world = data["world"]
-            population = data["population"]
-        logging.info(f"Simulation loaded from {filepath}")
-        return world, population
-    except Exception as e:
-        logging.error(f"Error loading simulation: {e}")
-        return None, None
+# Header
+st.markdown("<h1 class='header'>Adaptive Hopfield Agent</h1>", unsafe_allow_html=True)
+st.markdown("<p class='subheader'>An exploratory agent that learns from experience using Hopfield networks</p>", unsafe_allow_html=True)
 
-# Function to create a visualization of agent's goal planning and execution
-def create_goal_visualization(agent, width=350, height=200):
-    """Create a visualization of agent's goal planning and execution"""
-    # Create a new surface
-    surface = pygame.Surface((width, height))
-    surface.fill((50, 50, 50))  # Dark gray background
+# Initialize state
+if "world" not in st.session_state:
+    # initialise world & agent (try loading state on agent)
+    st.session_state.world = World(grid_size = GRID)
+    st.session_state.agent = Agent(st.session_state.world)
+    st.session_state.agent.load_state()  # harmless if file absent
+    st.session_state.running = False
+    st.session_state.speed = 0.15  # Default speed
+    logging.info("Session initialised.")
+
+world: World = st.session_state.world
+agent: Agent = st.session_state.agent
+
+# --- sidebar controls ---
+with st.sidebar:
+    st.markdown("## Simulation Controls")
+    col1, col2 = st.columns(2)
     
-    # Check if agent has planning system
-    if not hasattr(agent, 'planning_system') or not agent.planning_system:
-        # Draw message
-        font = pygame.font.SysFont("Arial", 14)
-        text = font.render("No planning system available", True, (200, 200, 200))
-        surface.blit(text, (width//2 - text.get_width()//2, height//2 - text.get_height()//2))
-        return surface
+    if col1.button("▶️ Start", use_container_width=True):
+        st.session_state.running = True
+        logging.info("▶️ Simulation started.")
+    if col2.button("⏸️ Pause", use_container_width=True):
+        st.session_state.running = False
+        logging.info("⏸️ Simulation paused.")
     
-    # Fonts
-    header_font = pygame.font.SysFont("Arial", 16, bold=True)
-    normal_font = pygame.font.SysFont("Arial", 14)
-    small_font = pygame.font.SysFont("Arial", 12)
+    st.session_state.speed = st.slider(
+        "Simulation Speed", 
+        min_value=0.01, 
+        max_value=0.5, 
+        value=st.session_state.speed,
+        step=0.01,
+        format="%.2f"
+    )
     
-    # Draw title
-    title = header_font.render("Agent Planning Visualization", True, (220, 220, 220))
-    surface.blit(title, (width//2 - title.get_width()//2, 10))
+    if st.button("🔄 Reset Simulation", use_container_width=True):
+        # remove saved state and rebuild everything
+        if os.path.exists(STATE_FILE):
+            os.remove(STATE_FILE)
+            logging.info("🗑️ Saved state cleared.")
+        st.session_state.world = World(grid_size = GRID)
+        st.session_state.agent = Agent(st.session_state.world)
+        st.session_state.running = False
+        st.rerun()
     
-    # Draw current goal information
-    y_pos = 40
-    if agent.planning_system.current_goal:
-        goal_text = f"Current Goal: {agent.planning_system.current_goal.goal_type}"
-        goal_surf = normal_font.render(goal_text, True, (220, 220, 220))
-        surface.blit(goal_surf, (20, y_pos))
-        y_pos += 20
+    # Display cell type experiences
+    st.markdown("## Cell Type Learning")
+    exp_data = []
+    for cell_type, data in agent.cell_experience.items():
+        exp_data.append({
+            "Type": cell_type.capitalize(),
+            "Reward": f"{data['reward']:.2f}",
+            "Visits": data['visits']
+        })
+    
+    st.dataframe(
+        pd.DataFrame(exp_data),
+        hide_index=True,
+        use_container_width=True
+    )
+    
+    # Show agent stats
+    st.markdown("## Agent Stats")
+    st.markdown(f"**Tick Count:** {agent.tick_count}")
+    st.markdown(f"**Last Action:** {agent.last_action}")
+    st.markdown(f"**Last Reward:** {agent.last_reward:.2f}")
+
+# Main content area
+main_col1, main_col2 = st.columns([2, 1])
+
+with main_col1:
+    # --- grid rendering with improved visuals ---
+    color_map = {
+        "home": [0, 0.8, 0],      # Green
+        "food": [1, 0.8, 0],      # Yellow
+        "hazard": [0.9, 0, 0],    # Red
+        "empty": [0.9, 0.9, 0.9], # Light Gray
+    }
+
+    rgb = np.zeros((GRID, GRID, 3))
+    for i, j in itertools.product(range(GRID), range(GRID)):
+        rgb[i, j] = color_map[world.grid[i, j]]
+    
+    # Add agent position with different color if carrying food
+    ax, ay = agent.pos
+    rgb[ax, ay] = [0, 0.4, 0.9] if not agent.carrying else [0.8, 0, 0.8]
+    
+    # Create customized figure
+    fig = px.imshow(rgb, aspect="equal")
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0),
+        xaxis=dict(showticklabels=False, showgrid=False),
+        yaxis=dict(showticklabels=False, showgrid=False),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+    
+    # Add home position marker
+    hx, hy = world.home
+    fig.add_annotation(
+        x=hy, 
+        y=hx,
+        text="🏠",
+        showarrow=False,
+        font=dict(size=16)
+    )
+    
+    # Add agent marker
+    fig.add_annotation(
+        x=ay, 
+        y=ax,
+        text="🤖" if not agent.carrying else "🧠",
+        showarrow=False,
+        font=dict(size=16)
+    )
+    
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+
+with main_col2:
+    # --- metrics with better visuals ---
+    st.markdown("<div class='metric-card'>", unsafe_allow_html=True)
+    
+    # Energy bar
+    energy_color = "green" if agent.energy > MAX_E * 0.5 else "orange" if agent.energy > MAX_E * 0.2 else "red"
+    st.markdown(f"### Energy: {agent.energy:.0f}/{MAX_E}")
+    st.progress(max(0.0, min(1.0, agent.energy / MAX_E)))
+    
+    # Hunger bar
+    hunger_color = "green" if agent.hunger < MAX_H * 0.3 else "orange" if agent.hunger < MAX_H * 0.7 else "red"
+    st.markdown(f"### Hunger: {agent.hunger}/{MAX_H}")
+    st.progress(max(0.0, min(1.0, agent.hunger / MAX_H)))
+    
+    # Pain bar
+    pain_color = "green" if agent.pain < MAX_P * 0.3 else "orange" if agent.pain < MAX_P * 0.7 else "red"
+    st.markdown(f"### Pain: {agent.pain}/{MAX_P}")
+    st.progress(max(0.0, min(1.0, agent.pain / MAX_P)))
+    
+    # Food stats
+    st.markdown(f"### Food Stored: {agent.store}")
+    st.markdown(f"### Carrying Food: {'Yes' if agent.carrying else 'No'}")
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# History charts
+if agent.tick_count > 10:
+    st.markdown("## Learning & Performance History")
+    
+    # Create history dataframe - ensure all arrays are the same length
+    history_length = min(300, len(agent.history["energy"]))
+    
+    # Make sure rewards and actions match other metrics in length
+    # If they're shorter (which can happen with loaded state), pad them
+    rewards_len = len(agent.history["rewards"])
+    if rewards_len < history_length and rewards_len > 0:
+        padding_needed = history_length - rewards_len
+        agent.history["rewards"] = [0] * padding_needed + agent.history["rewards"]
         
-        # Draw goal details
-        if agent.planning_system.current_goal.target:
-            target_text = f"Target: {agent.planning_system.current_goal.target}"
-            target_surf = small_font.render(target_text, True, (200, 200, 200))
-            surface.blit(target_surf, (30, y_pos))
-            y_pos += 16
-        
-        priority_text = f"Priority: {agent.planning_system.current_goal.priority:.2f}"
-        priority_surf = small_font.render(priority_text, True, (200, 200, 200))
-        surface.blit(priority_surf, (30, y_pos))
-        y_pos += 16
-        
-        # Draw plan progress bar
-        if agent.planning_system.current_goal.plan:
-            plan_length = len(agent.planning_system.current_goal.plan)
-            progress = agent.planning_system.current_goal.plan_index
-            plan_text = f"Plan Progress: {progress}/{plan_length}"
-            plan_surf = small_font.render(plan_text, True, (200, 200, 200))
-            surface.blit(plan_surf, (30, y_pos))
-            y_pos += 16
-            
-            # Draw progress bar
-            progress_rect = pygame.Rect(30, y_pos, width - 60, 10)
-            pygame.draw.rect(surface, (80, 80, 80), progress_rect)  # Background
-            
-            if plan_length > 0:
-                fill_width = int(progress_rect.width * (progress / plan_length))
-                fill_rect = pygame.Rect(progress_rect.left, progress_rect.top, fill_width, progress_rect.height)
-                pygame.draw.rect(surface, (50, 150, 255), fill_rect)  # Fill
-            
-            pygame.draw.rect(surface, (150, 150, 150), progress_rect, 1)  # Border
-            y_pos += 20
-            
-            # Show plan steps
-            remaining = max(0, plan_length - progress)
-            if remaining > 0:
-                steps_text = "Next Steps: "
-                steps_surf = small_font.render(steps_text, True, (200, 200, 200))
-                surface.blit(steps_surf, (30, y_pos))
-                y_pos += 16
-                
-                # Show up to 5 upcoming actions
-                upcoming_actions = agent.planning_system.current_goal.plan[progress:progress + min(5, remaining)]
-                for i, action in enumerate(upcoming_actions):
-                    action_text = f"{i+1}. {action}"
-                    action_surf = small_font.render(action_text, True, (180, 180, 180))
-                    surface.blit(action_surf, (40, y_pos))
-                    y_pos += 16
+    # Only include rewards in dataframe if they exist
+    if len(agent.history["rewards"]) >= history_length:
+        df = pd.DataFrame({
+            "Tick": range(agent.tick_count - history_length + 1, agent.tick_count + 1),
+            "Energy": agent.history["energy"][-history_length:],
+            "Hunger": agent.history["hunger"][-history_length:],
+            "Pain": agent.history["pain"][-history_length:],
+            "Food": agent.history["food_stored"][-history_length:],
+            "Reward": agent.history["rewards"][-history_length:]
+        })
     else:
-        no_goal_surf = normal_font.render("No active goal", True, (220, 220, 220))
-        surface.blit(no_goal_surf, (20, y_pos))
-        y_pos += 20
+        # Create DataFrame without rewards if they're not available
+        df = pd.DataFrame({
+            "Tick": range(agent.tick_count - history_length + 1, agent.tick_count + 1),
+            "Energy": agent.history["energy"][-history_length:],
+            "Hunger": agent.history["hunger"][-history_length:],
+            "Pain": agent.history["pain"][-history_length:],
+            "Food": agent.history["food_stored"][-history_length:]
+        })
     
-    # Draw other goals section
-    y_pos = max(y_pos + 10, 120)
-    other_goals_surf = normal_font.render("Other Goals:", True, (220, 220, 220))
-    surface.blit(other_goals_surf, (20, y_pos))
-    y_pos += 20
+    # Create subplots
+    fig = make_subplots(
+        rows=2, cols=1,
+        subplot_titles=("Agent Status", "Rewards"),
+        vertical_spacing=0.12,
+        row_heights=[0.6, 0.4]
+    )
     
-    # List other goals
-    if hasattr(agent, 'planning_system') and agent.planning_system:
-        other_goals = [g for g in agent.planning_system.goals if g != agent.planning_system.current_goal]
-        if other_goals:
-            for i, goal in enumerate(other_goals[:4]):  # Show up to 4 other goals
-                goal_text = f"- {goal.goal_type} (Priority: {goal.priority:.2f})"
-                goal_surf = small_font.render(goal_text, True, (200, 200, 200))
-                surface.blit(goal_surf, (30, y_pos))
-                y_pos += 16
-        else:
-            no_other_surf = small_font.render("- No other goals", True, (200, 200, 200))
-            surface.blit(no_other_surf, (30, y_pos))
+    # First plot: Agent Status
+    fig.add_trace(
+        go.Scatter(x=df["Tick"], y=df["Energy"], mode="lines", name="Energy", line=dict(color="blue")),
+        row=1, col=1
+    )
+    fig.add_trace(
+        go.Scatter(x=df["Tick"], y=df["Hunger"], mode="lines", name="Hunger", line=dict(color="orange")),
+        row=1, col=1
+    )
+    fig.add_trace(
+        go.Scatter(x=df["Tick"], y=df["Pain"], mode="lines", name="Pain", line=dict(color="red")),
+        row=1, col=1
+    )
+    fig.add_trace(
+        go.Scatter(x=df["Tick"], y=df["Food"], mode="lines", name="Food Stored", line=dict(color="green")),
+        row=1, col=1
+    )
     
-    # Draw border
-    pygame.draw.rect(surface, (100, 100, 100), (0, 0, width, height), 1)
+    # Second plot: Rewards (only if rewards data exists)
+    if "Reward" in df.columns:
+        fig.add_trace(
+            go.Scatter(x=df["Tick"], y=df["Reward"], mode="lines", name="Reward", line=dict(color="purple")),
+            row=2, col=1
+        )
+    else:
+        # Add empty trace with a message when no reward data is available
+        fig.add_annotation(
+            text="Reward data will appear here after some actions",
+            xref="paper", yref="paper",
+            x=0.5, y=0.25,  # Position in the second subplot
+            showarrow=False,
+            font=dict(size=12)
+        )
     
-    return surface
+    # Update layout
+    fig.update_layout(
+        height=500,
+        margin=dict(l=20, r=20, t=40, b=20),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
 
-# Function to draw a visualization of the agent's planned path
-def draw_agent_path(screen, world, agent, cell_size, grid_size):
-    """Draw a visualization of the agent's planned path on the grid"""
-    if not hasattr(agent, 'planning_system') or not agent.planning_system:
-        return
-        
-    if not agent.planning_system.current_goal or not agent.planning_system.current_goal.plan:
-        return
-    
-    # Get current position and plan
-    current_pos = agent.pos.copy()
-    plan = agent.planning_system.current_goal.plan[agent.planning_system.current_goal.plan_index:]
-    
-    if not plan:
-        return
-    
-    # Create a simulated path from the plan
-    path_positions = [current_pos.copy()]
-    sim_pos = current_pos.copy()
-    
-    for action in plan:
-        if action == "REST" or action == "VERIFY_FOOD":
-            continue
-            
-        dx, dy = agent.MOV[action]
-        sim_pos = [(sim_pos[0] + dx) % grid_size, (sim_pos[1] + dy) % grid_size]
-        path_positions.append(sim_pos.copy())
-    
-    # Draw the path
-    for i, pos in enumerate(path_positions):
-        x, y = pos
-        alpha = 255 - min(255, i * 25)  # Fade out over distance
-        color = (255, 150, 0, alpha)  # Orange with alpha
-        
-        # Calculate rect
-        rect = pygame.Rect(y * cell_size, x * cell_size, cell_size, cell_size)
-        
-        # Skip drawing on agent's current position
-        if i == 0:
-            continue
-            
-        # Create surface with transparency
-        s = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
-        pygame.draw.rect(s, color, (0, 0, cell_size, cell_size), 2)
-        
-        # Draw a smaller rectangle to indicate path
-        inner_size = cell_size // 3
-        inner_rect = pygame.Rect(
-            (cell_size - inner_size) // 2, 
-            (cell_size - inner_size) // 2, 
-            inner_size, 
-            inner_size
-        )
-        pygame.draw.rect(s, color, inner_rect)
-        
-        # Add to screen
-        screen.blit(s, rect)
-        
-        # Add path step number for first few steps
-        if i < 6:
-            step_surf = pygame.font.SysFont(None, 14).render(f"{i}", True, (255, 255, 255))
-            step_rect = step_surf.get_rect(center=rect.center)
-            screen.blit(step_surf, step_rect)
-
-# ───────────────────── UI Components ─────────────────────
-class Button:
-    """Interactive button with hover and click states"""
-    def __init__(self, rect, text, callback=None, color=COLOR_BUTTON, 
-                 hover_color=COLOR_BUTTON_HOVER, active_color=COLOR_BUTTON_ACTIVE):
-        self.rect = pygame.Rect(rect)
-        self.text = text
-        self.callback = callback
-        self.color = color
-        self.hover_color = hover_color
-        self.active_color = active_color
-        self.state = BUTTON_NORMAL
-    
-    def update(self, events):
-        mouse_pos = pygame.mouse.get_pos()
-        self.state = BUTTON_NORMAL
-        
-        if self.rect.collidepoint(mouse_pos):
-            self.state = BUTTON_HOVER
-            
-            for event in events:
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    self.state = BUTTON_PRESSED
-                elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                    if self.callback and self.rect.collidepoint(mouse_pos):
-                        self.callback()
-    
-    def draw(self, screen, font):
-        # Draw button background based on state
-        if self.state == BUTTON_NORMAL:
-            color = self.color
-        elif self.state == BUTTON_HOVER:
-            color = self.hover_color
-        else:
-            color = self.active_color
-            
-        pygame.draw.rect(screen, color, self.rect, border_radius=5)
-        pygame.draw.rect(screen, (200, 200, 200), self.rect, 2, border_radius=5)
-        
-        # Draw button text
-        text_surf = font.render(self.text, True, COLOR_TEXT)
-        text_rect = text_surf.get_rect(center=self.rect.center)
-        screen.blit(text_surf, text_rect)
-
-class Slider:
-    """Interactive slider for adjusting simulation parameters"""
-    def __init__(self, rect, min_val, max_val, value, label, callback=None):
-        self.rect = pygame.Rect(rect)
-        self.min_val = min_val
-        self.max_val = max_val
-        self.value = value
-        self.label = label
-        self.callback = callback
-        self.dragging = False
-        self.handle_width = 12
-        
-    def update(self, events):
-        mouse_pos = pygame.mouse.get_pos()
-        
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                handle_rect = self.get_handle_rect()
-                if handle_rect.collidepoint(mouse_pos):
-                    self.dragging = True
-            elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                self.dragging = False
-        
-        if self.dragging:
-            # Calculate value based on mouse x position
-            x_pos = max(self.rect.left, min(mouse_pos[0], self.rect.right))
-            ratio = (x_pos - self.rect.left) / self.rect.width
-            self.value = self.min_val + ratio * (self.max_val - self.min_val)
-            
-            # Call the callback if provided
-            if self.callback:
-                self.callback(self.value)
-    
-    def get_handle_rect(self):
-        """Get the Rectangle for the slider handle"""
-        ratio = (self.value - self.min_val) / (self.max_val - self.min_val)
-        handle_x = self.rect.left + ratio * self.rect.width - self.handle_width // 2
-        return pygame.Rect(handle_x, self.rect.top - 6, self.handle_width, self.rect.height + 12)
-    
-    def draw(self, screen, font):
-        # Draw slider track
-        pygame.draw.rect(screen, (80, 80, 80), self.rect, border_radius=3)
-        
-        # Draw slider handle
-        handle_rect = self.get_handle_rect()
-        pygame.draw.rect(screen, (160, 160, 160), handle_rect, border_radius=4)
-        pygame.draw.rect(screen, (200, 200, 200), handle_rect, 2, border_radius=4)
-        
-        # Draw label and value - moved up to prevent overlap
-        label_surf = font.render(f"{self.label}: {self.value:.2f}", True, COLOR_TEXT)
-        label_rect = label_surf.get_rect(midleft=(self.rect.left, self.rect.top - 15))
-        screen.blit(label_surf, label_rect)
-
-class ScrollableArea:
-    """Area that can be scrolled vertically"""
-    def __init__(self, rect, content_height):
-        self.rect = pygame.Rect(rect)
-        self.content_height = content_height
-        self.scroll_y = 0
-        self.scroll_speed = 20
-        self.visible_rect = pygame.Rect(rect.left, rect.top, rect.width, rect.height)
-        self.dragging = False
-        self.last_mouse_y = 0
-        
-    def update(self, events):
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 4:  # Mouse wheel up
-                    self.scroll_y = max(0, self.scroll_y - self.scroll_speed)
-                elif event.button == 5:  # Mouse wheel down
-                    max_scroll = max(0, self.content_height - self.rect.height)
-                    self.scroll_y = min(max_scroll, self.scroll_y + self.scroll_speed)
-                elif event.button == 1 and self.rect.collidepoint(event.pos):  # Left click
-                    self.dragging = True
-                    self.last_mouse_y = event.pos[1]
-            elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                self.dragging = False
-            elif event.type == pygame.MOUSEMOTION and self.dragging:
-                dy = event.pos[1] - self.last_mouse_y
-                self.scroll_y = max(0, min(self.content_height - self.rect.height, self.scroll_y - dy))
-                self.last_mouse_y = event.pos[1]
-                
-        # Update the visible rectangle
-        self.visible_rect = pygame.Rect(self.rect.left, self.rect.top - self.scroll_y, 
-                                        self.rect.width, self.rect.height)
-    
-    def get_content_rect(self, height):
-        """Get a rectangle for content relative to the scrollable area"""
-        return pygame.Rect(self.rect.left, self.rect.top + height - self.scroll_y,
-                         self.rect.width, height)
-    
-    def draw_scrollbar(self, screen):
-        if self.content_height <= self.rect.height:
-            return  # No scrollbar needed
-            
-        # Calculate scrollbar dimensions
-        scrollbar_height = max(30, self.rect.height * (self.rect.height / self.content_height))
-        scrollbar_pos = self.rect.right - 10
-        scrollbar_top = self.rect.top + (self.scroll_y / self.content_height) * self.rect.height
-        
-        # Draw scrollbar track
-        pygame.draw.rect(screen, (60, 60, 60), 
-                      (scrollbar_pos - 2, self.rect.top, 
-                       14, self.rect.height), 
-                      border_radius=7)
-        
-        # Draw scrollbar handle
-        pygame.draw.rect(screen, (140, 140, 140), 
-                      (scrollbar_pos, scrollbar_top, 
-                       10, scrollbar_height), 
-                      border_radius=5)
-
-class ProgressBar:
-    """Progress bar for displaying agent stats"""
-    def __init__(self, rect, value, max_value, label=None, color=(0, 200, 0)):
-        self.rect = pygame.Rect(rect)
-        self.value = value
-        self.max_value = max_value
-        self.label = label
-        self.color = color
-    
-    def update(self, value):
-        self.value = value
-    
-    def draw(self, screen, font):
-        # Draw background
-        pygame.draw.rect(screen, (60, 60, 60), self.rect, border_radius=3)
-        
-        # Draw filled portion
-        fill_width = int(self.rect.width * (self.value / self.max_value))
-        fill_rect = pygame.Rect(self.rect.left, self.rect.top, fill_width, self.rect.height)
-        pygame.draw.rect(screen, self.color, fill_rect, border_radius=3)
-        
-        # Draw border
-        pygame.draw.rect(screen, (120, 120, 120), self.rect, 1, border_radius=3)
-        
-        # Draw label and value if provided
-        if self.label:
-            text = f"{self.label}: {self.value:.1f}/{self.max_value}"
-            text_surf = font.render(text, True, COLOR_TEXT)
-            text_rect = text_surf.get_rect(midleft=(self.rect.left, self.rect.top - 10))
-            screen.blit(text_surf, text_rect)
-
-class TabControl:
-    """Tabbed interface for organizing content"""
-    def __init__(self, rect, tabs):
-        self.rect = pygame.Rect(rect)
-        self.tabs = tabs  # List of tab names
-        self.active_tab = 0
-        self.tab_width = self.rect.width // len(tabs)
-        self.tab_height = 30
-        
-    def update(self, events):
-        mouse_pos = pygame.mouse.get_pos()
-        
-        # Check for tab clicks
-        for i, tab in enumerate(self.tabs):
-            tab_rect = self.get_tab_rect(i)
-            if tab_rect.collidepoint(mouse_pos):
-                for event in events:
-                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                        self.active_tab = i
-                        break
-    
-    def get_tab_rect(self, tab_index):
-        """Get rectangle for a specific tab"""
-        return pygame.Rect(
-            self.rect.left + tab_index * self.tab_width,
-            self.rect.top,
-            self.tab_width,
-            self.tab_height
-        )
-    
-    def get_content_rect(self):
-        """Get rectangle for the tab content area"""
-        return pygame.Rect(
-            self.rect.left,
-            self.rect.top + self.tab_height,
-            self.rect.width,
-            self.rect.height - self.tab_height
-        )
-    
-    def draw(self, screen, font):
-        # Draw tab backgrounds
-        for i, tab in enumerate(self.tabs):
-            tab_rect = self.get_tab_rect(i)
-            
-            # Different styling for active tab
-            if i == self.active_tab:
-                # Active tab
-                pygame.draw.rect(screen, (80, 80, 80), tab_rect)
-                # Bottom line in active tab color to create connected look
-                pygame.draw.line(
-                    screen, 
-                    (80, 80, 80), 
-                    (tab_rect.left, tab_rect.bottom - 1),
-                    (tab_rect.right, tab_rect.bottom - 1),
-                    2
-                )
-            else:
-                # Inactive tab
-                pygame.draw.rect(screen, (60, 60, 60), tab_rect)
-                
-            # Border
-            pygame.draw.rect(screen, (120, 120, 120), tab_rect, 1)
-            
-            # Tab text
-            tab_text = font.render(tab, True, COLOR_TEXT)
-            text_rect = tab_text.get_rect(center=tab_rect.center)
-            screen.blit(tab_text, text_rect)
-        
-        # Draw content area
-        content_rect = self.get_content_rect()
-        pygame.draw.rect(screen, (80, 80, 80), content_rect)
-        pygame.draw.rect(screen, (120, 120, 120), content_rect, 1)
-        
-        return content_rect
-
-# ───────────────────── Main Simulation Class ─────────────────────
-class Simulation:
-    """Main simulation class handling the game loop and UI"""
-    def __init__(self):
-        pygame.init()
-        pygame.display.set_caption("Multi-Agent Emergence Simulation")
-        
-        # Set up the screen
-        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-        self.world = load_or_create_world(GRID)
-        
-        # Initialize population with appropriate communication system
-        self.population = AgentPopulation(self.world, initial_pop=5)
-        if not HAS_TORCH:
-            self.population.comm_system = DummyCommSystem()
-        
-        # Set up simulation state
-        self.running = True
-        self.paused = True
-        self.sim_speed = 1.0
-        self.step_manually = False
-        self.tick_count = 0
-        self.last_tick_time = time.time()
-        self.selected_agent_id = list(self.population.agents.keys())[0] if self.population.agents else None
-        
-        # Initialize fonts
-        self.font_small = pygame.font.SysFont("Arial", 12)
-        self.font_normal = pygame.font.SysFont("Arial", 14)
-        self.font_large = pygame.font.SysFont("Arial", 18)
-        self.font_header = pygame.font.SysFont("Arial", 22, bold=True)
-        
-        # Set up UI components
-        self.setup_ui()
-        
-        # Set up simulation clock
-        self.clock = pygame.time.Clock()
-        
-        # Show minimap by default - CHANGE TO FALSE
-        self.show_minimap = False
-        
-        logging.info("Simulation initialized")
-        
-    def setup_ui(self):
-        """Set up all UI components"""
-        margin = 15
-        panel_left = GRID * CELL_SIZE + margin
-        panel_width = PANEL_WIDTH - 2 * margin
-        button_height = 30
-        
-        # Calculate the grid display area size
-        grid_area_size = min(WINDOW_HEIGHT, GRID * CELL_SIZE)
-        
-        # Main control buttons - positions will be updated in render_panel
-        self.btn_play = Button(
-            (panel_left, margin, panel_width//2 - 5, button_height),
-            "▶ Play" if self.paused else "⏸ Pause",
-            self.toggle_pause
-        )
-        
-        self.btn_step = Button(
-            (panel_left + panel_width//2 + 5, margin, panel_width//2 - 5, button_height),
-            "Step",
-            self.step_once
-        )
-        
-        # Speed slider - moved down by adding more vertical space
-        slider_top = margin + button_height + 25  # Increased spacing from 15 to 25
-        self.slider_speed = Slider(
-            (panel_left, slider_top, panel_width, 10),
-            0.1, 5.0, self.sim_speed, "Simulation Speed",
-            self.set_speed
-        )
-        
-        # Agent management buttons - adjusted position
-        agent_btn_top = slider_top + 50  # Increased from 40 to 50 for more space
-        self.btn_add_agent = Button(
-            (panel_left, agent_btn_top, panel_width//2 - 5, button_height),
-            "Add Agent",
-            self.add_agent
-        )
-        
-        self.btn_remove_agent = Button(
-            (panel_left + panel_width//2 + 5, agent_btn_top, panel_width//2 - 5, button_height),
-            "Remove Agent",
-            self.remove_selected_agent
-        )
-        
-        # Save/Load buttons - adjusted position
-        save_btn_top = agent_btn_top + button_height + 15  # Increased from 10 to 15
-        self.btn_save = Button(
-            (panel_left, save_btn_top, panel_width//2 - 5, button_height),
-            "Save Simulation",
-            self.save_simulation
-        )
-        
-        self.btn_load = Button(
-            (panel_left + panel_width//2 + 5, save_btn_top, panel_width//2 - 5, button_height),
-            "Load Simulation",
-            self.load_simulation
-        )
-        
-        # Reset button - adjusted position
-        reset_btn_top = save_btn_top + button_height + 15  # Increased from 10 to 15
-        self.btn_reset = Button(
-            (panel_left, reset_btn_top, panel_width, button_height),
-            "Reset Simulation",
-            self.reset_simulation
-        )
-        
-        # Toggle minimap button - adjusted position
-        minimap_btn_top = reset_btn_top + button_height + 15  # Increased from 10 to 15
-        self.btn_toggle_minimap = Button(
-            (panel_left, minimap_btn_top, panel_width, button_height),
-            "Toggle Minimap",
-            self.toggle_minimap
-        )
-        
-        # Agent dropdown - select box for agents - adjusted position
-        agent_selection_top = minimap_btn_top + button_height + 30  # Increased from 25 to 30
-        self.agent_selection_rect = pygame.Rect(panel_left, agent_selection_top, panel_width, button_height)
-        self.agent_dropdown_open = False
-        self.agent_dropdown_rect = pygame.Rect(panel_left, agent_selection_top + button_height, panel_width, 0)
-        
-        # World info display
-        world_info_top = agent_selection_top + button_height + 25
-        
-        # Tab control for statistics views - positioned below world info
-        tab_top = world_info_top + 100  # Leave room for world info
-        self.tabs = TabControl(
-            (panel_left, tab_top, panel_width, WINDOW_HEIGHT - tab_top - margin),
-            ["Agent", "Planning", "Population", "Interactions"]
-        )
-        
-        # Scrollable area for agent stats
-        content_rect = self.tabs.get_content_rect()
-        self.stats_area = ScrollableArea(
-            content_rect,
-            700  # Initial content height
-        )
-        
-        # Progress bars for agent stats - will be updated in render_agent_stats
-        self.agent_progress_bars = {}
-        
-        # Cached visualization surfaces
-        self.visualization_cache = {
-            "agent_graph": None,
-            "goal_visualization": None,
-            "population_stats": None,
-            "interaction_graph": None,
-            "minimap": None,
-            "cache_tick": -1  # Tick when cache was last updated
-        }
-    
-    def toggle_pause(self):
-        """Toggle the simulation pause state"""
-        self.paused = not self.paused
-        self.btn_play.text = "▶ Play" if self.paused else "⏸ Pause"
-        logging.info(f"Simulation {'paused' if self.paused else 'resumed'}")
-    
-    def set_speed(self, speed):
-        """Set the simulation speed"""
-        self.sim_speed = speed
-    
-    def step_once(self):
-        """Step the simulation a single tick"""
-        self.step_manually = True
-    
-    def add_agent(self):
-        """Add a new agent to the simulation"""
-        agent = self.population.add_agent()
-        if agent:
-            self.selected_agent_id = agent.id
-            logging.info(f"Added agent {agent.id}")
-    
-    def remove_selected_agent(self):
-        """Remove the currently selected agent"""
-        if len(self.population.agents) > 1 and self.selected_agent_id:
-            self.population.remove_agent(self.selected_agent_id)
-            self.selected_agent_id = list(self.population.agents.keys())[0]
-            logging.info(f"Removed agent {self.selected_agent_id}")
-    
-    def toggle_minimap(self):
-        """Toggle the minimap display"""
-        self.show_minimap = not self.show_minimap
-    
-    def save_simulation(self):
-        """Save the current simulation state"""
-        save_simulation(self.world, self.population)
-    
-    def load_simulation(self):
-        """Load a saved simulation state"""
-        if not os.path.exists(SAVE_DIR):
-            logging.warning("No saves directory found")
-            return
-            
-        save_files = [f for f in os.listdir(SAVE_DIR) if f.endswith(".pkl")]
-        if not save_files:
-            logging.warning("No save files found")
-            return
-            
-        # For simplicity, just load the most recent save
-        save_files.sort(reverse=True)
-        most_recent = os.path.join(SAVE_DIR, save_files[0])
-        
-        world, population = load_simulation(most_recent)
-        if world and population:
-            self.world = world
-            self.population = population
-            self.selected_agent_id = list(self.population.agents.keys())[0] if self.population.agents else None
-            
-            # Clear visualization cache
-            self.visualization_cache = {
-                "agent_graph": None,
-                "goal_visualization": None,
-                "population_stats": None,
-                "interaction_graph": None,
-                "minimap": None,
-                "cache_tick": -1
-            }
-    
-    def reset_simulation(self):
-        """Reset the simulation to a fresh state"""
-        self.world = load_or_create_world(GRID)
-        self.population = AgentPopulation(self.world, initial_pop=5)
-        if not HAS_TORCH:
-            self.population.comm_system = DummyCommSystem()
-        self.selected_agent_id = list(self.population.agents.keys())[0] if self.population.agents else None
-        self.tick_count = 0
-        self.paused = True
-        self.btn_play.text = "▶ Play"
-        
-        # Clear visualization cache
-        self.visualization_cache = {
-            "agent_graph": None,
-            "goal_visualization": None,
-            "population_stats": None,
-            "interaction_graph": None,
-            "minimap": None,
-            "cache_tick": -1
-        }
-        
-        logging.info("Simulation reset")
-    
-    def process_events(self):
-        """Process pygame events"""
-        events = pygame.event.get()
-        
-        for event in events:
-            if event.type == pygame.QUIT:
-                self.running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    self.running = False
-                elif event.key == pygame.K_SPACE:
-                    self.toggle_pause()
-                elif event.key == pygame.K_RIGHT:
-                    self.step_once()
-                elif event.key == pygame.K_m:
-                    self.toggle_minimap()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Left click
-                    # Handle agent selection from grid
-                    if event.pos[0] < GRID * CELL_SIZE:
-                        cell_x = event.pos[1] // CELL_SIZE
-                        cell_y = event.pos[0] // CELL_SIZE
-                        
-                        for agent_id, agent in self.population.agents.items():
-                            ax, ay = agent.pos
-                            if ax == cell_x and ay == cell_y:
-                                self.selected_agent_id = agent_id
-                                # Clear agent graph cache on agent change
-                                self.visualization_cache["agent_graph"] = None
-                                self.visualization_cache["goal_visualization"] = None
-                                break
-                    
-                    # Handle agent dropdown
-                    if self.agent_selection_rect.collidepoint(event.pos):
-                        self.agent_dropdown_open = not self.agent_dropdown_open
-                    elif self.agent_dropdown_open:
-                        # Check if clicked on an agent in the dropdown
-                        dropdown_y = self.agent_selection_rect.bottom
-                        for i, agent_id in enumerate(self.population.agents.keys()):
-                            agent_rect = pygame.Rect(
-                                self.agent_selection_rect.left, 
-                                dropdown_y + i * 25, 
-                                self.agent_selection_rect.width, 
-                                25
-                            )
-                            if agent_rect.collidepoint(event.pos):
-                                self.selected_agent_id = agent_id
-                                self.agent_dropdown_open = False
-                                # Clear agent graph cache on agent change
-                                self.visualization_cache["agent_graph"] = None
-                                self.visualization_cache["goal_visualization"] = None
-                                break
-                        else:
-                            # Close dropdown if clicked outside
-                            self.agent_dropdown_open = False
-        
-        # Update UI components
-        self.btn_play.update(events)
-        self.btn_step.update(events)
-        self.slider_speed.update(events)
-        self.btn_add_agent.update(events)
-        self.btn_remove_agent.update(events)
-        self.btn_save.update(events)
-        self.btn_load.update(events)
-        self.btn_reset.update(events)
-        self.btn_toggle_minimap.update(events)
-        self.tabs.update(events)
-        self.stats_area.update(events)
-    
-    
-    def update(self):
-        """Update the simulation state"""
-        current_time = time.time()
-        step_time = 1.0 / (CLOCK_SPEED * self.sim_speed)
-        
-        # Check if we should step the simulation
-        if (not self.paused or self.step_manually) and current_time - self.last_tick_time >= step_time:
-            # Step the world
-            self.world.step()
-            
-            # Step all agents
-            self.population.step_all()
-            
-            self.last_tick_time = current_time
-            self.tick_count += 1
-            self.step_manually = False
-            
-            # Update visualizations when tick count changes
-            self.update_visualization_cache()
-        
-        # Update agent dropdown height
-        if self.agent_dropdown_open:
-            self.agent_dropdown_rect.height = len(self.population.agents) * 25
-        else:
-            self.agent_dropdown_rect.height = 0
-    
-    def update_visualization_cache(self):
-        """Update cached visualizations when needed"""
-        # Only update when tick count changes
-        if self.tick_count == self.visualization_cache["cache_tick"]:
-            return
-        
-        # Update agent graph if selected
-        if self.selected_agent_id in self.population.agents:
-            agent = self.population.agents[self.selected_agent_id]
-            self.visualization_cache["agent_graph"] = create_graph_surface(agent)
-            
-            # Add the new goal visualization
-            self.visualization_cache["goal_visualization"] = create_goal_visualization(agent)
-        
-        # Update population stats
-        self.visualization_cache["population_stats"] = create_population_stats_surface(self.population)
-        
-        # Update interaction graph
-        self.visualization_cache["interaction_graph"] = create_interaction_graph(self.population)
-        
-        # Update minimap
-        self.visualization_cache["minimap"] = draw_minimap(None, self.world)
-        
-        # Update cache tick
-        self.visualization_cache["cache_tick"] = self.tick_count
-    
-    def render(self):
-        """Render the simulation to the screen"""
-        # Clear the screen
-        self.screen.fill(COLOR_BG)
-        
-        # Draw the world grid
-        self.render_world()
-        
-        # Draw the side panel
-        self.render_panel()
-        
-        # Draw minimap if enabled
-        if self.show_minimap and self.visualization_cache["minimap"]:
-            self.screen.blit(self.visualization_cache["minimap"], (20, 20))
-        
-        # Flip the display
-        pygame.display.flip()
-        
-    def render_world(self):
-        """Render the world grid with risk visualization"""
-        # Draw grid background
-        grid_rect = pygame.Rect(0, 0, GRID * CELL_SIZE, GRID * CELL_SIZE)
-        pygame.draw.rect(self.screen, (230, 230, 230), grid_rect)
-        
-        # Draw cell types with risk visualization
-        for i in range(GRID):
-            for j in range(GRID):
-                cell = self.world.cell((i, j))
-                
-                # Get color based on cell material and risk
-                color = get_terrain_color(cell)
-                
-                # Special case for food cells
-                if is_food_cell(cell):
-                    rect = pygame.Rect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                    # Draw the base square with food color
-                    pygame.draw.rect(self.screen, color, rect)
-                    pygame.draw.rect(self.screen, (180, 180, 180), rect, 1)
-                    # Add a darker red circle in the center
-                    pygame.draw.circle(
-                        self.screen, 
-                        (180, 0, 0),
-                        (j * CELL_SIZE + CELL_SIZE//2, i * CELL_SIZE + CELL_SIZE//2), 
-                        CELL_SIZE//3
-                    )
-                    continue  # Skip normal cell drawing since we drew a custom design
-                
-                # Special case for home cells
-                elif cell.material == "home" or "home" in cell.tags:
-                    color = MATERIAL_COLORS["home"]
-                
-                rect = pygame.Rect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                pygame.draw.rect(self.screen, color, rect)
-                
-                # Add risk indicator if terrain has significant risk
-                if cell.local_risk > 0.1:
-                    # Draw diagonal lines to indicate risk
-                    risk_lines = int(cell.local_risk * 5) + 1  # 1-6 lines based on risk
-                    line_spacing = CELL_SIZE // (risk_lines + 1)
-                    
-                    for line in range(1, risk_lines + 1):
-                        start_pos = (rect.left, rect.top + line * line_spacing)
-                        end_pos = (rect.left + line * line_spacing, rect.top)
-                        pygame.draw.line(self.screen, (200, 0, 0), start_pos, end_pos, 1)
-                
-                pygame.draw.rect(self.screen, (180, 180, 180), rect, 1)
-        
-        # Draw home marker
-        hx, hy = self.world.home
-        home_rect = pygame.Rect(hy * CELL_SIZE, hx * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-        home_icon = self.font_large.render("H", True, (0, 0, 0))
-        self.screen.blit(home_icon, home_icon.get_rect(center=home_rect.center))
-        
-        # Draw selected agent's path if applicable
-        if self.selected_agent_id in self.population.agents:
-            agent = self.population.agents[self.selected_agent_id]
-            draw_agent_path(self.screen, self.world, agent, CELL_SIZE, GRID)
-            
-        # Draw agents
-        agent_icons = ["1", "2", "3", "4", "5", "6"]
-        for i, (agent_id, agent) in enumerate(self.population.agents.items()):
-            ax, ay = agent.pos
-            agent_rect = pygame.Rect(ay * CELL_SIZE, ax * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-            
-            # Highlight selected agent
-            if agent_id == self.selected_agent_id:
-                pygame.draw.rect(self.screen, (100, 150, 255), agent_rect, 3)
-            
-            # Draw agent icon
-            icon_idx = i % len(agent_icons)
-            # Use simple circle with color based on agent index
-            agent_colors = [(50, 150, 255), (255, 150, 50), (100, 200, 100), 
-                          (200, 100, 200), (100, 200, 200), (200, 200, 100)]
-            agent_color = agent_colors[i % len(agent_colors)]
-            
-            # Draw agent as a colored circle with an ID number
-            pygame.draw.circle(
-                self.screen, 
-                agent_color,
-                (agent_rect.centerx, agent_rect.centery), 
-                CELL_SIZE//2 - 2
-            )
-            # Draw agent ID number
-            id_num = agent_id.split('_')[1]
-            id_surf = self.font_small.render(id_num, True, (0, 0, 0))
-            id_rect = id_surf.get_rect(center=agent_rect.center)
-            self.screen.blit(id_surf, id_rect)
-
-        # Draw communication signals
-        if HAS_TORCH:
-            for signal in self.population.comm_system.active_signals:
-                sx, sy = signal["position"]
-                signal_rect = pygame.Rect(sy * CELL_SIZE, sx * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                
-                # Draw signal indicator
-                s = pygame.Surface((CELL_SIZE, CELL_SIZE), pygame.SRCALPHA)
-                pygame.draw.circle(s, (255, 255, 100, 128), (CELL_SIZE//2, CELL_SIZE//2), CELL_SIZE//2)
-                self.screen.blit(s, signal_rect)
-                
-                signal_icon = self.font_normal.render("💬", True, (0, 0, 0))
-                self.screen.blit(signal_icon, signal_icon.get_rect(center=signal_rect.center))
-
-    def render_panel(self):
-        """Render the control panel"""
-        # Draw panel background
-        panel_rect = pygame.Rect(GRID * CELL_SIZE, 0, PANEL_WIDTH, WINDOW_HEIGHT)
-        pygame.draw.rect(self.screen, COLOR_PANEL, panel_rect)
-        
-        # Draw title
-        title_surf = self.font_header.render("Multi-Agent Simulation", True, COLOR_TEXT_HEADER)
-        # Position title 10px from the top of the panel
-        title_rect = title_surf.get_rect(midtop=(GRID * CELL_SIZE + PANEL_WIDTH // 2, 10))
-        self.screen.blit(title_surf, title_rect)
-        
-        # Adjust button positions to be below the title
-        button_top = title_rect.bottom + 15  # 15px spacing after title
-        self.btn_play.rect.top = button_top
-        self.btn_step.rect.top = button_top
-        
-        # Update slider position to ensure it doesn't overlap with buttons
-        self.slider_speed.rect.top = button_top + self.btn_play.rect.height + 25
-        
-        # Draw UI controls
-        self.btn_play.draw(self.screen, self.font_normal)
-        self.btn_step.draw(self.screen, self.font_normal)
-        self.slider_speed.draw(self.screen, self.font_normal)
-        self.btn_add_agent.draw(self.screen, self.font_normal)
-        self.btn_remove_agent.draw(self.screen, self.font_normal)
-        self.btn_save.draw(self.screen, self.font_normal)
-        self.btn_load.draw(self.screen, self.font_normal)
-        self.btn_reset.draw(self.screen, self.font_normal)
-        self.btn_toggle_minimap.draw(self.screen, self.font_normal)
-        
-        # Draw agent selector
-        self.render_agent_selector()
-        
-        # Draw world info
-        world_info_y = self.agent_selection_rect.bottom + (25 if not self.agent_dropdown_open else self.agent_dropdown_rect.height + 25)
-        world_info = [
-            f"Tick: {self.tick_count}",
-            f"Time: {'Day' if self.world.is_day else 'Night'}",
-            f"Weather: {self.world.weather.capitalize()}",
-            f"Temperature: {self.world.ambient_temperature:.1f}°C",
-            f"Active Agents: {len(self.population.agents)}"
-        ]
-        
-        # Create a background for world info
-        world_info_height = len(world_info) * 20 + 10
-        world_info_rect = pygame.Rect(
-            panel_rect.left + 10, 
-            world_info_y, 
-            panel_rect.width - 20, 
-            world_info_height
-        )
-        pygame.draw.rect(self.screen, (60, 60, 60), world_info_rect, border_radius=5)
-        pygame.draw.rect(self.screen, (100, 100, 100), world_info_rect, 1, border_radius=5)
-        
-        # Draw world info text
-        for i, info in enumerate(world_info):
-            info_surf = self.font_normal.render(info, True, COLOR_TEXT)
-            info_rect = info_surf.get_rect(topleft=(panel_rect.left + 20, world_info_y + 10 + i * 20))
-            self.screen.blit(info_surf, info_rect)
-
-        # Adjust tab position based on world info position
-        self.tabs.rect.top = world_info_y + world_info_height + 15
-        self.tabs.rect.height = WINDOW_HEIGHT - self.tabs.rect.top - 10
-
-        # Draw tabs
-        content_rect = self.tabs.draw(self.screen, self.font_normal)
-        
-        # Update stats area rectangle to match tab content
-        self.stats_area.rect = content_rect
-
-        # Create a clipping rectangle for the tab content area
-        # This ensures that content doesn't draw outside the tab area
-        original_clip = self.screen.get_clip()
-        self.screen.set_clip(content_rect)
-        
-        # Draw content based on active tab
-        if self.tabs.active_tab == 0:  # Agent tab
-            if self.selected_agent_id in self.population.agents:
-                self.render_agent_stats()
-            else:
-                # No agent selected
-                info = self.font_normal.render("No agent selected", True, COLOR_TEXT)
-                self.screen.blit(info, info.get_rect(center=content_rect.center))
-        elif self.tabs.active_tab == 1:  # Planning tab
-            if self.selected_agent_id in self.population.agents:
-                agent = self.population.agents[self.selected_agent_id]
-                if self.visualization_cache["goal_visualization"] is not None:
-                    # Set up proper positioning
-                    goal_viz_rect = self.visualization_cache["goal_visualization"].get_rect(
-                        topleft=(self.stats_area.rect.left, 
-                                self.stats_area.rect.top + 10 - self.stats_area.scroll_y)
-                    )
-                    
-                    # Render the visualization
-                    self.screen.blit(self.visualization_cache["goal_visualization"], goal_viz_rect)
-                    
-                    # Update content height for scrolling
-                    self.stats_area.content_height = goal_viz_rect.height + 50
-            else:
-                # No agent selected
-                info = self.font_normal.render("No agent selected", True, COLOR_TEXT)
-                self.screen.blit(info, info.get_rect(center=content_rect.center))
-        elif self.tabs.active_tab == 2:  # Population tab
-            self.render_population_stats()
-        else:  # Interactions tab
-            self.render_interaction_stats()
-        
-        # Restore original clipping rectangle
-        self.screen.set_clip(original_clip)
-        
-        # Draw scrollbar if needed
-        self.stats_area.draw_scrollbar(self.screen)
-    
-    def render_agent_selector(self):
-        """Render the agent selection dropdown"""
-        # Draw the selection box
-        selected_agent_num = self.selected_agent_id.split('_')[1] if self.selected_agent_id else "None"
-        text = f"Selected Agent: {selected_agent_num}"
-        
-        pygame.draw.rect(self.screen, (80, 80, 80), self.agent_selection_rect, border_radius=5)
-        pygame.draw.rect(self.screen, (150, 150, 150), self.agent_selection_rect, 1, border_radius=5)
-        
-        # Draw current selection
-        text_surf = self.font_normal.render(text, True, COLOR_TEXT)
-        text_rect = text_surf.get_rect(midleft=(self.agent_selection_rect.left + 10, self.agent_selection_rect.centery))
-        self.screen.blit(text_surf, text_rect)
-        
-        # Draw dropdown arrow
-        arrow = "▼" if not self.agent_dropdown_open else "▲"
-        arrow_surf = self.font_normal.render(arrow, True, COLOR_TEXT)
-        arrow_rect = arrow_surf.get_rect(midright=(self.agent_selection_rect.right - 10, self.agent_selection_rect.centery))
-        self.screen.blit(arrow_surf, arrow_rect)
-        
-        # Draw dropdown if open
-        if self.agent_dropdown_open:
-            dropdown_rect = pygame.Rect(
-                self.agent_selection_rect.left,
-                self.agent_selection_rect.bottom,
-                self.agent_selection_rect.width,
-                len(self.population.agents) * 25
-            )
-            pygame.draw.rect(self.screen, (100, 100, 100), dropdown_rect)
-            pygame.draw.rect(self.screen, (150, 150, 150), dropdown_rect, 1)
-            
-            # Draw agent options
-            for i, agent_id in enumerate(self.population.agents.keys()):
-                agent_num = agent_id.split('_')[1]
-                option_rect = pygame.Rect(
-                    dropdown_rect.left,
-                    dropdown_rect.top + i * 25,
-                    dropdown_rect.width,
-                    25
-                )
-                
-                # Highlight selected agent
-                if agent_id == self.selected_agent_id:
-                    pygame.draw.rect(self.screen, (80, 100, 120), option_rect)
-                
-                # Draw agent text
-                agent_text = f"Agent {agent_num}"
-                agent_surf = self.font_normal.render(agent_text, True, COLOR_TEXT)
-                agent_rect = agent_surf.get_rect(midleft=(option_rect.left + 10, option_rect.centery))
-                self.screen.blit(agent_surf, agent_rect)
-    
-    def render_agent_stats(self):
-        """Render the selected agent's statistics"""
-        if self.selected_agent_id not in self.population.agents:
-            return
-            
-        agent = self.population.agents[self.selected_agent_id]
-        
-        # Set up variables for positioning
-        content_height = 0
-        line_height = 20
-        progress_height = 15
-        section_spacing = 10
-        agent_id_num = self.selected_agent_id.split('_')[1]
-        
-        # Clear the agent progress bars dictionary
-        self.agent_progress_bars = {}
-        
-        # Agent header with proper positioning
-        agent_header = self.font_large.render(f"Agent {agent_id_num}", True, COLOR_TEXT_HEADER)
-        header_rect = self.stats_area.get_content_rect(content_height)
-        self.screen.blit(agent_header, header_rect)
-        content_height += line_height * 2  # Increased spacing after header
-        
-        # Agent vitals
-        vitals = [
-            {"name": "Energy", "value": agent.energy, "max": 100, "color": (100, 200, 100)},
-            {"name": "Hunger", "value": agent.hunger, "max": 100, "color": (200, 150, 100)},
-            {"name": "Pain", "value": agent.pain, "max": 100, "color": (200, 100, 100)}
-        ]
-        
-        for vital in vitals:
-            progress_rect = pygame.Rect(
-                self.stats_area.rect.left,
-                self.stats_area.rect.top + content_height - self.stats_area.scroll_y,
-                self.stats_area.rect.width,
-                progress_height
-            )
-            
-            progress_bar = ProgressBar(
-                progress_rect,
-                vital["value"],
-                vital["max"],
-                vital["name"],
-                vital["color"]
-            )
-            progress_bar.draw(self.screen, self.font_small)
-            
-            content_height += progress_height + 15
-        
-        # Food information
-        food_info = [
-            f"Food Stored: {agent.store}",
-            f"Carrying Food: {'Yes' if agent.carrying else 'No'}"
-        ]
-        
-        content_height += section_spacing
-        for info in food_info:
-            info_rect = self.stats_area.get_content_rect(content_height)
-            info_surf = self.font_normal.render(info, True, COLOR_TEXT)
-            self.screen.blit(info_surf, info_rect)
-            content_height += line_height
-        
-        # Environment information
-        content_height += section_spacing
-        env_header = self.font_normal.render("Environment", True, COLOR_TEXT_HEADER)
-        env_header_rect = self.stats_area.get_content_rect(content_height)
-        self.screen.blit(env_header, env_header_rect)
-        content_height += line_height
-        
-        current_cell = self.world.cell(tuple(agent.pos))
-        env_info = [
-            f"Position: ({agent.pos[0]}, {agent.pos[1]})",
-            f"Terrain: {current_cell.material.title()}",
-            f"Temperature: {current_cell.temperature:.1f}°C",
-            f"Passable: {'Yes' if current_cell.passable else 'No'}",
-            f"Risk: {current_cell.local_risk * 100:.1f}%"
-        ]
-        
-        for info in env_info:
-            info_rect = self.stats_area.get_content_rect(content_height)
-            info_surf = self.font_normal.render(info, True, COLOR_TEXT)
-            self.screen.blit(info_surf, info_rect)
-            content_height += line_height
-        
-        # Action information
-        content_height += section_spacing
-        action_header = self.font_normal.render("Actions", True, COLOR_TEXT_HEADER)
-        action_header_rect = self.stats_area.get_content_rect(content_height)
-        self.screen.blit(action_header, action_header_rect)
-        content_height += line_height
-        
-        action_info = [
-            f"Last Action: {agent.last_action}",
-            f"Last Reward: {agent.last_reward:.1f}",
-            f"Tick Count: {agent.tick_count}"
-        ]
-        
-        for info in action_info:
-            info_rect = self.stats_area.get_content_rect(content_height)
-            info_surf = self.font_normal.render(info, True, COLOR_TEXT)
-            self.screen.blit(info_surf, info_rect)
-            content_height += line_height
-        
-        # Goals & Planning information
-        if hasattr(agent, 'planning_system') and agent.planning_system and agent.planning_system.current_goal:
-            content_height += section_spacing
-            goal_header = self.font_normal.render("Goals & Planning", True, COLOR_TEXT_HEADER)
-            goal_header_rect = self.stats_area.get_content_rect(content_height)
-            self.screen.blit(goal_header, goal_header_rect)
-            content_height += line_height
-            
-            goal_text = f"Current Goal: {agent.planning_system.current_goal.goal_type}"
-            if agent.planning_system.current_goal.target:
-                goal_text += f" (Target: {agent.planning_system.current_goal.target})"
-            
-            goal_rect = self.stats_area.get_content_rect(content_height)
-            goal_surf = self.font_normal.render(goal_text, True, COLOR_TEXT)
-            self.screen.blit(goal_surf, goal_rect)
-            content_height += line_height
-            
-            # Goal priority
-            priority_text = f"Priority: {agent.planning_system.current_goal.priority:.2f}"
-            priority_rect = self.stats_area.get_content_rect(content_height)
-            priority_surf = self.font_normal.render(priority_text, True, COLOR_TEXT)
-            self.screen.blit(priority_surf, priority_rect)
-            content_height += line_height
-            
-            # Plan information
-            if agent.planning_system.current_goal.plan:
-                plan_length = len(agent.planning_system.current_goal.plan)
-                progress = agent.planning_system.current_goal.plan_index
-                remaining = max(0, plan_length - progress)
-                
-                plan_text = f"Plan Progress: {progress}/{plan_length} steps"
-                plan_rect = self.stats_area.get_content_rect(content_height)
-                plan_surf = self.font_normal.render(plan_text, True, COLOR_TEXT)
-                self.screen.blit(plan_surf, plan_rect)
-                content_height += line_height
-                
-                # Show upcoming actions in plan
-                if remaining > 0:
-                    upcoming_text = "Upcoming: "
-                    upcoming_actions = agent.planning_system.current_goal.plan[agent.planning_system.current_goal.plan_index:agent.planning_system.current_goal.plan_index + min(5, remaining)]
-                    upcoming_text += ", ".join(upcoming_actions)
-                    
-                    upcoming_rect = self.stats_area.get_content_rect(content_height)
-                    upcoming_surf = self.font_normal.render(upcoming_text, True, COLOR_TEXT)
-                    self.screen.blit(upcoming_surf, upcoming_rect)
-                    content_height += line_height
-        
-        # Communication information (if PyTorch available)
-        if HAS_TORCH:
-            content_height += section_spacing
-            comm_header = self.font_normal.render("Communication", True, COLOR_TEXT_HEADER)
-            comm_header_rect = self.stats_area.get_content_rect(content_height)
-            self.screen.blit(comm_header, comm_header_rect)
-            content_height += line_height
-            
-            comm_info = [
-                f"Signals Sent: {agent.last_signal_time if hasattr(agent, 'last_signal_time') and agent.last_signal is not None else 0}",
-                f"Signal Cooldown: {agent.signal_cooldown if hasattr(agent, 'signal_cooldown') else 0}"
-            ]
-            
-            for info in comm_info:
-                info_rect = self.stats_area.get_content_rect(content_height)
-                info_surf = self.font_normal.render(info, True, COLOR_TEXT)
-                self.screen.blit(info_surf, info_rect)
-                content_height += line_height
-        
-        # Agent history graph
-        content_height += section_spacing * 2
-        if self.visualization_cache["agent_graph"] is not None:
-            graph_rect = self.visualization_cache["agent_graph"].get_rect(
-                topleft=(self.stats_area.rect.left, 
-                        self.stats_area.rect.top + content_height - self.stats_area.scroll_y)
-            )
-            
-            self.screen.blit(self.visualization_cache["agent_graph"], graph_rect)
-            
-            content_height += graph_rect.height + section_spacing
-        
-        # Update content height for scrolling
-        self.stats_area.content_height = content_height + 20
-    
-    def render_interaction_stats(self):
-        """Render interaction statistics"""
-        # Set up variables for positioning
-        content_height = 0
-        line_height = 20
-        section_spacing = 15
-        
-        # Interaction header
-        int_header = self.font_large.render("Interaction Statistics", True, COLOR_TEXT_HEADER)
-        header_rect = self.stats_area.get_content_rect(content_height)
-        if header_rect.top > 0 and header_rect.top < WINDOW_HEIGHT:
-            self.screen.blit(int_header, header_rect)
-        content_height += line_height * 1.5
-        
-        # Interaction summary
-        if len(self.population.interactions) == 0:
-            info_surf = self.font_normal.render("No interactions recorded yet", True, COLOR_TEXT)
-            info_rect = self.stats_area.get_content_rect(content_height)
-            if info_rect.top > 0 and info_rect.top < WINDOW_HEIGHT:
-                self.screen.blit(info_surf, info_rect)
-            content_height += line_height
-        else:
-            # Count interaction types
-            interaction_types = {}
-            for interaction in self.population.interactions:
-                int_type = interaction["type"]
-                if int_type not in interaction_types:
-                    interaction_types[int_type] = 0
-                interaction_types[int_type] += 1
-            
-            # Display interaction type counts
-            for int_type, count in interaction_types.items():
-                info = f"{int_type.capitalize()}: {count}"
-                info_surf = self.font_normal.render(info, True, COLOR_TEXT)
-                info_rect = self.stats_area.get_content_rect(content_height)
-                if info_rect.top > 0 and info_rect.top < WINDOW_HEIGHT:
-                    self.screen.blit(info_surf, info_rect)
-                content_height += line_height
-        
-        # Interaction graph
-        content_height += section_spacing * 2
-        if self.visualization_cache["interaction_graph"] is not None:
-            graph_rect = self.visualization_cache["interaction_graph"].get_rect(
-                topleft=(self.stats_area.rect.left, 
-                        self.stats_area.rect.top + content_height - self.stats_area.scroll_y)
-            )
-            
-            if graph_rect.top + 20 > 0 and graph_rect.top < WINDOW_HEIGHT:
-                self.screen.blit(self.visualization_cache["interaction_graph"], graph_rect)
-            
-            content_height += graph_rect.height + section_spacing
-        
-        # Recent interactions
-        content_height += section_spacing
-        recent_header = self.font_normal.render("Recent Interactions", True, COLOR_TEXT_HEADER)
-        recent_rect = self.stats_area.get_content_rect(content_height)
-        if recent_rect.top > 0 and recent_rect.top < WINDOW_HEIGHT:
-            self.screen.blit(recent_header, recent_rect)
-        content_height += line_height * 1.5
-        
-        # Show the 10 most recent interactions
-        if len(self.population.interactions) > 0:
-            recent = self.population.interactions[-10:]
-            for interaction in reversed(recent):
-                int_type = interaction["type"].capitalize()
-                agents = [a.split('_')[1] for a in interaction["agents"]]
-                info = f"{int_type} between Agent {agents[0]} and Agent {agents[1]}"
-                
-                info_surf = self.font_small.render(info, True, COLOR_TEXT)
-                info_rect = self.stats_area.get_content_rect(content_height)
-                if info_rect.top > 0 and info_rect.top < WINDOW_HEIGHT:
-                    self.screen.blit(info_surf, info_rect)
-                content_height += line_height
-        
-        # Update content height for scrolling
-        self.stats_area.content_height = content_height + 20
-    
-    def run(self):
-        """Main game loop"""
-        while self.running:
-            # Process events
-            self.process_events()
-            
-            # Update state
-            self.update()
-            
-            # Render
-            self.render()
-            
-            # Cap the frame rate
-            self.clock.tick(FPS)
-        
-        pygame.quit()
-        logging.info("Simulation terminated")
-
-# ───────────────────── Main Entry Point ─────────────────────
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Multi-Agent Emergence Simulation")
-    parser.add_argument("--load", type=str, help="Path to a saved simulation to load")
-    args = parser.parse_args()
-    
-    sim = Simulation()
-    
-    # Load saved simulation if specified
-    if args.load and os.path.exists(args.load):
-        world, population = load_simulation(args.load)
-        if world and population:
-            sim.world = world
-            sim.population = population
-            sim.selected_agent_id = list(sim.population.agents.keys())[0] if sim.population.agents else None
-    
-    # Run the simulation
-    sim.run()
+# --- autoplay tick ---
+if st.session_state.running:
+    agent.step()              # take one action & persist
+    time.sleep(st.session_state.speed)  # wait based on speed setting
+    st.rerun()
