@@ -2,7 +2,7 @@
 
 A lightweight multi‑agent simulation framework powered by Modern Hopfield memory and discrete communication. Agents explore a grid world, learn from their experiences, and exchange symbolic messages on demand.
 
-[App example](example-app.png)
+![App example](example-app.png)
 
 ---
 
@@ -15,7 +15,7 @@ This framework simulates autonomous agents in a grid-based world. Each agent use
 * **Associative Memory:** Modern Hopfield networks retain patterns of past observations for rapid recall.
 * **Reinforcement Learning:** Agents receive rewards based on energy, hunger, and task outcomes.
 
-[Agent learning history](example-learning.png)
+![Agent learning history](example-learning.png)
 
 * **On‑Demand Communication:** Agents query neighbors and reply with symbolic summaries of their latest experiences.
 
