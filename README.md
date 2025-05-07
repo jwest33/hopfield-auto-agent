@@ -88,14 +88,6 @@ Adjust these constants at the top of each file before running the simulation.
 
 ---
 
-## Extending the Framework
-
-* **Custom Worlds**: Subclass `World` to create new environments (e.g., obstacles, dynamic hazards).
-* **Alternate Memories**: Swap out `module_hopfield.Hopfield` for other memory models.
-* **Communication Policies**: Implement new query types or richer message data in `module_comm.py`.
-
----
-
 ## License
 
 This project is released under the MIT License. See [LICENSE](LICENSE) for details.
