@@ -40,8 +40,8 @@ streamlit run main.py
 
 ## Configuration
 
-Adjust thresholds and hyperparameters at the top of `module_agent.py` and `module_comm.py`:
+Adjust thresholds and hyperparameters at the top of `module_agent.py` and `module_main.py`:
 
 **Examples:**
-* `SURPRISE_THRESHOLD`, `REWARD_THRESHOLD`
-* `CODEBOOK_SIZE`, `SEQ_LEN`, `EMBED_DIM`
+* `PAIN_HIT, PAIN_DECAY = 5, 5`
+* `SURPRISE_SCALE = 10`
