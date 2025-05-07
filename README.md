@@ -4,6 +4,8 @@ An extensible multi‑agent simulation framework leveraging Modern Hopfield‑in
 
 ![Hopfield Agents](example-app.png)
 
+![Hopfield Learning](example-learning.png)
+
 ## Overview
 
 This project is a closed‑loop system where agents perceive a world, store observations in a Modern Hopfield‑style memory, and broadcast compressed symbols when their surprise or reward thresholds are exceeded. Key components:
