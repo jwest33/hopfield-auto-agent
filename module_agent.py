@@ -11,7 +11,9 @@ from module_comm import default_comm as COMM_CHANNEL, VQ, Message
 # ───────────────────── configuration ─────────────────────
 GRID = 25
 OBS_DIM = GRID * GRID * 4
-SEQ_LEN, SEQ_DIM = 5, OBS_DIM * 5
+SEQ_LEN = 5
+SEQ_DIM = OBS_DIM * SEQ_LEN  # total obs dims in a segment
+SEQ_DIM_REWARD = SEQ_DIM + 1 # +1 slot for the reward scalar
 CAP_L0, CAP_L1 = 800, 1200
 
 # Communication parameters
@@ -28,7 +30,7 @@ MOVE_COST, CARRY_COST = 1, 1
 REST_ENERGY_RECOVERY = MOVE_COST
 
 FOOD_E, FOOD_S = 40, 40
-PAIN_HIT, PAIN_DECAY = 5, 10 
+PAIN_HIT, PAIN_DECAY = 5, 5 
 
 BETA = 2.0
 SURPRISE_SCALE = 10
@@ -52,19 +54,20 @@ ENC = OneHotEncoder(sparse_output=False, handle_unknown="ignore").fit(CELL_TYPES
 # ───────────────────── Agent ─────────────────────
 class Agent:
     MOV = {"N": (-1, 0), "S": (1, 0), "W": (0, -1), "E": (0, 1), "REST": (0, 0)}
-    
+
     def __init__(self, w: World, agent_id: str):
         self.agent_id = agent_id
         self.w = w
         self.pos = list(w.home)
         self.energy, self.hunger, self.pain = MAX_E, 0, 0
+
         self.carrying, self.store = False, 0
         self.rest_streak = 0
         self.mem0 = Hopfield(OBS_DIM, CAP_L0)
-        self.mem1 = Hopfield(SEQ_DIM, CAP_L1)
+        self.mem1 = Hopfield(SEQ_DIM_REWARD, CAP_L1)
         self.trace: list[np.ndarray] = []
-        
-        # Time & reward tracking
+
+        # Tracking
         self.tick_count = 0
         self.last_reward = 0.0
         self.last_surprise = 0.0
@@ -72,37 +75,22 @@ class Agent:
 
         # Communication setup
         self.comm = COMM_CHANNEL
-        self.vq = VQ(n_clusters=N_SYMBOLS, dim=SEQ_DIM)
+        self.vq = VQ(n_clusters=N_SYMBOLS, dim=SEQ_DIM_REWARD)
         self.symbol_labels: Dict[int, str] = {i: f"Cluster {i}" for i in range(N_SYMBOLS)}
-        self.symbol_values: Dict[int, float] = {i: 0.0 for i in range(N_SYMBOLS)}
-        self.symbol_counts: Dict[int, int] = {i: 0 for i in range(N_SYMBOLS)}
-        self.comm_log: list[tuple[int,int,str]] = []  # (tick, symbol, label)
-        
-        # Register handler
+        self.comm_log: list[tuple[int, int, str]] = []  # (tick, symbol, label)
+
         self.comm.register(self)
 
-        # Initialize experience memory
-        self.cell_experience = {
-            "home":   {"reward": 0, "visits": 0, "last_visit": 0},
-            "food":   {"reward": 0, "visits": 0, "last_visit": 0},
-            "hazard": {"reward": 0, "visits": 0, "last_visit": 0},
-            "empty":  {"reward": 0, "visits": 0, "last_visit": 0}
-        }
-        # Q-learning state-action values
-        self.q_values = {}
+        # Memory & learning
+        self.cell_experience = {t: {"reward": 0, "visits": 0, "last_visit": 0}
+                                 for t in ["home", "food", "hazard", "empty"]}
+        self.q_values: Dict[str, Dict[str, float]] = {}
 
-        # History for plotting
-        self.history = {
-            "energy": [MAX_E],
-            "hunger": [0],
-            "pain": [0],
-            "food_stored": [0],
-            "actions": [],
-            "rewards": []
-        }
-        self.history["surprise"] = [0.0]
+        # History
+        self.history = {"energy": [MAX_E], "hunger": [0], "pain": [0],
+                        "food_stored": [0], "actions": [], "rewards": [], "surprise": [0.0]}
 
-        # Seed initial memory
+        # Seed memory
         init_obs = self.observe()
         self.mem0.store(init_obs)
         self.trace.append(init_obs)
@@ -257,76 +245,80 @@ class Agent:
         prev_pos, prev_carry = self.pos.copy(), self.carrying
         prev_en, prev_p, prev_h = self.energy, self.pain, self.hunger
         prev_key = self.get_state_key(prev_pos, prev_carry)
-        prev_cell = self.w.cell(tuple(prev_pos))
 
+        # Receive any queries
         self._receive_messages()
+
         act = self.plan()
         self.last_action = act
         dx, dy = self.MOV[act]
 
+        # Move or rest
         if act != "REST":
-            self.pos = [(self.pos[0] + dx)%GRID, (self.pos[1] + dy)%GRID]
+            self.pos = [(self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID]
             self.rest_streak = 0
             self.energy -= MOVE_COST
             if self.carrying:
                 self.energy -= CARRY_COST
         else:
             self.rest_streak += 1
-            rec = REST_ENERGY_RECOVERY * (2 if self.w.cell(tuple(self.pos))=="home" else 1)
+            rec = REST_ENERGY_RECOVERY * (2 if self.w.cell(tuple(self.pos)) == "home" else 1)
             self.energy = min(MAX_E, self.energy + rec)
 
-        self.hunger = min(MAX_H, self.hunger+1)
-        self.pain = max(0, self.pain-PAIN_DECAY)
+        # Always increase hunger
+        self.hunger = min(MAX_H, self.hunger + 1)
 
+        # Interact with cell
         food_collected = False
         food_eaten = False
         curr = self.w.cell(tuple(self.pos))
         if curr == "hazard":
+            old_pain = self.pain
             self.pain = min(MAX_P, self.pain + PAIN_HIT)
+            self.energy = max(0, self.energy - (self.pain - old_pain))
         if curr == "food" and not self.carrying:
-            self.carrying = True; food_collected = True; self.w.remove_food(tuple(self.pos))
+            self.carrying = True
+            food_collected = True
+            self.w.remove_food(tuple(self.pos))
         if curr == "home":
             if self.carrying and act != "REST":
-                self.carrying = False; self.store += 1
+                self.carrying = False
+                self.store += 1
             if act == "REST":
                 if self.carrying:
-                    self.carrying = False; food_eaten = True
-                elif self.store>0:
-                    self.store -= 1; food_eaten = True
+                    self.carrying = False
+                    food_eaten = True
+                elif self.store > 0:
+                    self.store -= 1
+                    food_eaten = True
                 if food_eaten:
-                    self.energy = min(MAX_E, self.energy+FOOD_E)
-                    self.hunger = max(0, self.hunger-FOOD_S)
+                    self.energy = min(MAX_E, self.energy + FOOD_E)
+                    self.hunger = max(0, self.hunger - FOOD_S)
 
-        # reward calculation
+        # Compute reward
         de = self.energy - prev_en
         dp = self.pain - prev_p
         dh = self.hunger - prev_h
         reward = de - dp - dh + (10 if food_collected else 0) + (20 if food_eaten else 0)
         self.last_reward = reward
 
-        # observe & surprise
+        # Surprise and memory
         obs = self.observe()
-        surprise = self.mem0.surprise(obs)
-        self.last_surprise = surprise
-        
-        # store memories
+        self.last_surprise = self.mem0.surprise(obs)
         self.mem0.store(obs)
         if len(self.trace) >= SEQ_LEN:
-            segment = np.concatenate(self.trace[-SEQ_LEN+1:] + [obs])
+            segment = np.concatenate(self.trace[-SEQ_LEN+1:] + [obs] + [np.array([self.last_reward])])
             self.mem1.store(segment)
         self.trace.append(obs)
 
-        # update learning
-        self.update_experience(prev_cell, reward)
+        # Update learning
+        self.update_experience(curr, reward)
         next_key = self.get_state_key(self.pos, self.carrying)
         self.update_q_value(prev_key, act, reward, next_key)
         if self.tick_count % 100 == 0:
             self.decay_experiences()
-            
-        if abs(self.last_reward) >= REWARD_THRESH or self.last_surprise >= SURPRISE_THRESH:
-            self._package_and_broadcast()
-            
-        # history and persistence
+
+        # Log history and persist
         self.history["energy"].append(self.energy)
         self.history["hunger"].append(self.hunger)
         self.history["pain"].append(self.pain)
@@ -336,54 +328,29 @@ class Agent:
         self.history["surprise"].append(self.last_surprise)
         self.save_state(path=f"{self.agent_id}_state.npz")
 
-        logging.debug(f"Tick {self.tick_count} – pos {self.pos}, energy {self.energy:.1f}, hunger {self.hunger}, pain {self.pain}, reward {reward}")
-        
+        logging.debug(f"Tick {self.tick_count} – pos {self.pos}, energy {self.energy}, hunger {self.hunger}, pain {self.pain}, reward {reward}")
+
     def _receive_messages(self):
         msgs = self.comm.receive_all()
         for msg in msgs:
-            for sym in msg.symbols:
-                proto = self.vq.decode(sym)
-                self.mem0.store(proto[:OBS_DIM])
-                self.mem1.store(proto)
-                
-    def _package_and_broadcast(self):
-        # build sequence
-        seq = np.concatenate(self.trace[-SEQ_LEN:])
-        if len(self.trace) < SEQ_LEN:
-            return
-
-        symbol = self.vq.encode(seq)
-        centroid = self.vq.codebook_[symbol]
-        label = self.symbol_labels[symbol]
-        msg_data = {
-            "centroid_head": centroid[:10].tolist(),
-            "label": label
-        }
-        msg = Message(sender=self.agent_id, symbol=symbol, data=msg_data)
-        self.comm.broadcast(msg)
-        # Log
-        self.symbol_counts[symbol] += 1
-        self.comm_log.append((self.tick_count, symbol, label))
+            if msg.data.get("query"):
+                self.receive(msg)
 
     def receive(self, msg: Message):
-        # Handle incoming messages
-        logging.info(f"Agent {self.agent_id} received symbol {msg.symbol} ('{msg.data['label']}') from {msg.sender} at tick {self.tick_count}.")
-        # Optionally respond to queries
-        if msg.data.get("query", False):
-            self._respond_to_query(msg.sender)
+        """Handle incoming query and respond."""
+        logging.info(f"Agent {self.agent_id} received query from {msg.sender} at tick {self.tick_count}.")
+        self._respond_to_query(msg.sender)
 
     def query_agent(self, target_id: str):
-        # send a query flag
-        dummy_centroid = [0]*10
-        msg_data = {"query": True, "centroid_head": dummy_centroid}
-        msg = Message(sender=self.agent_id, symbol=-1, data=msg_data)
+        """Broadcast a query to other agents."""
+        msg = Message(sender=self.agent_id, symbol=-1, data={"query": True})
         self.comm.broadcast(msg)
 
     def _respond_to_query(self, requester_id: str):
-        # respond with last symbol and label
-        if self.comm:
-            msg = Message(sender=self.agent_id, symbol=self.comm_log[-1][1], data={
-                "label": self.comm_log[-1][2],
-                "response_to": requester_id
-            })
-            self.comm.broadcast(msg)
+        """Respond with last known cluster symbol and label."""
+        if not self.comm_log:
+            return
+        tick, symbol, label = self.comm_log[-1]
+        msg = Message(sender=self.agent_id, symbol=symbol,
+                      data={"label": label, "response_to": requester_id})
+        self.comm.broadcast(msg)

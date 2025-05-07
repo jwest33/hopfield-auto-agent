@@ -1,6 +1,8 @@
 # Hop to it: Modern Hopfield Auto‑Agent
 
-A minimal, extensible multi‑agent simulation framework leveraging Modern Hopfield‑inspired memory and vector‑quantization communication.
+An extensible multi‑agent simulation framework leveraging Modern Hopfield‑inspired memory and vector‑quantization communication.
+
+![Hopfield Agents](example-app.png)
 
 ## Overview
 
