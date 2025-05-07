@@ -1,4 +1,4 @@
-# Hop to it: Modern Hopfield Auto‑Agent
+# Hop to it: Agentic Modern Hopfield Memory
 
 A lightweight multi‑agent simulation framework powered by Modern Hopfield memory and discrete communication. Agents explore a grid world, learn from their experiences, and exchange symbolic messages on demand.
 
