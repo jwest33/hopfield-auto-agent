@@ -115,6 +115,19 @@ Modify these before launching the app.
 
 ---
 
+
+## Analysis
+
+Run the analysis dashboard:
+
+```bash
+streamlit run agent_state_analysis.py
+```
+
+![Analysis example](example-agent-analysis-main.png)
+
+---
+
 ## License
 
 This project is released under the MIT License. See [LICENSE](LICENSE) for details.
