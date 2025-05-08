@@ -2,6 +2,7 @@ from __future__ import annotations
 import itertools, random, time, logging, os, sys
 from typing import Tuple, Dict, Any
 import numpy as np
+import heapq
 import streamlit as st
 from sklearn.preprocessing import OneHotEncoder
 from module_hopfield import Hopfield
@@ -30,7 +31,7 @@ MOVE_COST, CARRY_COST = 1, 1
 REST_ENERGY_RECOVERY = MOVE_COST
 
 FOOD_E, FOOD_S = 40, 40
-PAIN_HIT, PAIN_DECAY = 5, 5 
+PAIN_HIT, PAIN_DECAY = 10, 5 
 
 BETA = 2.0
 SURPRISE_SCALE = 10
@@ -90,6 +91,8 @@ class Agent:
         self.history = {"energy": [MAX_E], "hunger": [0], "pain": [0],
                         "food_stored": [0], "actions": [], "rewards": [], "surprise": [0.0]}
 
+        self.known_map: dict[tuple[int,int], str] = { tuple(w.home): "home" }
+        
         # Seed memory
         init_obs = self.observe()
         self.mem0.store(init_obs)
@@ -175,6 +178,43 @@ class Agent:
         flat = self.w.grid.reshape(-1)
         return ENC.transform(flat[:, None]).flatten()
 
+    def a_star(self,
+               start: tuple[int,int],
+               goal: tuple[int,int]
+               ) -> list[tuple[int,int]] | None:
+        """
+        Return list of positions from start→goal avoiding known hazards.
+        Unknown cells are treated as walkable; known hazards are blocked.
+        """
+        def heuristic(a, b):
+            return abs(a[0]-b[0]) + abs(a[1]-b[1])
+
+        open_set = []
+        heapq.heappush(open_set, (0 + heuristic(start, goal), 0, start, [start]))
+        closed = set()
+
+        while open_set:
+            f, g, current, path = heapq.heappop(open_set)
+            if current == goal:
+                return path
+            if current in closed:
+                continue
+            closed.add(current)
+
+            for action, (dx, dy) in self.MOV.items():
+                if action == "REST":
+                    continue
+                neighbor = ((current[0] + dx) % GRID, (current[1] + dy) % GRID)
+                # skip if we know it’s a hazard
+                if self.known_map.get(neighbor) == "hazard":
+                    continue
+                if neighbor in closed:
+                    continue
+                new_g = g + 1
+                new_f = new_g + heuristic(neighbor, goal)
+                heapq.heappush(open_set, (new_f, new_g, neighbor, path + [neighbor]))
+        return None
+    
     def plan(self) -> str:
         hunger = self.hunger / MAX_H
         pain = self.pain / MAX_P
@@ -240,51 +280,67 @@ class Agent:
         return v
 
     def step(self):
-        """Take one step in the environment and learn."""
+        """Take one step: decide, move/rest, interact, learn, store memories, and persist."""
+        # 1) Tick and snapshot prior state
         self.tick_count += 1
         prev_pos, prev_carry = self.pos.copy(), self.carrying
         prev_en, prev_p, prev_h = self.energy, self.pain, self.hunger
         prev_key = self.get_state_key(prev_pos, prev_carry)
 
-        # Receive any queries
+        # 2) Receive any inter-agent queries
         self._receive_messages()
 
+        # 3) Plan and execute next action
         act = self.plan()
         self.last_action = act
         dx, dy = self.MOV[act]
 
-        # Move or rest
         if act != "REST":
+            # Move
             self.pos = [(self.pos[0] + dx) % GRID, (self.pos[1] + dy) % GRID]
             self.rest_streak = 0
             self.energy -= MOVE_COST
             if self.carrying:
                 self.energy -= CARRY_COST
         else:
+            # Rest
             self.rest_streak += 1
             rec = REST_ENERGY_RECOVERY * (2 if self.w.cell(tuple(self.pos)) == "home" else 1)
             self.energy = min(MAX_E, self.energy + rec)
 
-        # Always increase hunger
+        # 4) Hunger always increases
         self.hunger = min(MAX_H, self.hunger + 1)
 
-        # Interact with cell
+        # 5) Interact with the new cell
         food_collected = False
         food_eaten = False
         curr = self.w.cell(tuple(self.pos))
+
+        # Learn about this cell
+        self.known_map[tuple(self.pos)] = curr
+
+        # Hazard penalty
         if curr == "hazard":
-            old_pain = self.pain
+            old_p = self.pain
             self.pain = min(MAX_P, self.pain + PAIN_HIT)
-            self.energy = max(0, self.energy - (self.pain - old_pain))
+            self.energy = max(0, self.energy - (self.pain - old_p))
+        else:
+            self.pain = max(0, self.pain - PAIN_DECAY)
+
+        # Pick up food
         if curr == "food" and not self.carrying:
             self.carrying = True
             food_collected = True
             self.w.remove_food(tuple(self.pos))
+
+        # Home deposit or eating
         if curr == "home":
             if self.carrying and act != "REST":
+                # drop off carried food
                 self.carrying = False
                 self.store += 1
             if act == "REST":
+                # eat either carried or stored food
                 if self.carrying:
                     self.carrying = False
                     food_eaten = True
@@ -295,30 +351,32 @@ class Agent:
                     self.energy = min(MAX_E, self.energy + FOOD_E)
                     self.hunger = max(0, self.hunger - FOOD_S)
 
-        # Compute reward
+        # 6) Compute reward
         de = self.energy - prev_en
         dp = self.pain - prev_p
         dh = self.hunger - prev_h
         reward = de - dp - dh + (10 if food_collected else 0) + (20 if food_eaten else 0)
         self.last_reward = reward
 
-        # Surprise and memory
+        # 7) Surprise & episodic memory
         obs = self.observe()
         self.last_surprise = self.mem0.surprise(obs)
         self.mem0.store(obs)
+
         if len(self.trace) >= SEQ_LEN:
             segment = np.concatenate(self.trace[-SEQ_LEN+1:] + [obs] + [np.array([self.last_reward])])
             self.mem1.store(segment)
         self.trace.append(obs)
 
-        # Update learning
+        # 8) Q-learning updates
         self.update_experience(curr, reward)
         next_key = self.get_state_key(self.pos, self.carrying)
         self.update_q_value(prev_key, act, reward, next_key)
+
         if self.tick_count % 100 == 0:
             self.decay_experiences()
 
-        # Log history and persist
+        # 9) Log history & persist state
         self.history["energy"].append(self.energy)
         self.history["hunger"].append(self.hunger)
         self.history["pain"].append(self.pain)
@@ -326,8 +384,8 @@ class Agent:
         self.history["actions"].append(act)
         self.history["rewards"].append(reward)
         self.history["surprise"].append(self.last_surprise)
-        self.save_state(path=f"{self.agent_id}_state.npz")
 
+        self.save_state(f"{self.agent_id}_state.npz")
         logging.debug(f"Tick {self.tick_count} – pos {self.pos}, energy {self.energy}, hunger {self.hunger}, pain {self.pain}, reward {reward}")
 
     def _receive_messages(self):

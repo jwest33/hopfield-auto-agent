@@ -1,6 +1,6 @@
-# Hop to it: Agentic Modern Hopfield Memory
+# Hop to it: Agentic A* Planing and Modern Hopfield Memory
 
-A lightweight multi‑agent simulation framework powered by Modern Hopfield memory and discrete communication. Agents explore a grid world, learn from their experiences, and exchange symbolic messages on demand.
+A lightweight multi-agent simulation framework powered by Modern Hopfield memory, A\* planning, and discrete communication. Agents explore a grid world, learn from their experiences (including path outcomes), and exchange symbolic messages on demand.
 
 ![App example](example-app.png)
 
@@ -8,83 +8,110 @@ A lightweight multi‑agent simulation framework powered by Modern Hopfield memo
 
 ## Introduction
 
-This framework simulates autonomous agents in a grid-based world. Each agent uses a Modern Hopfield network to store and recall sensory observations, applies simple reinforcement signals to learn policies, and communicates with peers only in response to queries.
+This framework simulates autonomous agents in a grid-based world. Each agent:
 
-### Key concepts:
-
-* **Associative Memory:** Modern Hopfield networks retain patterns of past observations for rapid recall.
-* **Reinforcement Learning:** Agents receive rewards based on energy, hunger, and task outcomes.
+* **Perceives** its local environment and encodes observations into a continuous Modern Hopfield memory (`mem0`) for surprise detection.
+* **Plans** optimal routes to goals (home or known food) using A\* pathfinding, avoiding learned hazards.
+* **Simulates** full path outcomes (energy spent, hunger/pain incurred, food collected) before executing a step.
+* **Stores** each path + outcome vector in a secondary Hopfield memory (`mem_paths`) for episodic recall.
+* **Learns** action policies via Q-learning with state-action values, tempered by physiological drives (energy, hunger, pain).
+* **Communicates** symbolic summaries of high-reward or high-surprise experiences via on-demand queries.
 
 ![Agent learning history](example-learning.png)
-
-* **On‑Demand Communication:** Agents query neighbors and reply with symbolic summaries of their latest experiences.
 
 ---
 
 ## Architecture
 
-* **World:** Provides cell types (`home`, `food`, `hazard`, `empty`), tracks agent positions, and applies interactions.
-* **Agent Loop:** On each tick, agents observe their surroundings, update memory, choose actions, and optionally exchange messages when queried.
-* **Communication Bus:** A simple message channel for broadcasting queries and responses between agents.
+* **World (`module_world.py`)**
 
----
+  * 25×25 grid of cells: `home`, `food`, `hazard`, `empty`.
+  * Deterministic placement of 80 food and 70 hazards (via fixed RNG).
+  * Persistence of world state across runs.
 
-## Modules
+* **Agent (`module_agent.py`)**
 
-* **`main.py`**: Initializes the world and agents, starts the simulation loop, and handles logging.
-* **`module_world.py`**: Defines the `World` class with grid initialization, cell management, and time stepping.
-* **`module_hopfield.py`**: Implements a Modern Hopfield associative memory with storage and surprise detection.
-* **`module_comm.py`**: Manages a vector‑quantization codebook, message registration, and the communication API.
-* **`module_agent.py`**: Contains the `Agent` class, including perception, learning, action selection, and query‑response handlers.
+  1. **Observation & Surprise**
+
+     * One-hot encoding of entire grid, stored in `mem0`.
+     * Surprise = Euclidean distance between current obs and recalled pattern.
+  2. **A* Planning*\*
+
+     * Maintains a `known_map` of stepped-on cells (`home`, `food`, `hazard`, `empty`).
+     * Computes A\* routes to home (when carrying food or low energy) or nearest known food.
+     * Blocks moves into learned hazard cells; treats unknown cells as walkable.
+  3. **Path Simulation & Episodic Memory**
+
+     * Simulates the full planned path to estimate energy use, hunger/pain changes, and food gains.
+     * Vectorizes path coordinates + outcome metrics and stores in `mem_paths`.
+  4. **Action Execution & Physiology**
+
+     * Applies move or rest, updates energy, hunger, pain, pickup/deliver logic.
+     * Computes reward based on physiological deltas and task events.
+  5. **Learning**
+
+     * Updates Q-values (state-action) using reward and discount.
+     * Updates per-cell experience statistics to bias future planning.
+     * Stores sequences of observations + reward in `mem1` for communication.
+  6. **Persistence**
+
+     * Saves/loads all memories (`mem0`, `mem1`, `mem_paths`), Q-values, experiences, physiology, and `known_map` to `.npz` files.
+
+* **Hopfield (`module_hopfield.py`)**
+
+  * Continuous modern Hopfield network supporting variable-dimension vectors (observations, sequences, path outcomes).
+  * Softmax-based attention recall (Ramsauer et al. 2020) and surprise computation.
+
+* **Communication (`module_comm.py`)**
+
+  * Broadcast bus for query-response among agents.
+  * Vector-quantization placeholder (`VQ`) for clustering episodic segments into symbols.
+
+* **Dashboard (`main.py`)**
+
+  * Streamlit app with:
+
+    * **Comparative metrics** table: food collected, average reward, hazards learned, steps taken.
+    * **World grid** visualization with agent overlays.
+    * **Agent status** (energy, hunger, pain, carrying state) side-by-side.
+    * **Performance charts**: energy and reward over ticks for each agent.
+    * **Controls**: start/pause/reset and simulation speed slider.
 
 ---
 
 ## Installation
 
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/yourusername/hopfield-auto-agent.git
-   cd hopfield-auto-agent
-   ```
-
-2. Install dependencies:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+git clone https://github.com/yourusername/hopfield-auto-agent.git
+cd hopfield-auto-agent
+pip install -r requirements.txt
+```
 
 ---
 
 ## Usage
 
-Start the simulation with Streamlit:
+Run the interactive dashboard:
 
 ```bash
 streamlit run main.py
 ```
 
-By default, the simulation opens in a browser window showing:
-
-* Real‑time agent positions on the grid
-* Memory surprise and reward charts
-* A control panel for hyperparameters
+Explore the simulation, adjust speed, and compare agent performance in real time.
 
 ---
 
 ## Configuration
 
-All key parameters live in `module_agent.py` and `main.py`:
+Key parameters live at the top of `module_agent.py` and `main.py`:
 
-**Examples:**
+* **Grid size**: `GRID`
+* **Memory capacities**: `CAP_L0`, `CAP_L1`, `CAP_PATH`
+* **Physiology**: `MAX_E`, `HUNGER_W`, `PAIN_W`, `FOOD_E`, `PAIN_HIT`, etc.
+* **A* weights*\*: implicit unit costs; unknown/hazard tuning in `a_star`.
+* **Learning rates**: `LEARNING_RATE`, `DISCOUNT_FACTOR`, `EXPERIENCE_DECAY`
 
-* **Grid size**: `GRID` (default: 25)
-* **Memory capacities**: `CAP_L0`, `CAP_L1`
-* **Communication symbols**: `N_SYMBOLS`
-* **Agent physiology**: `MAX_E`, `MOVE_COST`, `FOOD_E`, etc.
-* **Learning rates**: `LEARNING_RATE`, `DISCOUNT_FACTOR`
-
-Adjust these constants at the top of each file before running the simulation.
+Modify these before launching the app.
 
 ---
 
